@@ -23,6 +23,10 @@
   color: black;
 }
 
+.Hide {
+  visibility: hidden
+}
+
 .Idea-vert {
   display: flex;
   flex-direction: column;
@@ -41,7 +45,11 @@
 .Idea-vert-item {
   margin-top: 5px;
   margin-bottom: 5px;
-  width: 25%
+}
+
+.Idea-vert-item-small {
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
 .Idea-label {
