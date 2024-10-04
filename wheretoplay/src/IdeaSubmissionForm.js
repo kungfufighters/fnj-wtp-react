@@ -1,105 +1,109 @@
-import React, { useState } from 'react';
+import './Idea.css'
+
+import React, { useState } from "react"
 
 const IdeaSubmissionForm = ({ onSubmit }) => {
-  const [ideas, setIdeas] = useState([
-    { ideaName: '', status: 'pursue', image: null },
-  ]);
+  const [ideas, setIdeas] = useState([["", "Pursue Now", null]])
 
-  const handleChange = (index, event) => {
-    const newIdeas = [...ideas];
-    const { name, value, files } = event.target;
+  function addIdea(e) {
+    setIdeas([...ideas, ["", "Pursue Now", null]])
+  }
 
-    if (name === 'image') {
-      newIdeas[index][name] = files[0];  // Save the uploaded image as a file
-    } else {
-      newIdeas[index][name] = value;
-    }
-
-    setIdeas(newIdeas);
-  };
-
-  // Function to add a new form (capped at 10 ideas)
-  const addIdeaForm = () => {
-    if (ideas.length < 10) {
-      setIdeas([...ideas, { ideaName: '', status: 'pursue', image: null }]);
-    }
-  };
-
-  // Function to remove the last idea form
-  const removeLastIdeaForm = () => {
-    if (ideas.length > 1) {
-      const newIdeas = ideas.slice(0, ideas.length - 1);
-      setIdeas(newIdeas);
-    }
-  };
+  function removeIdea(e) {
+    let newIdeas = [...ideas]
+    newIdeas.pop()
+    setIdeas(newIdeas)
+  }
 
   const handleSubmit = (event) => {
     event.preventDefault();
     onSubmit(ideas);  // Pass submitted ideas to the parent (App.js)
   };
 
+  function IdeaForm({i, name, stat, source}) {
+    i = parseInt(i)
+    const [idea, setIdea] = useState(name)
+    const [status, setStatus] = useState(stat)
+    const [img, setImg] = useState(source)
+
+
+    function changeIdea(e) {
+      setIdea(e.target.value)
+      let newIdeas = ideas
+      newIdeas[i][0] = e.target.value
+      setIdeas(newIdeas)
+    }
+
+    function changeStatus(e) {
+      setStatus(e.target.value)
+      let newIdeas = ideas
+      newIdeas[i][1] = e.target.value
+      setIdeas(newIdeas)
+    }
+
+    function changeImage(e) {
+      const file = e.target.files[0]
+      setImg(URL.createObjectURL(file))
+      let newIdeas = ideas
+      newIdeas[i][2] = URL.createObjectURL(file)
+      setIdeas(newIdeas)
+    }
+
+    return (
+      <>
+        <div className="Idea-vert Idea-vert-item">
+            <label className="Idea-label" name="ideaL" >Idea Name</label>
+            <input type="text" className="Idea-text" name="idea" value={idea} onChange={changeIdea}/>
+        </div>
+        <div className="Idea-vert Idea-vert-item">
+          <label className="Idea-label" name="statusL">Current Status</label>
+          <select className="Idea-text" name="status" value={status} onChange={changeStatus}>
+            <option value="pursueNow">Pursue Now</option>
+            <option value="keepOpen">Keep Open</option>
+            <option value="shelve">Shelve</option>
+          </select>
+        </div>
+        <div className="Idea-vert">
+          <label htmlFor={"files" + i} className="Idea-button Idea-vert-item">Select Image</label>
+          <input id={"files" + i}
+                  className="Hide Idea-vert-item"
+                  type="file"
+                  aria-label="add image"
+                  onChange={changeImage}
+                >
+          </input>
+        </div>
+        {img && <img alt={"idea " + i + " logo"} className="Idea-vert-item Square" src={img} />}
+      </>
+    )
+  }
+
   return (
-    <div>
-      <h1>Idea Submission</h1>
+    <div className="Idea">
+      <header className="Idea-header">
+        <nav>
+          <p><strong>Owner - Idea Submission</strong></p>
+        </nav>
+      </header>
+
       <form onSubmit={handleSubmit}>
-        {ideas.map((idea, index) => (
-          <div key={index} style={{ marginBottom: '20px' }}>
-            <h3>Idea {index + 1}</h3>
-            <label>
-              Idea Name: 
-              <input
-                type="text"
-                name="ideaName"
-                value={idea.ideaName}
-                onChange={(e) => handleChange(index, e)}
-                required
-              />
-            </label>
-            <br />
-            <label>
-              Current Status:
-              <select
-                name="status"
-                value={idea.status}
-                onChange={(e) => handleChange(index, e)}
-              >
-                <option value="pursue">Pursue</option>
-                <option value="shelf">Shelf</option>
-                <option value="check">Check On</option>
-              </select>
-            </label>
-            <br />
-            <label>
-              Image Upload (optional):
-              <input
-                type="file"
-                name="image"
-                accept="image/*"
-                onChange={(e) => handleChange(index, e)}
-              />
-            </label>
-          </div>
-        ))}
-
-        {/* Add Idea button, only shown if fewer than 10 ideas */}
-        {ideas.length < 10 && (
-          <button type="button" onClick={addIdeaForm}>
+        <div className="Idea-vert">
+          {ideas.map((idea, i) => (
+            <div key={i}>
+              <IdeaForm i={i} name={ideas[i][0]} stat={ideas[i][1]} source={ideas[i][2]}/>
+            </div>
+          ))}
+          {ideas.length <= 10 && <button htmlFor="ideasAdd" className="Idea-button Idea-vert-item" onClick={addIdea} type="button">
             Add Idea
-          </button>
-        )}
-
-        {/* Remove last Idea button */}
-        {ideas.length > 1 && (
-          <button type="button" onClick={removeLastIdeaForm} style={{ marginLeft: '10px' }}>
-            Remove Last Idea
-          </button>
-        )}
-
-        <br />
-        <button type="submit">Submit Ideas</button>
+          </button>}
+          {ideas.length > 1 && <button htmlFor="ideasSub" className="Idea-button Idea-vert-item" onClick={removeIdea} type="button">
+            Remove Idea
+          </button>}
+          <button className="Idea-button Idea-vert-item" type="submit">Submit Idea(s)</button>
+        </div>
       </form>
     </div>
   );
-};
+}
 
 export default IdeaSubmissionForm;
