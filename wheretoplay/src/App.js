@@ -1,23 +1,29 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import IdeaSubmissionForm from './IdeaSubmissionForm';
+import ResultsPage from './ResultsPage';
 
 function App() {
+  // State to track if the owner has submitted ideas
+  const [submitted, setSubmitted] = useState(false);
+
+  // State to store the submitted ideas
+  const [ideas, setIdeas] = useState([]);
+
+  // Function to handle form submission
+  const handleFormSubmit = (submittedIdeas) => {
+    setIdeas(submittedIdeas); // Save submitted ideas
+    setSubmitted(true); // Switch to results page
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      {!submitted ? (
+        // Show IdeaSubmissionForm when not submitted
+        <IdeaSubmissionForm onSubmit={handleFormSubmit} />
+      ) : (
+        // Show ResultsPage when submitted, passing the ideas
+        <ResultsPage ideas={ideas} />
+      )}
     </div>
   );
 }
