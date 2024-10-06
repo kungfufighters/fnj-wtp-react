@@ -1,5 +1,4 @@
-// app/login/page.tsx or pages/login.tsx
-"use client"; // Only for app directory to handle client-side logic
+"use client";
 import { TextInput, PasswordInput, Paper, Group, Button, Title, Container } from '@mantine/core';
 import { useForm } from '@mantine/form';
 
@@ -17,7 +16,6 @@ export default function Login() {
 
   const handleSubmit = (values: { email: string; password: string }) => {
     console.log('Login details', values);
-    // Perform login operation (API call)
   };
 
   return (
