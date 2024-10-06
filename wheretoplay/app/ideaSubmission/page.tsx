@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useState } from 'react';
-import IdeaSubmissionForm from './IdeaSubmissionForm';
+import IdeaSubmissionForm from './ideaSubmissionFormNEW.js';
 import ResultsPage from './ResultsPage';
 
 function App() {
