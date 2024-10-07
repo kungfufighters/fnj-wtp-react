@@ -1,59 +1,33 @@
-"use client";
+'use client';
 
-import React, { FC } from 'react';
+import React, { useState } from 'react';
+import IdeaSubmissionForm from './ideaSubmissionFormNEW.js';
+import Voting from './participant';
 
-import { useForm } from '@mantine/form';
+function App() {
+  // State to track if the owner has submitted ideas
+  const [submitted, setSubmitted] = useState(false);
 
-import { RadioGroup, Radio, Flex, Group, Button, Stack, Center } from '@mantine/core';
+  // State to store the submitted ideas
+  const [ideas, setIdeas] = useState([]);
 
-export default function Demo() {
-  const form = useForm({ mode: 'uncontrolled' });
-
-  const handleSubmit = (values: typeof form.values) => {
-    console.log(values);
+  // Function to handle form submission
+  const handleFormSubmit = (submittedIdeas) => {
+    setIdeas(submittedIdeas); // Save submitted ideas
+    setSubmitted(true); // Switch to results page
   };
 
-  const Selection: FC<Props> = ({caption}) => {
-    return (
-        <RadioGroup
-        label={caption}
-        description="Results will not be visible until you have voted"
-        required
-        >
-            <Flex  gap="md">
-                <Radio value="1" label="1" />
-                <Radio value="2" label="2" />
-                <Radio value="3" label="3" />
-                <Radio value="4" label="4" />
-                <Radio value="5" label="5" />
-            </Flex>
-        </RadioGroup>
-    )
-  }
-
   return (
-    <>
-      {/* Supply handle submit as a single argument to receive validated values */}
-      <form onSubmit={form.onSubmit(handleSubmit)}>
-        <Center>
-        <Stack
-            bg="var(--mantine-color-body)"
-            align="stretch"
-            justify="center"
-            gap="md"
-            >
-            <Selection caption="Reason to Buy" />
-            <Selection caption="Market Volume" />
-            <Selection caption="Economic Viability" />
-            <Selection caption="Obstacles to Implementation" />
-            <Selection caption="Time To Revenue" />
-            <Selection caption="Economic Risks" />
-            <Group justify="space-between" mt="md">
-                <Button type="submit">Finalize Votes</Button>
-            </Group>
-        </Stack>
-        </Center>
-       </form>
-    </>
+    <div className="App">
+      {!submitted ? (
+        // Show IdeaSubmissionForm when not submitted
+        <IdeaSubmissionForm onSubmit={handleFormSubmit} />
+      ) : (
+        // Show ResultsPage when submitted, passing the ideas
+        <Voting ideas={ideas} />
+      )}
+    </div>
   );
 }
+
+export default App;
