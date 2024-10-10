@@ -12,9 +12,10 @@ import { Graph } from '../../components/Graph/Graph';
 import oneF from '../../public/OneFinger.png';
 import fiveF from '../../public/FiveFingers.png';
 
-interface GreetingProps {
+interface VotingProps {
   caption: string;
   index: number;
+  infoM: string;
 }
 
 export default function Voting({ ideas }) {
@@ -47,11 +48,23 @@ export default function Voting({ ideas }) {
     console.log(values);
   };
 
-  const Selection: React.FC<GreetingProps> = ({ caption, index }) => (
+  function InfoButton({message}) {
+    const handleClick = () => {
+      alert(message);
+    };
+
+    return (
+      <Button variant="outlined" className="Idea-button" onClick={handleClick}>
+        Info
+      </Button>
+    );
+  }
+
+  const Selection: React.FC<VotingProps> = ({ caption, index, infoM }) => (
         <Center>
+          <InfoButton message={infoM} />
           <RadioGroup
             label={caption}
-            description="Results will not be visible until you have voted"
             bg="rgba(0, 0, 0, .3)"
             required
           >
@@ -93,17 +106,17 @@ export default function Voting({ ideas }) {
           justify="center"
           gap="sm"
             >
-            {isVoteArray[0] ? <Selection caption="Reason to Buy" index={0} /> :
+            {isVoteArray[0] ? <Selection caption="Reason to Buy" index={0} infoM="Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]"/> :
             <Graph key="0" graphTitle="Reason to Buy" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
-            {isVoteArray[1] ? <Selection caption="Market Volume" index={1} /> :
+            {isVoteArray[1] ? <Selection caption="Market Volume" index={1} infoM="Based on: Current market size and Expected growth. [HIGH is GOOD]" /> :
             <Graph key="1" graphTitle="Market Volume" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
-            {isVoteArray[2] ? <Selection caption="Economic Viability" index={2} /> :
+            {isVoteArray[2] ? <Selection caption="Economic Viability" index={2} infoM="Based on: Margins (value vs. cost), Customers' ability to pay, and Customer stickiness? [HIGH is GOOD]" /> :
             <Graph key="2" graphTitle="Economic Viability" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
-            {isVoteArray[3] ? <Selection caption="Obstacles to Implementation" index={3} /> :
+            {isVoteArray[3] ? <Selection caption="Obstacles to Implementation" index={3} infoM="Based on: Product development difficutlies' and Funding challenges [WANT LOW]" /> :
             <Graph key="3" graphTitle="Obstacles to Implementation" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
-            {isVoteArray[4] ? <Selection caption="Time To Revenue" index={4} /> :
+            {isVoteArray[4] ? <Selection caption="Time To Revenue" index={4} infoM="Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]" /> :
             <Graph key="4" graphTitle="Time To Revenue" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
-            {isVoteArray[5] ? <Selection caption="Economic Risks" index={5} /> :
+            {isVoteArray[5] ? <Selection caption="Economic Risks" index={5} infoM="Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" /> :
             <Graph key="5" graphTitle="Economic Risks" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
         </Stack>
         </Center>
