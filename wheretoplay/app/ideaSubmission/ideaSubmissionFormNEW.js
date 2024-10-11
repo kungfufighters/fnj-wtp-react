@@ -3,10 +3,10 @@ import './Idea.css'
 import React, { useState } from "react"
 
 const IdeaSubmissionForm = ({ onSubmit }) => {
-  const [ideas, setIdeas] = useState([["", "Pursue Now", null]])
+  const [ideas, setIdeas] = useState([["", "", "Pursue Now", null]])
 
   function addIdea(e) {
-    setIdeas([...ideas, ["", "Pursue Now", null]])
+    setIdeas([...ideas, ["", "", "Pursue Now", null]])
   }
 
   function removeIdea(e) {
@@ -20,9 +20,10 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
     onSubmit(ideas);  // Pass submitted ideas to the parent (App.js)
   };
 
-  function IdeaForm({i, name, stat, source}) {
+  function IdeaForm({i, name, seg, stat, source}) {
     i = parseInt(i)
     const [idea, setIdea] = useState(name)
+    const [segment, setSegment] = useState(seg)
     const [status, setStatus] = useState(stat)
     const [img, setImg] = useState(source)
 
@@ -34,10 +35,19 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
       setIdeas(newIdeas)
     }
 
+    
+    function changeSegment(e) {
+      setSegment(e.target.value)
+      let newIdeas = ideas
+      newIdeas[i][1] = e.target.value
+      setIdeas(newIdeas)
+    }
+
+
     function changeStatus(e) {
       setStatus(e.target.value)
       let newIdeas = ideas
-      newIdeas[i][1] = e.target.value
+      newIdeas[i][2] = e.target.value
       setIdeas(newIdeas)
     }
 
@@ -45,15 +55,19 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
       const file = e.target.files[0]
       setImg(URL.createObjectURL(file))
       let newIdeas = ideas
-      newIdeas[i][2] = URL.createObjectURL(file)
+      newIdeas[i][3] = URL.createObjectURL(file)
       setIdeas(newIdeas)
     }
 
     return (
       <>
         <div className="Idea-vert Idea-vert-item">
-            <label className="Idea-label" name="ideaL" >Idea Name</label>
+            <label className="Idea-label" name="ideaL" >Product/Service</label>
             <input type="text" className="Idea-text" name="idea" value={idea} onChange={changeIdea}/>
+        </div>
+        <div className="Idea-vert Idea-vert-item">
+            <label className="Idea-label" name="ideaL" >Customer Segment</label>
+            <input type="text" className="Idea-text" name="idea" value={segment} onChange={changeSegment}/>
         </div>
         <div className="Idea-vert Idea-vert-item">
           <label className="Idea-label" name="statusL">Current Status</label>
@@ -90,7 +104,7 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
         <div className="Idea-vert">
           {ideas.map((idea, i) => (
             <div key={i}>
-              <IdeaForm i={i} name={ideas[i][0]} stat={ideas[i][1]} source={ideas[i][2]}/>
+              <IdeaForm i={i} name={ideas[i][0]} seg={ideas[i][1]} stat={ideas[i][2]} source={ideas[i][3]}/>
             </div>
           ))}
           {ideas.length <= 10 && <button htmlFor="ideasAdd" className="Idea-button Idea-vert-item" onClick={addIdea} type="button">

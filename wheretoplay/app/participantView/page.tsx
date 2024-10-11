@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import IdeaSubmissionForm from './ideaSubmissionFormNEW.js';
+import IdeaSubmissionForm from '../ideaSubmission/ideaSubmissionFormNEW.js';
 import Voting from './participant';
 
 function App() {

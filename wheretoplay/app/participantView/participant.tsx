@@ -84,14 +84,14 @@ export default function Voting({ ideas }) {
   return (
     <>
         <h2 style={{ textAlign: 'center' }}>
-            Idea #{currentIdeaIndex + 1}: {idea[0]}
+            Idea #{currentIdeaIndex + 1}: {idea[0] + "(" + idea[1] + ")"}
         </h2>
 
-        {idea[2] && (
+        {idea[3] && (
         <div style={{ textAlign: 'center' }}>
             <Center>
               <Image
-                src={idea[2]}
+                src={idea[3]}
                 alt=""// Empty alt attribute for decorative images
                 style={{ width: '300px', marginBottom: '20px' }}
               />
