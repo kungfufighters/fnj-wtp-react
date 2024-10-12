@@ -21,6 +21,18 @@ export default function Invite() {
         setEmails(newEmails);
     }
 
+    function QRCodeButton() {
+        const [isQRCode, setIsQRCode] = useState(false);
+
+        function switchOn() {
+            setIsQRCode(true);
+        }
+
+        return !isQRCode ?
+            (<button className="Idea-button Idea-vert-item" type="button" onClick={switchOn}>Generate QR Code</button>) :
+            (<img src="https://api.qrserver.com/v1/create-qr-code/?data=https%3A%2F%2Fsushigo.netlify.app%2F&size=[200]x[200]" alt="qr code" />);
+    }
+
     function EmailBox({ i, curEmail }) {
         i = parseInt(i, 10);
         const [email, setEmail] = useState(curEmail);
@@ -64,6 +76,7 @@ export default function Invite() {
                 Remove Email
                                     </button>}
               <button className="Idea-button Idea-vert-item" type="submit">Send Invites</button>
+              <QRCodeButton />
             </div>
           </form>
         </div>
