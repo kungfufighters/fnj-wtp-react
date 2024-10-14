@@ -106,18 +106,37 @@ export default function Voting({ ideas }) {
           justify="center"
           gap="sm"
             >
-            {isVoteArray[0] ? <Selection caption="Reason to Buy" index={0} infoM="Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]"/> :
-            <Graph key="0" graphTitle="Reason to Buy" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
-            {isVoteArray[1] ? <Selection caption="Market Volume" index={1} infoM="Based on: Current market size and Expected growth. [HIGH is GOOD]" /> :
-            <Graph key="1" graphTitle="Market Volume" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
-            {isVoteArray[2] ? <Selection caption="Economic Viability" index={2} infoM="Based on: Margins (value vs. cost), Customers' ability to pay, and Customer stickiness? [HIGH is GOOD]" /> :
-            <Graph key="2" graphTitle="Economic Viability" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
-            {isVoteArray[3] ? <Selection caption="Obstacles to Implementation" index={3} infoM="Based on: Product development difficutlies' and Funding challenges [WANT LOW]" /> :
-            <Graph key="3" graphTitle="Obstacles to Implementation" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
-            {isVoteArray[4] ? <Selection caption="Time To Revenue" index={4} infoM="Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]" /> :
-            <Graph key="4" graphTitle="Time To Revenue" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
-            {isVoteArray[5] ? <Selection caption="Economic Risks" index={5} infoM="Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" /> :
-            <Graph key="5" graphTitle="Economic Risks" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
+            <Selection caption="Reason to Buy" index={0} infoM="Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]"/>
+            {!isVoteArray[0] 
+            && <div><Graph key="0" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+             <label className="reason-label">Reason:</label>      
+             <input type="text" className="reason-text" name="reason"/></div>}
+
+            <Selection caption="Market Volume" index={1} infoM="Based on: Current market size and Expected growth. [HIGH is GOOD]" />
+            {!isVoteArray[1] && <div><Graph key="1" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            <label className="reason-label">Reason:</label>      
+            <input type="text" className="reason-text" name="reason"/></div>}
+
+            <Selection caption="Economic Viability" index={2} infoM="Based on: Margins (value vs. cost), Customers' ability to pay, and Customer stickiness? [HIGH is GOOD]" />
+            {!isVoteArray[2] && <div> <Graph key="2" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            <label className="reason-label">Reason:</label>      
+            <input type="text" className="reason-text" name="reason"/></div>}
+
+            <Selection caption="Obstacles to Implementation" index={3} infoM="Based on: Product development difficutlies' and Funding challenges [WANT LOW]" />
+            {!isVoteArray[3] && <div> <Graph key="3" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+             <label className="reason-label">Reason:</label>      
+             <input type="text" className="reason-text" name="reason"/></div>}
+
+            <Selection caption="Time To Revenue" index={4} infoM="Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]" />
+            {!isVoteArray[4] && <div><Graph key="4" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            <label className="reason-label">Reason:</label>      
+            <input type="text" className="reason-text" name="reason"/> </div>}
+
+            <Selection caption="Economic Risks" index={5} infoM="Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" />
+            {!isVoteArray[5] && <div><Graph key="5" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            <label className="reason-label">Reason:</label>      
+            <input type="text" className="reason-text" name="reason"/></div>}
+            
         </Stack>
         </Center>
             <Center>
