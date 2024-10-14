@@ -1,8 +1,12 @@
 "use client";
-import { TextInput, PasswordInput, Paper, Group, Button, Title, Container } from '@mantine/core';
+
+import { TextInput, PasswordInput, Paper, Group, Button, Title, Container, Center } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { useRouter } from 'next/navigation'; // useRouter from Next.js
 
 export default function Login() {
+  const router = useRouter(); // Initialize the router for navigation
+
   const form = useForm({
     initialValues: {
       email: '',
@@ -18,11 +22,23 @@ export default function Login() {
     console.log('Login details', values);
   };
 
+  const handleSignupRedirect = () => {
+    router.push('/signup'); // Redirect to signup page
+  };
+
   return (
-    <Container size={420} my={40}>
-      <Title style={{ textAlign: 'center' }}>Login</Title>
+    <Container
+      size="xs"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <Paper withBorder shadow="md" p={30} mt={30} radius="md">
         <form onSubmit={form.onSubmit(handleSubmit)}>
+          <Title style={{ textAlign: 'center' }}>Login</Title>
           <TextInput
             label="Email"
             placeholder="your@email.com"
@@ -36,9 +52,10 @@ export default function Login() {
             required
             mt="md"
           />
-        <Group justify="space-between" mt="md">
+          <Group justify="space-between" mt="md">
             <Button type="submit">Login</Button>
-        </Group>
+            <Button variant="subtle" onClick={handleSignupRedirect}>Don't have an account? Sign Up</Button>
+          </Group>
         </form>
       </Paper>
     </Container>
