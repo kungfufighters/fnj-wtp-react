@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import IdeaSubmissionForm from '../create/ideaSubmissionFormNEW.js';
-import Voting from '../voting/voting.jsx';
+import Voting from './voting';
 
 function App() {
   // State to track if the owner has submitted ideas
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(true);
 
   // State to store the submitted ideas
-  const [ideas, setIdeas] = useState([]);
+  const [ideas, setIdeas] = useState([['Butter Stick', 'Suburbanites', 'Pursue Now', null], ['Reverse Bike', 'Idiots', 'Keep Open', null]]);
 
   // Function to handle form submission
   const handleFormSubmit = (submittedIdeas: any) => {

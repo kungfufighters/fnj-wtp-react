@@ -8,7 +8,9 @@ module.exports = {
     },
   ],
   parserOptions: {
-    project: './tsconfig.json',
+    project: "tsconfig.json",
+    tsconfigRootDir: __dirname,
+    sourceType: "module",
   },
   rules: {
     'react/react-in-jsx-scope': 'off',
