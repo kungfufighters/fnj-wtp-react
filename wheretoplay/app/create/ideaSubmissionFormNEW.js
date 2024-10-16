@@ -96,7 +96,7 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
     <div className="Idea">
       <header className="Idea-header">
         <nav>
-          <p><strong>Owner - Idea Submission</strong></p>
+          <p><strong>Opportunity Submission</strong></p>
         </nav>
       </header>
 

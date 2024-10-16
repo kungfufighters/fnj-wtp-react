@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import {
   Chart as ChartJS,
-  CategoryScale,   
-  LinearScale,    
-  BarElement,     
-  Title,          
-  Tooltip,        
-  Legend           
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
 ChartJS.register(
-  CategoryScale,   
-  LinearScale,     
-  BarElement,      
-  Title,           
-  Tooltip,         
-  Legend           
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
 );
 
 const ResultsPage = ({ ideas }) => {
@@ -80,12 +80,12 @@ const ResultsPage = ({ ideas }) => {
 
   return (
     <div>
-        <h1 style ={{ textAlign: 'center' }}> 
-            Owner's View
+        <h1 style={{ textAlign: 'center' }}>
+            Owner&apos;s View
         </h1>
 
-        <h2 style ={{ textAlign: 'center' }}>
-            Idea #{currentIdeaIndex + 1} Results: {idea[0] + "(" + idea[1] + ")"}
+        <h2 style={{ textAlign: 'center' }}>
+            Idea #{currentIdeaIndex + 1} Results: {`${idea[0]} ( ${idea[1]})`}
         </h2>
 
         {idea[3] && (
@@ -104,9 +104,9 @@ const ResultsPage = ({ ideas }) => {
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          width: '60%',  // Reduce the width of the entire graph container
-          margin: '0 auto',  // Center the container
-          padding: '0 20px',  // Add some padding to prevent it from touching the edge
+          width: '60%', // Reduce the width of the entire graph container
+          margin: '0 auto', // Center the container
+          padding: '0 20px', // Add some padding to prevent it from touching the edge
         }}
       >
         <div className="left-graphs" style={{ width: '30%' }}>
@@ -145,13 +145,14 @@ const ResultsPage = ({ ideas }) => {
       </div>
 
       <div className="navigation-buttons" style={{ marginTop: '20px', textAlign: 'center' }}>
-        <button onClick={goToPreviousIdea} disabled={currentIdeaIndex === 0}>
+        <button onClick={goToPreviousIdea} disabled={currentIdeaIndex === 0} type="button">
           Previous Idea
         </button>
         <button
           onClick={goToNextIdea}
           disabled={currentIdeaIndex === ideas.length - 1}
           style={{ marginLeft: '10px' }}
+          type="button"
         >
           Next Idea
         </button>
