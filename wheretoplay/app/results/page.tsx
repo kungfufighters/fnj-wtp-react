@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import {
   Chart as ChartJS,
@@ -19,9 +20,11 @@ ChartJS.register(
   Legend
 );
 
-const ResultsPage = ({ ideas }) => {
-  const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
 
+
+const ResultsPage = ({ /*ideas*/ }) => {
+  const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
+  const ideas = [['Butter Stick', 'Suburbanites', 'Pursue Now', null], ['Reverse Bike', 'Idiots', 'Keep Open', null]]
   const idea = ideas[currentIdeaIndex];
 
   const goToPreviousIdea = () => {
