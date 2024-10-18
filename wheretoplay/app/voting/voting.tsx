@@ -26,12 +26,13 @@ export default function Voting({ ideas } : any) {
   const NUMCATS = 6;
   const form = useForm({ mode: 'uncontrolled' });
   const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
-  const [isVoteArray, setIsVoteArray] = useState(Array.from({ length: NUMCATS }, () => true));
+  const [isVoted, setIsVoted] = useState(Array.from({ length: NUMCATS }, () => false));
   const [votes, setVotes] = useState(Array.from({ length: NUMCATS }, () => 0));
 
   const idea = ideas[currentIdeaIndex];
 
-  const [timers, setTimers] = useState(Array.from({ length: NUMCATS }, () => setTimeout(() => {}, 1)));
+  const [timers, setTimers] =
+    useState(Array.from({ length: NUMCATS }, () => setTimeout(() => {}, 1)));
 
   // Progress to the next idea
   const goToNextIdea = () => {
@@ -40,10 +41,15 @@ export default function Voting({ ideas } : any) {
     }
   };
 
+  // Here is where data will be sent through the sockets, it is called every time a radio
+  // button on the voting screen is clicked. {index} refers to the index of the option. For
+  // example {index}=0 refers to REASON TO BUY. {val} is the response value, 1-5. When user
+  // authorization comes in we can also associate the user with this item, which should be
+  // everything we need to have our database managed appropriately.
   const radioClick = (index : number, val : number) => {
-    startStopTimer(index);
+    if (!isVoted[index]) startStopTimer(index);
     updateVotes(index, val);
-    console.log(votes);
+    // TODO: Implement socket for multi-user collaboration
   };
 
   // Updates votes according to the click
@@ -55,12 +61,15 @@ export default function Voting({ ideas } : any) {
 
   // Starts or stops the timer for displaying vote results after entering/changing a vote
   const startStopTimer = (index : number) => {
+    // TODO: Fix bug when multiple timers for votes overlap
+    // Either by locking concurrent votes or finding a work
+    // around to update state without overwriting
     clearTimeout(timers[index]);
     const newTimers = [...timers];
     newTimers[index] = setTimeout(() => {
-      const newIsVoteArray = [...isVoteArray];
-      newIsVoteArray[index] = false;
-      setIsVoteArray(newIsVoteArray);
+      const newIsVoted = [...isVoted];
+      newIsVoted[index] = true;
+      setIsVoted(newIsVoted);
     }, 5000);
     setTimers(newTimers);
   };
@@ -130,41 +139,41 @@ export default function Voting({ ideas } : any) {
           gap="sm"
             >
             <Selection caption="Reason to Buy" index={0} infoM="Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]" />
-            {!isVoteArray[0]
+            {isVoted[0]
             && <div><Graph key="0" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
              <label className="reason-label">Reason:</label>
              <input type="text" className="reason-text" name="reason" />
                </div>}
 
             <Selection caption="Market Volume" index={1} infoM="Based on: Current market size and Expected growth. [HIGH is GOOD]" />
-            {!isVoteArray[1] && <div><Graph key="1" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            {isVoted[1] && <div><Graph key="1" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
             <label className="reason-label">Reason:</label>
             <input type="text" className="reason-text" name="reason" />
-                                </div>}
+                           </div>}
 
             <Selection caption="Economic Viability" index={2} infoM="Based on: Margins (value vs. cost), Customers' ability to pay, and Customer stickiness? [HIGH is GOOD]" />
-            {!isVoteArray[2] && <div> <Graph key="2" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            {isVoted[2] && <div> <Graph key="2" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
             <label className="reason-label">Reason:</label>
             <input type="text" className="reason-text" name="reason" />
-                                </div>}
+                           </div>}
 
             <Selection caption="Obstacles to Implementation" index={3} infoM="Based on: Product development difficutlies' and Funding challenges [WANT LOW]" />
-            {!isVoteArray[3] && <div> <Graph key="3" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            {isVoted[3] && <div> <Graph key="3" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
              <label className="reason-label">Reason:</label>
              <input type="text" className="reason-text" name="reason" />
-                                </div>}
+                           </div>}
 
             <Selection caption="Time To Revenue" index={4} infoM="Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]" />
-            {!isVoteArray[4] && <div><Graph key="4" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            {isVoted[4] && <div><Graph key="4" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
             <label className="reason-label">Reason:</label>
             <input type="text" className="reason-text" name="reason" />
-                                </div>}
+                           </div>}
 
             <Selection caption="Economic Risks" index={5} infoM="Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" />
-            {!isVoteArray[5] && <div><Graph key="5" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            {isVoted[5] && <div><Graph key="5" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
             <label className="reason-label">Reason:</label>
             <input type="text" className="reason-text" name="reason" />
-                                </div>}
+                           </div>}
         </Stack>
         </Center>
             <Center>
