@@ -31,7 +31,7 @@ export default function Voting({ ideas } : any) {
 
   const idea = ideas[currentIdeaIndex];
 
-  const timeIDS : NodeJS.Timeout[] = Array.from({ length: NUMCATS }, () => setTimeout(() => {}, 1));
+  const [timers, setTimers] = useState(Array.from({ length: NUMCATS }, () => setTimeout(() => {}, 1)));
 
   // Progress to the next idea
   const goToNextIdea = () => {
@@ -43,6 +43,7 @@ export default function Voting({ ideas } : any) {
   const radioClick = (index : number, val : number) => {
     startStopTimer(index);
     updateVotes(index, val);
+    console.log(votes);
   };
 
   // Updates votes according to the click
@@ -54,12 +55,14 @@ export default function Voting({ ideas } : any) {
 
   // Starts or stops the timer for displaying vote results after entering/changing a vote
   const startStopTimer = (index : number) => {
-    clearTimeout(timeIDS[index]);
-    timeIDS[index] = setTimeout(() => {
+    clearTimeout(timers[index]);
+    const newTimers = [...timers];
+    newTimers[index] = setTimeout(() => {
       const newIsVoteArray = [...isVoteArray];
       newIsVoteArray[index] = false;
       setIsVoteArray(newIsVoteArray);
     }, 5000);
+    setTimers(newTimers);
   };
 
   const handleSubmit = (values: typeof form.values) => {
