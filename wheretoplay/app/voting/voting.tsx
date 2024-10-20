@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { useForm } from '@mantine/form';
 
 import './Idea.css';
+import './Voting.css';
 
 import NextImage from 'next/image';
 import { RadioGroup, Radio, Flex, Button, Stack, Center, Image } from '@mantine/core';
@@ -23,16 +24,17 @@ interface InfoProps {
 }
 
 export default function Voting({ ideas } : any) {
-  const NUMCATS = 6;
+  const NUMCATS = 6; // 6 different categories that are voted on
+  const TIMERLENGTH = 5; // 5 second timer for vote lock in countdown
+
   const form = useForm({ mode: 'uncontrolled' });
   const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
+  const [currentOptionIndex, setCurrentOptionIndex] = useState(-1);
   const [isVoted, setIsVoted] = useState(Array.from({ length: NUMCATS }, () => false));
   const [votes, setVotes] = useState(Array.from({ length: NUMCATS }, () => 0));
+  const [timeRemaining, setTimeRemaining] = useState(0);
 
   const idea = ideas[currentIdeaIndex];
-
-  const [timers, setTimers] =
-    useState(Array.from({ length: NUMCATS }, () => setTimeout(() => {}, 1)));
 
   // Progress to the next idea
   const goToNextIdea = () => {
@@ -41,12 +43,27 @@ export default function Voting({ ideas } : any) {
     }
   };
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (timeRemaining === 1) {
+        const newIsVoted = [...isVoted];
+        newIsVoted[currentOptionIndex] = true;
+        setIsVoted(newIsVoted);
+      }
+      setTimeRemaining((prev) => prev - 1);
+    }, 1000); // Decrement time remaining every second
+
+    return () => clearInterval(intervalId);
+  }, [timeRemaining]);
+
   // Here is where data will be sent through the sockets, it is called every time a radio
   // button on the voting screen is clicked. {index} refers to the index of the option. For
   // example {index}=0 refers to REASON TO BUY. {val} is the response value, 1-5. When user
   // authorization comes in we can also associate the user with this item, which should be
   // everything we need to have our database managed appropriately.
   const radioClick = (index : number, val : number) => {
+    // If the timer is ongoing for a different option, prohibit any activity
+    if (timeRemaining > 0 && index !== currentOptionIndex) return;
     if (!isVoted[index]) startStopTimer(index);
     updateVotes(index, val);
     // TODO: Implement socket for multi-user collaboration
@@ -61,17 +78,8 @@ export default function Voting({ ideas } : any) {
 
   // Starts or stops the timer for displaying vote results after entering/changing a vote
   const startStopTimer = (index : number) => {
-    // TODO: Fix bug when multiple timers for votes overlap
-    // Either by locking concurrent votes or finding a work
-    // around to update state without overwriting
-    clearTimeout(timers[index]);
-    const newTimers = [...timers];
-    newTimers[index] = setTimeout(() => {
-      const newIsVoted = [...isVoted];
-      newIsVoted[index] = true;
-      setIsVoted(newIsVoted);
-    }, 5000);
-    setTimers(newTimers);
+    setTimeRemaining(TIMERLENGTH);
+    setCurrentOptionIndex(index);
   };
 
   const handleSubmit = (values: typeof form.values) => {
@@ -93,23 +101,32 @@ export default function Voting({ ideas } : any) {
 
   const Selection: React.FC<VotingProps> = ({ caption, index, infoM }) => (
         <Center>
-          <InfoButton message={infoM} />
-          <RadioGroup
-            value={votes[index].toString()}
-            label={caption}
-            bg="rgba(0, 0, 0, .3)"
-            required
-          >
-              <Flex gap="md">
-                  <Image alt="One finger" component={NextImage} src={oneF} h={35} />
-                  <Radio value="1" onClick={() => radioClick(index, 1)} color="grape" />
-                  <Radio value="2" onClick={() => radioClick(index, 2)} color="grape" />
-                  <Radio value="3" onClick={() => radioClick(index, 3)} color="grape" />
-                  <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
-                  <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
-                  <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
-              </Flex>
-          </RadioGroup>
+          <Stack>
+            {timeRemaining > 0 && currentOptionIndex === index &&
+            <h4 style={{ textAlign: 'center' }}>
+              Time Remaining: {timeRemaining}s
+            </h4>}
+            <Flex>
+              <InfoButton message={infoM} />
+              <RadioGroup
+                value={votes[index].toString()}
+                label={caption}
+                className={timeRemaining > 0 && currentOptionIndex !== index ? 'Disabled' : ''}
+                bg="rgba(0, 0, 0, .3)"
+                required
+              >
+                  <Flex gap="md">
+                      <Image alt="One finger" component={NextImage} src={oneF} h={35} />
+                      <Radio value="1" onClick={() => radioClick(index, 1)} color="grape" />
+                      <Radio value="2" onClick={() => radioClick(index, 2)} color="grape" />
+                      <Radio value="3" onClick={() => radioClick(index, 3)} color="grape" />
+                      <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
+                      <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
+                      <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
+                  </Flex>
+              </RadioGroup>
+            </Flex>
+          </Stack>
         </Center>
     );
 
