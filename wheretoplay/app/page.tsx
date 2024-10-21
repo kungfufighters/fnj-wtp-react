@@ -4,17 +4,21 @@ import '@mantine/core/styles.css';
 
 import { useState } from 'react';
 import { TextInput, Button, Container, Divider } from '@mantine/core';
+import { useRouter } from 'next/navigation'; // useRouter from Next.js
 
 export default function HomePage() {
+  const router = useRouter();
   const [sessionPin, setSessionPin] = useState('');
 
   const handleEnterSession = () => {
     // Handle session enter logic here
+    router.push('/voting');
     console.log('Entered session pin:', sessionPin);
   };
 
   const handleCreateSession = () => {
     // Handle create session logic here
+    router.push('/create');
     console.log('Creating new session');
   };
 
