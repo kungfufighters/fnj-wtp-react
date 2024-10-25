@@ -1,48 +1,53 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation.js';
-import IdeaSubmissionForm from './ideaSubmissionFormNEW.js';
+import { useRouter } from 'next/navigation';
+import IdeaSubmissionForm from './ideaSubmissionFormNEW';
+import axios from 'axios';
 
-// import ResultsPage from './ResultsPage';
 
 function App() {
   const router = useRouter();
-  // State to track if the owner has submitted ideas
   const [submitted, setSubmitted] = useState(false);
 
-  // State to store the submitted ideas
-  //const [ideas, setIdeas] = useState([]);
+// Function to handle form submission
+const handleFormSubmit = async (submittedIdeas: any) => {
 
-  // Function to handle form submission
-  const handleFormSubmit = (submittedIdeas : any) => {
-    //setIdeas(submittedIdeas); // Save submitted ideas
-    console.log(submittedIdeas);
+  const formattedIdeas = submittedIdeas.map((idea: any[]) => ({
+        name: idea[0],
+        customer_segment: idea[1],
+        description: idea[2],
+    }));
+try {
+    // Assuming you want to submit each idea individually
+    for (const idea of formattedIdeas) {
+      const response = await axios.post('http://localhost:8000/api/create_opportunity/', idea, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('Opportunity created:', response.data);
+    }
+
     router.push('/invite');
     setSubmitted(true); // Switch to results page
-  };
-
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Axios error creating opportunity:', error.response?.data);
+    } else {
+      console.error('Unexpected error:', error);
+    }
+  }
+};
   return (
     <div className="App">
       {!submitted && (
         <IdeaSubmissionForm onSubmit={handleFormSubmit} />
       )}
+      {submitted && <h1>Thank you for your submission!</h1>}
     </div>
   );
-
-  /* Old versiont that had idea submission form go right to results
-  return (
-    <div className="App">
-      {!submitted ? (
-        // Show IdeaSubmissionForm when not submitted
-        <IdeaSubmissionForm onSubmit={handleFormSubmit} />
-      ) : (
-        // Show ResultsPage when submitted, passing the ideas
-        <ResultsPage ideas={ideas} />
-      )}
-    </div>
-  );
-  */
 }
 
 export default App;
