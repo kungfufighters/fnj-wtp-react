@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, {  useState } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -7,9 +7,12 @@ import {
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  PointElement
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import { Bar, Scatter} from 'react-chartjs-2';
+import ScatterPlot from '@/components/ScatterPlot/ScatterPlot';
+import { ScrollArea } from '@mantine/core';
 
 ChartJS.register(
   CategoryScale,
@@ -17,10 +20,9 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  PointElement
 );
-
-
 
 const ResultsPage = ({ /*ideas*/ }) => {
   const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
@@ -81,6 +83,8 @@ const ResultsPage = ({ /*ideas*/ }) => {
     },
   };
 
+  const outlierSampleText = "Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem";
+
   return (
     <div>
         <h1 style={{ textAlign: 'center' }}>
@@ -107,12 +111,12 @@ const ResultsPage = ({ /*ideas*/ }) => {
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          width: '60%', // Reduce the width of the entire graph container
+          width: '70%', // Reduce the width of the entire graph container
           margin: '0 auto', // Center the container
           padding: '0 20px', // Add some padding to prevent it from touching the edge
         }}
       >
-        <div className="left-graphs" style={{ width: '30%' }}>
+        <div className="left-graphs" style={{ width: '20%' }}>
           <h3>Reason to Buy</h3>
           <div style={{ height: '150px' }}>
             <Bar key={`chart-reason-${currentIdeaIndex}`} data={graphData('Reason to Buy', idea.reasonToBuy)} options={chartOptions} />
@@ -129,7 +133,25 @@ const ResultsPage = ({ /*ideas*/ }) => {
           </div>
         </div>
 
-        <div className="right-graphs" style={{ width: '30%' }}>
+        <div className="middle-text-areas" style={{ width: '20%' }}>
+          <h3>Reason to Buy Reasons</h3>
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  } }> 
+            
+          <ScrollArea h={150} scrollbars="y"> {outlierSampleText}</ScrollArea>
+          </div>
+
+          <h3>Market Volume Reasons</h3>
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
+          <ScrollArea h={150} scrollbars="y"> {outlierSampleText}</ScrollArea>
+          </div>
+
+          <h3>Economic Viability Reasons</h3>
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
+          <ScrollArea h={150} scrollbars="y"> {outlierSampleText}</ScrollArea>
+          </div>
+        </div>
+
+        <div className="right-graphs" style={{ width: '20%' }}>
           <h3>Obstacles to Implementation</h3>
           <div style={{ height: '150px' }}>
             <Bar key={`chart-obstacles-${currentIdeaIndex}`} data={graphData('Obstacles', idea.obstaclesToImplementation)} options={chartOptions} />
@@ -144,10 +166,32 @@ const ResultsPage = ({ /*ideas*/ }) => {
           <div style={{ height: '150px' }}>
             <Bar key={`chart-revenue-${currentIdeaIndex}`} data={graphData('Time to Revenue', idea.timeToRevenue)} options={chartOptions} />
           </div>
+
+          <h3>Where to Play</h3>
+          <div style= {{height: '350px'}}>
+          <ScatterPlot />
+          </div>
+        </div>
+        <div className="right-text-areas" style={{ width: '20%' }}>
+          <h3>Reason to Buy Reasons</h3>
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  } }> 
+            
+          <ScrollArea h={150} scrollbars="y"> {outlierSampleText}</ScrollArea>
+          </div>
+
+          <h3>Market Volume Reasons</h3>
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0 }}>
+          <ScrollArea h={150} scrollbars="y"> {outlierSampleText}</ScrollArea>
+          </div>
+
+          <h3>Economic Viability Reasons</h3>
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
+          <ScrollArea h={150} scrollbars="y"> {outlierSampleText}</ScrollArea>
+          </div>
         </div>
       </div>
 
-      <div className="navigation-buttons" style={{ marginTop: '20px', textAlign: 'center' }}>
+      <div className="navigation-buttons" style={{ marginTop: '20px', textAlign: 'center'  }}>
         <button onClick={goToPreviousIdea} disabled={currentIdeaIndex === 0} type="button">
           Previous Idea
         </button>
@@ -161,6 +205,7 @@ const ResultsPage = ({ /*ideas*/ }) => {
         </button>
       </div>
     </div>
+    
   );
 };
 
