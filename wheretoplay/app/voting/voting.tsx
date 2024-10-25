@@ -1,17 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
-
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from '@mantine/form';
-
 import './Idea.css';
-
+import './Voting.css';
 import NextImage from 'next/image';
 import { RadioGroup, Radio, Flex, Button, Stack, Center, Image } from '@mantine/core';
 import { Graph } from '../../components/Graph/Graph';
 import oneF from '../../public/OneFinger.png';
 import fiveF from '../../public/FiveFingers.png';
 
+// TypeScript Interfaces
 interface VotingProps {
   caption: string;
   index: number;
@@ -22,27 +21,46 @@ interface InfoProps {
   message: string;
 }
 
-export default function Voting({ ideas } : any) {
+interface WebSocketMessage {
+  message: string;
+}
+
+export default function Voting({ ideas }: any) {
   const NUMCATS = 6;
+  const TIMERLENGTH = 5;
   const form = useForm({ mode: 'uncontrolled' });
   const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
-  const [isVoteArray, setIsVoteArray] = useState(Array.from({ length: NUMCATS }, () => true));
+  const [currentOptionIndex, setCurrentOptionIndex] = useState(-1);
+  const [isVoted, setIsVoted] = useState(Array.from({ length: NUMCATS }, () => false));
   const [votes, setVotes] = useState(Array.from({ length: NUMCATS }, () => 0));
+  const [timeRemaining, setTimeRemaining] = useState(0);
 
   const idea = ideas[currentIdeaIndex];
+  const socketRef = useRef<WebSocket | null>(null); // Store WebSocket in ref to persist between renders
 
-  const timeIDS : NodeJS.Timeout[] = Array.from({ length: NUMCATS }, () => setTimeout(() => {}, 1));
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (timeRemaining === 1) {
+        const newIsVoted = [...isVoted];
+        newIsVoted[currentOptionIndex] = true;
+        setIsVoted(newIsVoted);
+      }
+      setTimeRemaining((prev) => prev - 1);
+    }, 1000); // Decrement time remaining every second
+    return () => clearInterval(intervalId);
+  }, [timeRemaining]);
 
-  // Progress to the next idea
-  const goToNextIdea = () => {
-    if (currentIdeaIndex < ideas.length - 1) {
-      setCurrentIdeaIndex(currentIdeaIndex + 1);
-    }
-  };
-
+  // Here is where data will be sent through the sockets, it is called every time a radio
+  // button on the voting screen is clicked. {index} refers to the index of the option. For
+  // example {index}=0 refers to REASON TO BUY. {val} is the response value, 1-5. When user
+  // authorization comes in we can also associate the user with this item, which should be
+  // everything we need to have our database managed appropriately.
   const radioClick = (index : number, val : number) => {
-    startStopTimer(index);
+    // If the timer is ongoing for a different option, prohibit any activity
+    if (timeRemaining > 0 && index !== currentOptionIndex) return;
+    if (!isVoted[index]) startStopTimer(index);
     updateVotes(index, val);
+    // TODO: Implement socket for multi-user collaboration
   };
 
   // Updates votes according to the click
@@ -54,17 +72,67 @@ export default function Voting({ ideas } : any) {
 
   // Starts or stops the timer for displaying vote results after entering/changing a vote
   const startStopTimer = (index : number) => {
-    clearTimeout(timeIDS[index]);
-    timeIDS[index] = setTimeout(() => {
-      const newIsVoteArray = [...isVoteArray];
-      newIsVoteArray[index] = false;
-      setIsVoteArray(newIsVoteArray);
-    }, 5000);
+    setTimeRemaining(TIMERLENGTH);
+    setCurrentOptionIndex(index);
   };
 
+  // Establish WebSocket connection
+  const connectWebSocket = () => {
+    socketRef.current = new WebSocket('ws://localhost:8000/ws/vote/');
+
+    socketRef.current.onopen = () => {
+      console.log('WebSocket connection opened');
+    };
+
+    socketRef.current.onmessage = (event: MessageEvent) => {
+      const data: WebSocketMessage = JSON.parse(event.data);
+      console.log('Message received from server:', data.message); // Expecting "received!"
+    };
+
+    socketRef.current.onerror = (error: Event) => {
+      console.error('WebSocket error:', error);
+    };
+
+    socketRef.current.onclose = (event: CloseEvent) => {
+      console.log('WebSocket connection closed:', event);
+    };
+  };
+
+  // Initialize WebSocket connection when component is mounted
+  useEffect(() => {
+    connectWebSocket();
+    return () => {
+      socketRef.current?.close(); // Clean up WebSocket on component unmount
+    };
+  }, []);
+
+  // Handle form submission and send data via WebSocket
   const handleSubmit = (values: typeof form.values) => {
-    goToNextIdea();
-    console.log(values);
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      const payload = {
+        ideaIndex: currentIdeaIndex, // Should be an integer
+        votes, // Array of votes
+        formValues: values, // Additional form data
+      };
+
+      console.log('Sending payload to backend:', payload); // Log payload
+
+      socketRef.current.send(JSON.stringify(payload)); // Send data via WebSocket
+    } else {
+      console.error('WebSocket is not open. Current readyState:', socketRef.current?.readyState);
+    }
+
+    goToNextIdea();// Progress to the next idea
+  };
+
+  const goToNextIdea = () => {
+    if (currentIdeaIndex < ideas.length - 1) {
+      setCurrentIdeaIndex(currentIdeaIndex + 1);
+    }
+    setCurrentOptionIndex(-1);
+    setIsVoted(Array.from({ length: NUMCATS }, () => false));
+    setVotes(Array.from({ length: NUMCATS }, () => 0));
+    setTimeRemaining(0);
   };
 
   const InfoButton: React.FC<InfoProps> = ({ message }) => {
@@ -80,11 +148,18 @@ export default function Voting({ ideas } : any) {
   };
 
   const Selection: React.FC<VotingProps> = ({ caption, index, infoM }) => (
-        <Center>
+    <Center>
+      <Stack>
+        {timeRemaining > 0 && currentOptionIndex === index &&
+        <h4 style={{ textAlign: 'center' }}>
+          Time Remaining: {timeRemaining}s
+        </h4>}
+        <Flex>
           <InfoButton message={infoM} />
           <RadioGroup
             value={votes[index].toString()}
             label={caption}
+            className={timeRemaining > 0 && currentOptionIndex !== index ? 'Disabled' : ''}
             bg="rgba(0, 0, 0, .3)"
             required
           >
@@ -98,8 +173,10 @@ export default function Voting({ ideas } : any) {
                   <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
               </Flex>
           </RadioGroup>
-        </Center>
-    );
+        </Flex>
+      </Stack>
+    </Center>
+);
 
   return (
     <>
@@ -127,41 +204,41 @@ export default function Voting({ ideas } : any) {
           gap="sm"
             >
             <Selection caption="Reason to Buy" index={0} infoM="Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]" />
-            {!isVoteArray[0]
+            {isVoted[0]
             && <div><Graph key="0" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
              <label className="reason-label">Reason:</label>
              <input type="text" className="reason-text" name="reason" />
                </div>}
 
             <Selection caption="Market Volume" index={1} infoM="Based on: Current market size and Expected growth. [HIGH is GOOD]" />
-            {!isVoteArray[1] && <div><Graph key="1" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            {isVoted[1] && <div><Graph key="1" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
             <label className="reason-label">Reason:</label>
             <input type="text" className="reason-text" name="reason" />
-                                </div>}
+                           </div>}
 
             <Selection caption="Economic Viability" index={2} infoM="Based on: Margins (value vs. cost), Customers' ability to pay, and Customer stickiness? [HIGH is GOOD]" />
-            {!isVoteArray[2] && <div> <Graph key="2" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            {isVoted[2] && <div> <Graph key="2" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
             <label className="reason-label">Reason:</label>
             <input type="text" className="reason-text" name="reason" />
-                                </div>}
+                           </div>}
 
             <Selection caption="Obstacles to Implementation" index={3} infoM="Based on: Product development difficutlies' and Funding challenges [WANT LOW]" />
-            {!isVoteArray[3] && <div> <Graph key="3" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            {isVoted[3] && <div> <Graph key="3" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
              <label className="reason-label">Reason:</label>
              <input type="text" className="reason-text" name="reason" />
-                                </div>}
+                           </div>}
 
             <Selection caption="Time To Revenue" index={4} infoM="Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]" />
-            {!isVoteArray[4] && <div><Graph key="4" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            {isVoted[4] && <div><Graph key="4" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
             <label className="reason-label">Reason:</label>
             <input type="text" className="reason-text" name="reason" />
-                                </div>}
+                           </div>}
 
             <Selection caption="Economic Risks" index={5} infoM="Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" />
-            {!isVoteArray[5] && <div><Graph key="5" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
+            {isVoted[5] && <div><Graph key="5" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
             <label className="reason-label">Reason:</label>
             <input type="text" className="reason-text" name="reason" />
-                                </div>}
+                           </div>}
         </Stack>
         </Center>
             <Center>

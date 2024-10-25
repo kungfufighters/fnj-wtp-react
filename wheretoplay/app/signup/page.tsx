@@ -1,15 +1,16 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { TextInput, PasswordInput, Button, Paper, Group, Stack, Title, Container } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useRouter } from 'next/navigation'; // Import useRouter for navigation
+import axios from 'axios';
 
 export default function Signup() {
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null); // To handle errors
     const router = useRouter(); // Initialize router
 
-    // Mantine's form hook to handle form validation and state
     const form = useForm({
         initialValues: {
             email: '',
@@ -26,16 +27,37 @@ export default function Signup() {
         },
     });
 
-    // Simulate form submission
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
+        setError(null);
 
-        // Simulate API call
-        setTimeout(() => {
-            console.log('Form Submitted', values);
+        try {
+            const response = await axios.post('http://localhost:8000/api/signup/', {
+                email: values.email,
+                password: values.password,
+                password2: values.confirmPassword, // Send confirm password field as well
+                username: values.email, // Assuming username is the same as email in the backend
+            });
+
+            if (response.status === 201) {
+                // Save JWT to localStorage
+                const { access, refresh } = response.data.tokens;
+                localStorage.setItem('accessToken', access);
+                localStorage.setItem('refreshToken', refresh);
+
+                // Redirect to dashboard or login page
+                router.push('/dashboard');
+            }
+        } catch (error) {
+            console.error(error);
+            if (axios.isAxiosError(error) && error.response) {
+                setError(error.response.data.message || 'Something went wrong');
+            } else {
+                setError('An error occurred during registration');
+            }
+        } finally {
             setLoading(false);
-            // You would typically redirect or show a success message here
-        }, 2000);
+        }
     };
 
     return (
@@ -76,7 +98,8 @@ export default function Signup() {
                             {...form.getInputProps('confirmPassword')}
                         />
 
-                        {/* Group with buttons aligned left and right */}
+                        {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error message */}
+
                         <Group justify="space-between" mt="md">
                             <Button type="submit" loading={loading}>
                                 {loading ? 'Signing Up...' : 'Sign Up'}

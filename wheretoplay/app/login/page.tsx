@@ -1,12 +1,20 @@
 "use client";
 
-import { TextInput, PasswordInput, Paper, Group, Button, Title, Container, Center } from '@mantine/core';
+import {
+  TextInput,
+  PasswordInput,
+  Paper,
+  Group,
+  Button,
+  Title,
+  Container,
+} from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation'; // useRouter from Next.js
+import { useRouter } from 'next/navigation';
 
 export default function Login() {
-  const router = useRouter(); // Initialize the router for navigation
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const form = useForm({
@@ -15,25 +23,46 @@ export default function Login() {
       password: '',
     },
     validate: {
-      email: (value) => (/^\S+@\S+$/.test(value) ? null : 'Invalid email'),
-      password: (value) => (value.length >= 6 ? null : 'Password must be at least 6 characters'),
+      email: (value) =>
+        /^\S+@\S+$/.test(value) ? null : 'Invalid email',
+      password: (value) =>
+        value.length >= 6 ? null : 'Password must be at least 6 characters',
     },
   });
 
-  const handleSubmit = (values: { email: string; password: string }) => {
-    console.log('Login details', values);
+  // New login logic to handle API call to the Django backend
+  const handleSubmit = async (values: { email: string; password: string }) => {
     setLoading(true);
+    try {
+      const response = await fetch('http://localhost:8000/api/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Form Submitted', values);
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store tokens in localStorage
+        localStorage.setItem('accessToken', data.tokens.access);
+        localStorage.setItem('refreshToken', data.tokens.refresh);
+
+        // Redirect to the participant view
+        router.push('/participantView');
+      } else {
+        console.error('Login failed:', data.error);
+      }
+    } catch (err) {
+      console.error('Error during login:', err);
+    } finally {
       setLoading(false);
-      // You would typically redirect or show a success message here
-    }, 2000);
+    }
   };
 
   const handleSignupRedirect = () => {
-    router.push('/signup'); // Redirect to signup page
+    router.push('/signup');
   };
 
   return (
@@ -64,9 +93,11 @@ export default function Login() {
           />
           <Group justify="space-between" mt="md">
             <Button type="submit" loading={loading}>
-              {loading ? 'Loggin in...' : 'Log in'}
+              {loading ? 'Logging in...' : 'Log in'}
             </Button>
-            <Button variant="subtle" onClick={handleSignupRedirect}>Don't have an account? Sign Up</Button>
+            <Button variant="subtle" onClick={handleSignupRedirect}>
+              Don't have an account? Sign Up
+            </Button>
           </Group>
         </form>
       </Paper>
