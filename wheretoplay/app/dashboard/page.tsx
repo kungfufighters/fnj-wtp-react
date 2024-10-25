@@ -9,6 +9,7 @@ Account (change password)
 import { useState } from 'react';
 import { Accordion, Center, Stack, PasswordInput, TextInput, Button } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import axios from 'axios';
 
 interface OppProps {
     id: number;
@@ -19,11 +20,28 @@ interface OppProps {
     rating: number;
 }
 
+type Opp = {
+    opp_name: string;
+    customer_segment: string;
+};
+
 export default function Dashboard() {
     const [passLoading, setPassLoading] = useState(false);
     const [passError, setPassError] = useState<string | null>(null); // To handle errors
     const [mailLoading, setMailLoading] = useState(false);
     const [mailError, setMailError] = useState<string | null>(null); // To handle errors
+    const [ownerOpps, setOwnerOpps] = useState<Opp[]>([]);
+    const [queryFetched, setQueryFetched] = useState<boolean>(false);
+
+    const getOpportunities = async () => {
+        const response = await axios.get('http://localhost:8000/api/query/owneropps/');
+        setOwnerOpps([...ownerOpps, ...JSON.parse(response.data.json)]);
+    };
+
+    if (!queryFetched) {
+        getOpportunities();
+        setQueryFetched(true);
+    }
 
     const OpportunitySummary: React.FC<OppProps> =
       ({ id, label, segment, curStatus, parts, rating }) => (
@@ -127,7 +145,9 @@ export default function Dashboard() {
                 <Stack>
                     <h1>My Opportunities</h1>
                     <Accordion>
-                        <OpportunitySummary id={1} label="Butter Stick" segment="Suburbanites" curStatus="Shelve" parts={7} rating={1.3} />
+                        {ownerOpps.map((opp, i) => (
+                            <OpportunitySummary id={i} label={opp.opp_name} segment={opp.customer_segment} curStatus="Shelve" parts={7} rating={1.3} />
+                        ))}
                     </Accordion>
                     <h1>My Feedback</h1>
                     <Accordion>
