@@ -5,7 +5,9 @@ import { useForm } from '@mantine/form';
 import './Idea.css';
 import './Voting.css';
 import NextImage from 'next/image';
-import { RadioGroup, Radio, Flex, Button, Stack, Center, Image } from '@mantine/core';
+import { RadioGroup, Radio, Flex, Button, Stack, Center, Image, Modal, Textarea } from '@mantine/core';
+import { useDisclosure, useMediaQuery } from '@mantine/hooks'
+import { customModal } from '../../components/CustomModal/CustomModal';
 import { Graph } from '../../components/Graph/Graph';
 import oneF from '../../public/OneFinger.png';
 import fiveF from '../../public/FiveFingers.png';
@@ -33,10 +35,17 @@ export default function Voting({ ideas }: any) {
   const [currentOptionIndex, setCurrentOptionIndex] = useState(-1);
   const [isVoted, setIsVoted] = useState(Array.from({ length: NUMCATS }, () => false));
   const [votes, setVotes] = useState(Array.from({ length: NUMCATS }, () => 0));
+  const [reasons, setReasons] = useState(Array.from({ length: NUMCATS }, () => ''));
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const [modalOpened, modalHandlers] = useDisclosure(false);
+  const [currentReasonIndex, setCurrentReasonIndex] = useState(-1);
+  const [reasonInput, setReasonInput] = useState('');
 
+  // Check for mobile device
+  const isMobile = useMediaQuery('(max-width: 50em)') ?? false;
+  
   const idea = ideas[currentIdeaIndex];
-  const socketRef = useRef<WebSocket | null>(null); // Store WebSocket in ref to persist between renders
+  const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -46,37 +55,29 @@ export default function Voting({ ideas }: any) {
         setIsVoted(newIsVoted);
       }
       setTimeRemaining((prev) => prev - 1);
-    }, 1000); // Decrement time remaining every second
+    }, 1000);
     return () => clearInterval(intervalId);
   }, [timeRemaining]);
 
-  // Here is where data will be sent through the sockets, it is called every time a radio
-  // button on the voting screen is clicked. {index} refers to the index of the option. For
-  // example {index}=0 refers to REASON TO BUY. {val} is the response value, 1-5. When user
-  // authorization comes in we can also associate the user with this item, which should be
-  // everything we need to have our database managed appropriately.
-  const radioClick = (index : number, val : number) => {
-    // If the timer is ongoing for a different option, prohibit any activity
+  const radioClick = (index: number, val: number) => {
     if (timeRemaining > 0 && index !== currentOptionIndex) return;
     if (!isVoted[index]) startStopTimer(index);
     updateVotes(index, val);
-    // TODO: Implement socket for multi-user collaboration
   };
 
-  // Updates votes according to the click
-  const updateVotes = (index : number, val : number) => {
+  const updateVotes = (index: number, val: number) => {
     const newVotes = [...votes];
     newVotes[index] = val;
     setVotes(newVotes);
+    setCurrentReasonIndex(index); // Track which option is requesting a reason
+    modalHandlers.open();
   };
 
-  // Starts or stops the timer for displaying vote results after entering/changing a vote
-  const startStopTimer = (index : number) => {
+  const startStopTimer = (index: number) => {
     setTimeRemaining(TIMERLENGTH);
     setCurrentOptionIndex(index);
   };
 
-  // Establish WebSocket connection
   const connectWebSocket = () => {
     socketRef.current = new WebSocket('ws://localhost:8000/ws/vote/');
 
@@ -86,7 +87,7 @@ export default function Voting({ ideas }: any) {
 
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
-      console.log('Message received from server:', data.message); // Expecting "received!"
+      console.log('Message received from server:', data.message);
     };
 
     socketRef.current.onerror = (error: Event) => {
@@ -98,31 +99,29 @@ export default function Voting({ ideas }: any) {
     };
   };
 
-  // Initialize WebSocket connection when component is mounted
   useEffect(() => {
     connectWebSocket();
     return () => {
-      socketRef.current?.close(); // Clean up WebSocket on component unmount
+      socketRef.current?.close();
     };
   }, []);
 
-  // Handle form submission and send data via WebSocket
   const handleSubmit = (values: typeof form.values) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       const payload = {
-        ideaIndex: currentIdeaIndex, // Should be an integer
-        votes, // Array of votes
-        formValues: values, // Additional form data
+        ideaIndex: currentIdeaIndex,
+        votes,
+        formValues: values,
       };
 
-      console.log('Sending payload to backend:', payload); // Log payload
+      console.log('Sending payload to backend:', payload);
 
-      socketRef.current.send(JSON.stringify(payload)); // Send data via WebSocket
+      socketRef.current.send(JSON.stringify(payload));
     } else {
       console.error('WebSocket is not open. Current readyState:', socketRef.current?.readyState);
     }
 
-    goToNextIdea();// Progress to the next idea
+    goToNextIdea();
   };
 
   const goToNextIdea = () => {
@@ -132,7 +131,16 @@ export default function Voting({ ideas }: any) {
     setCurrentOptionIndex(-1);
     setIsVoted(Array.from({ length: NUMCATS }, () => false));
     setVotes(Array.from({ length: NUMCATS }, () => 0));
+    setReasons(Array.from({ length: NUMCATS }, () => ''));
     setTimeRemaining(0);
+  };
+
+  const handleReasonSubmit = () => {
+    const newReasons = [...reasons];
+    newReasons[currentReasonIndex] = reasonInput;
+    setReasons(newReasons);
+    setReasonInput('');            // Clear input
+    modalHandlers.close();
   };
 
   const InfoButton: React.FC<InfoProps> = ({ message }) => {
@@ -176,7 +184,7 @@ export default function Voting({ ideas }: any) {
         </Flex>
       </Stack>
     </Center>
-);
+  );
 
   return (
     <>
@@ -189,7 +197,7 @@ export default function Voting({ ideas }: any) {
             <Center>
               <Image
                 src={idea[3]}
-                alt=""// Empty alt attribute for decorative images
+                alt=""
                 style={{ width: '300px', marginBottom: '20px' }}
               />
             </Center>
@@ -204,47 +212,45 @@ export default function Voting({ ideas }: any) {
           gap="sm"
             >
             <Selection caption="Reason to Buy" index={0} infoM="Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]" />
-            {isVoted[0]
-            && <div><Graph key="0" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
-             <label className="reason-label">Reason:</label>
-             <input type="text" className="reason-text" name="reason" />
-               </div>}
+            {isVoted[0] && <Graph key="0" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
 
             <Selection caption="Market Volume" index={1} infoM="Based on: Current market size and Expected growth. [HIGH is GOOD]" />
-            {isVoted[1] && <div><Graph key="1" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
-            <label className="reason-label">Reason:</label>
-            <input type="text" className="reason-text" name="reason" />
-                           </div>}
+            {isVoted[1] && <Graph key="1" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
 
             <Selection caption="Economic Viability" index={2} infoM="Based on: Margins (value vs. cost), Customers' ability to pay, and Customer stickiness? [HIGH is GOOD]" />
-            {isVoted[2] && <div> <Graph key="2" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
-            <label className="reason-label">Reason:</label>
-            <input type="text" className="reason-text" name="reason" />
-                           </div>}
+            {isVoted[2] && <Graph key="2" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
 
-            <Selection caption="Obstacles to Implementation" index={3} infoM="Based on: Product development difficutlies' and Funding challenges [WANT LOW]" />
-            {isVoted[3] && <div> <Graph key="3" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
-             <label className="reason-label">Reason:</label>
-             <input type="text" className="reason-text" name="reason" />
-                           </div>}
+            <Selection caption="Obstacles to Implementation" index={3} infoM="Based on: Product development difficulties and Funding challenges [WANT LOW]" />
+            {isVoted[3] && <Graph key="3" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
 
             <Selection caption="Time To Revenue" index={4} infoM="Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]" />
-            {isVoted[4] && <div><Graph key="4" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
-            <label className="reason-label">Reason:</label>
-            <input type="text" className="reason-text" name="reason" />
-                           </div>}
+            {isVoted[4] && <Graph key="4" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
 
             <Selection caption="Economic Risks" index={5} infoM="Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" />
-            {isVoted[5] && <div><Graph key="5" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />
-            <label className="reason-label">Reason:</label>
-            <input type="text" className="reason-text" name="reason" />
-                           </div>}
+            {isVoted[5] && <Graph key="5" graphTitle="" votes={[[1, 1], [2, 2], [3, 3], [4, 2], [5, 1]]} />}
         </Stack>
         </Center>
             <Center>
                 <Button className="Idea-button" type="submit">Submit</Button>
             </Center>
       </form>
+
+      {/* Modal for entering reason */}
+      <Modal
+        opened={modalOpened}
+        onClose={modalHandlers.close}
+        title="Enter your reason"
+        centered
+        fullScreen={isMobile}
+        transitionProps={{ transition: 'fade', duration: 200 }}
+      >
+        <Textarea
+          placeholder="Explain your reasoning for your vote here"
+          value={reasonInput}
+          onChange={(e) => setReasonInput(e.target.value)}
+        />
+        <Button onClick={handleReasonSubmit} mt="md">Submit Reason</Button>
+      </Modal>
     </>
   );
 }
