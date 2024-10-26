@@ -9,7 +9,9 @@ Account (change password)
 import { useState } from 'react';
 import { Accordion, Center, Stack, PasswordInput, TextInput, Button } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { useRouter } from 'next/navigation'; 
 import axios from 'axios';
+import { getRandomValues } from 'crypto';
 
 interface OppProps {
     id: number;
@@ -32,11 +34,29 @@ export default function Dashboard() {
     const [mailError, setMailError] = useState<string | null>(null); // To handle errors
     const [ownerOpps, setOwnerOpps] = useState<Opp[]>([]);
     const [queryFetched, setQueryFetched] = useState<boolean>(false);
+    const router = useRouter();
 
     const getOpportunities = async () => {
-        const response = await axios.get('http://localhost:8000/api/query/owneropps/');
-        setOwnerOpps([...ownerOpps, ...JSON.parse(response.data.json)]);
+        if (typeof window === 'undefined') return;
+        const TOKEN = localStorage.getItem('accessToken');
+        console.log(TOKEN);
+        await axios
+            .get('http://localhost:8000/api/query/owneropps/', {
+              headers: {
+                Authorization: `${TOKEN}`,
+              },
+            })
+            .then(res => {
+                setOwnerOpps([...ownerOpps, ...JSON.parse(res.data.json)]);
+            })
+            .catch(error => {
+              console.log(error);
+            });
     };
+
+    if (typeof window !== 'undefined' && !localStorage.getItem('accessToken')) {
+        router.push('/login');
+    }
 
     if (!queryFetched) {
         getOpportunities();
@@ -81,13 +101,55 @@ export default function Dashboard() {
         },
     });
 
-    // TO BE IMPLEMENTED, error and loading state will be changed here
-    const mailSubmit = async (values: typeof mailForm.values) =>
-        values;
+    const mailSubmit = async (values: typeof mailForm.values) => {
+        setMailLoading(true);
+        setMailError(null);
 
-    // TO BE IMPLEMENTED, error and loading state will be changed here
-    const passSubmit = async (values: typeof passForm.values) =>
-        values;
+        try {
+            const response = await axios.post('http://localhost:8000/api/change/email/', {
+                newEmail: values.newEmail,
+            });
+
+            if (response.status === 200) {
+                console.log('success');
+            }
+        } catch (error) {
+            console.error(error);
+            if (axios.isAxiosError(error) && error.response) {
+                setMailError(error.response.data.message || 'Something went wrong');
+            } else {
+                setMailError('Email could not be changed');
+            }
+        } finally {
+            setMailLoading(false);
+        }
+    };
+
+    const passSubmit = async (values: typeof passForm.values) => {
+        setPassLoading(true);
+        setPassError(null);
+
+        try {
+            const response = await axios.post('http://localhost:8000/api/change/password/', {
+                currentPassword: values.currentPassword,
+                newPassword: values.newPassword,
+                confirmNewPassword: values.confirmNewPassword,
+            });
+
+            if (response.status === 200) {
+                console.log('success');
+            } else setPassError(response.data.error);
+        } catch (error) {
+            console.error(error);
+            if (axios.isAxiosError(error) && error.response) {
+                setPassError(error.response.data.message || 'Something went wrong');
+            } else {
+                setPassError('Password could not be changed');
+            }
+        } finally {
+            setPassLoading(false);
+        }
+    };
 
     const changeEmailForm = () =>
         <form onSubmit={mailForm.onSubmit((values) => mailSubmit(values))}>
