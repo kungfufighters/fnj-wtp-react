@@ -9,9 +9,9 @@ Account (change password)
 import { useState } from 'react';
 import { Accordion, Center, Stack, PasswordInput, TextInput, Button } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
+import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
-import { getRandomValues } from 'crypto';
 
 interface OppProps {
     id: number;
@@ -25,6 +25,7 @@ interface OppProps {
 type Opp = {
     opp_name: string;
     customer_segment: string;
+    label: string;
 };
 
 export default function Dashboard() {
@@ -39,15 +40,15 @@ export default function Dashboard() {
     const getOpportunities = async () => {
         if (typeof window === 'undefined') return;
         const TOKEN = localStorage.getItem('accessToken');
-        console.log(TOKEN);
         await axios
             .get('http://localhost:8000/api/query/owneropps/', {
               headers: {
-                Authorization: `${TOKEN}`,
+                AUTHORIZATION: `Bearer ${TOKEN}`,
               },
             })
             .then(res => {
-                setOwnerOpps([...ownerOpps, ...JSON.parse(res.data.json)]);
+                console.log(res);
+                setOwnerOpps([...ownerOpps, ...res.data]);
             })
             .catch(error => {
               console.log(error);
@@ -102,15 +103,23 @@ export default function Dashboard() {
     });
 
     const mailSubmit = async (values: typeof mailForm.values) => {
+        if (typeof window === 'undefined') return;
+        const TOKEN = localStorage.getItem('accessToken');
         setMailLoading(true);
         setMailError(null);
 
         try {
             const response = await axios.post('http://localhost:8000/api/change/email/', {
                 newEmail: values.newEmail,
+            }, {
+                headers: {
+                    AUTHORIZATION: `Bearer ${TOKEN}`,
+                },
             });
 
             if (response.status === 200) {
+                mailForm.reset();
+                toast.success('Email changed');
                 console.log('success');
             }
         } catch (error) {
@@ -126,6 +135,8 @@ export default function Dashboard() {
     };
 
     const passSubmit = async (values: typeof passForm.values) => {
+        if (typeof window === 'undefined') return;
+        const TOKEN = localStorage.getItem('accessToken');
         setPassLoading(true);
         setPassError(null);
 
@@ -134,9 +145,15 @@ export default function Dashboard() {
                 currentPassword: values.currentPassword,
                 newPassword: values.newPassword,
                 confirmNewPassword: values.confirmNewPassword,
+            }, {
+                headers: {
+                    AUTHORIZATION: `Bearer ${TOKEN}`,
+                },
             });
 
             if (response.status === 200) {
+                passForm.reset();
+                toast.success('Password changed');
                 console.log('success');
             } else setPassError(response.data.error);
         } catch (error) {
@@ -203,18 +220,27 @@ export default function Dashboard() {
 
     return (
         <>
+            <Toaster />
             <Center>
                 <Stack>
                     <h1>My Opportunities</h1>
                     <Accordion>
                         {ownerOpps.map((opp, i) => (
-                            <OpportunitySummary id={i} label={opp.opp_name} segment={opp.customer_segment} curStatus="Shelve" parts={7} rating={1.3} />
+                            <div key={i}>
+                              <OpportunitySummary
+                                id={i}
+                                label={opp.opp_name}
+                                segment={opp.customer_segment}
+                                curStatus={opp.label}
+                                parts={7}
+                                rating={1.3} />
+                            </div>
                         ))}
                     </Accordion>
                     <h1>My Feedback</h1>
                     <Accordion>
-                        <OpportunitySummary id={3} label="Reverse Bike" segment="Commuters" curStatus="Keep Open" parts={5} rating={2.6} />
-                        <OpportunitySummary id={3} label="Butter Stick" segment="City Dwellers" curStatus="Pursue" parts={4} rating={3.9} />
+                        <OpportunitySummary id={4} label="Reverse Bike" segment="Commuters" curStatus="Keep Open" parts={5} rating={2.6} />
+                        <OpportunitySummary id={5} label="Butter Stick" segment="City Dwellers" curStatus="Pursue" parts={4} rating={3.9} />
                     </Accordion>
                     <h1>Change Email</h1>
                     <p>Current email is: test@test.com</p>
