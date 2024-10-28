@@ -23,9 +23,10 @@ interface OppProps {
 }
 
 type Opp = {
-    opp_name: string;
+    name: string;
     customer_segment: string;
     label: string;
+    participants: number;
 };
 
 export default function Dashboard() {
@@ -71,7 +72,7 @@ export default function Dashboard() {
             <Accordion.Panel>
                 <p>{segment}</p>
                 <p>{curStatus}</p>
-                <p>{parts} participants</p>
+                <p>{parts} participant{parts === 1 ? '' : 's'}</p>
                 <p>{rating}/5</p>
             </Accordion.Panel>
         </Accordion.Item>
@@ -229,10 +230,10 @@ export default function Dashboard() {
                             <div key={i}>
                               <OpportunitySummary
                                 id={i}
-                                label={opp.opp_name}
+                                label={opp.name}
                                 segment={opp.customer_segment}
                                 curStatus={opp.label}
-                                parts={7}
+                                parts={opp.participants}
                                 rating={1.3} />
                             </div>
                         ))}

@@ -17,6 +17,7 @@ const handleFormSubmit = async (submittedIdeas: any) => {
         name: idea[0],
         customer_segment: idea[1],
         description: idea[2],
+        status: (idea[3] === 'Pursue Now' ? 1 : (idea[3] === 'Keep Open' ? 2 : 3)),
     }));
 try {
     // Assuming you want to submit each idea individually
