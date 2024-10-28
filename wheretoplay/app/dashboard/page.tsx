@@ -27,6 +27,7 @@ type Opp = {
     customer_segment: string;
     label: string;
     participants: number;
+    score: number
 };
 
 export default function Dashboard() {
@@ -35,7 +36,9 @@ export default function Dashboard() {
     const [mailLoading, setMailLoading] = useState(false);
     const [mailError, setMailError] = useState<string | null>(null); // To handle errors
     const [ownerOpps, setOwnerOpps] = useState<Opp[]>([]);
-    const [queryFetched, setQueryFetched] = useState<boolean>(false);
+    const [oppQueryFetched, setOppQueryFetched] = useState<boolean>(false);
+    const [mailQueryFetched, setMailQueryFetched] = useState<boolean>(false);
+    const [email, setEmail] = useState<string>('Loading...');
     const router = useRouter();
 
     const getOpportunities = async () => {
@@ -56,13 +59,36 @@ export default function Dashboard() {
             });
     };
 
+    const getEmail = async () => {
+        if (typeof window === 'undefined') return;
+        const TOKEN = localStorage.getItem('accessToken');
+        await axios
+            .get('http://localhost:8000/api/query/email/', {
+              headers: {
+                AUTHORIZATION: `Bearer ${TOKEN}`,
+              },
+            })
+            .then(res => {
+                console.log(res);
+                setEmail(res.data.email);
+            })
+            .catch(error => {
+              console.log(error);
+            });
+    };
+
     if (typeof window !== 'undefined' && !localStorage.getItem('accessToken')) {
         router.push('/login');
     }
 
-    if (!queryFetched) {
+    if (!oppQueryFetched) {
         getOpportunities();
-        setQueryFetched(true);
+        setOppQueryFetched(true);
+    }
+
+    if (!mailQueryFetched) {
+        getEmail();
+        setMailQueryFetched(true);
     }
 
     const OpportunitySummary: React.FC<OppProps> =
@@ -119,6 +145,7 @@ export default function Dashboard() {
             });
 
             if (response.status === 200) {
+                setEmail(mailForm.values.newEmail);
                 mailForm.reset();
                 toast.success('Email changed');
                 console.log('success');
@@ -225,7 +252,9 @@ export default function Dashboard() {
             <Center>
                 <Stack>
                     <h1>My Opportunities</h1>
-                    <Accordion>
+                    {oppQueryFetched ?
+                    (
+                        <Accordion>
                         {ownerOpps.map((opp, i) => (
                             <div key={i}>
                               <OpportunitySummary
@@ -234,17 +263,21 @@ export default function Dashboard() {
                                 segment={opp.customer_segment}
                                 curStatus={opp.label}
                                 parts={opp.participants}
-                                rating={1.3} />
+                                rating={Math.floor(opp.score * 100) / 100} />
                             </div>
                         ))}
-                    </Accordion>
+                        </Accordion>
+                    ) :
+                    (
+                        <p>Loading...</p>
+                    )}
                     <h1>My Feedback</h1>
                     <Accordion>
                         <OpportunitySummary id={4} label="Reverse Bike" segment="Commuters" curStatus="Keep Open" parts={5} rating={2.6} />
                         <OpportunitySummary id={5} label="Butter Stick" segment="City Dwellers" curStatus="Pursue" parts={4} rating={3.9} />
                     </Accordion>
                     <h1>Change Email</h1>
-                    <p>Current email is: test@test.com</p>
+                    <p>Current email is: {email}</p>
                     {changeEmailForm()}
                     <h1>Change Password</h1>
                     {changePasswordForm()}
