@@ -93,7 +93,7 @@ export default function Dashboard() {
 
     const OpportunitySummary: React.FC<OppProps> =
       ({ id, label, segment, curStatus, parts, rating }) => (
-        <Accordion.Item key={id} value={label}>
+        <Accordion.Item key={id} value={`${id}`}>
             <Accordion.Control>{label}</Accordion.Control>
             <Accordion.Panel>
                 <p>{segment}</p>
