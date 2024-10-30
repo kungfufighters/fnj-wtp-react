@@ -7,7 +7,7 @@ import './Voting.css';
 import NextImage from 'next/image';
 import { RadioGroup, Radio, Flex, Button, Stack, Center, Image, Modal, Textarea } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
-import { customModal } from '../../components/CustomModal/CustomModal';
+//import { CustomModal } from '../../components/CustomModal/CustomModal';
 import { Graph } from '../../components/Graph/Graph';
 import oneF from '../../public/OneFinger.png';
 import fiveF from '../../public/FiveFingers.png';
@@ -47,30 +47,64 @@ export default function Voting({ ideas }: any) {
   const idea = ideas[currentIdeaIndex];
   const socketRef = useRef<WebSocket | null>(null);
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      if (timeRemaining === 1) {
-        const newIsVoted = [...isVoted];
-        newIsVoted[currentOptionIndex] = true;
-        setIsVoted(newIsVoted);
-      }
-      setTimeRemaining((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(intervalId);
-  }, [timeRemaining]);
+// Manage the timer and lock state with a countdown and vote submission
+useEffect(() => {
+  if (timeRemaining <= 0) return; // Exit early if no countdown is active
 
-  const radioClick = (index: number, val: number) => {
-    if (timeRemaining > 0 && index !== currentOptionIndex) return;
-    if (!isVoted[index]) startStopTimer(index);
-    updateVotes(index, val);
-  };
+  const intervalId = setInterval(() => {
+    setTimeRemaining((prev) => prev - 1);
+
+    if (timeRemaining === 1) {
+      // Lock this criteria as "voted"
+      const newIsVoted = [...isVoted];
+      newIsVoted[currentOptionIndex] = true;
+      setIsVoted(newIsVoted);
+
+      sendVoteData(currentOptionIndex + 1, votes[currentOptionIndex]); // Send only current vote data
+    }
+  }, 1000);
+
+  return () => clearInterval(intervalId);
+}, [timeRemaining]);
+
+// Function to send vote data through WebSocket
+const sendVoteData = (criteria_id: number, vote_score: number) => {
+  if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+    const payload = {
+      session_id: '12345', // known as "code" in the workspace database
+      user_id: 1, // Placeholder
+      votes: [
+        {
+          criteria_id,
+          vote_score,
+        },
+      ],
+    };
+
+    console.log('Sending payload to backend:', JSON.stringify(payload, null, 2)); // Indented for clarity
+    socketRef.current.send(JSON.stringify(payload));
+  } else {
+    console.error('WebSocket is not open. Current readyState:', socketRef.current?.readyState);
+  }
+};
+
+// Update the radioClick function to start the countdown on each selection
+const radioClick = (index: number, val: number) => {
+  if (isVoted[index]) return; // Skip if this criteria has already been voted on
+
+  setCurrentOptionIndex(index); // Set the index of the current criteria being voted
+  setTimeRemaining(2); // Start the 5-second countdown timer
+  updateVotes(index, val); // Update the vote with the selected value
+};
+
+
 
   const updateVotes = (index: number, val: number) => {
     const newVotes = [...votes];
     newVotes[index] = val;
     setVotes(newVotes);
     setCurrentReasonIndex(index); // Track which option is requesting a reason
-    modalHandlers.open();
+    //modalHandlers.open();
   };
 
   const startStopTimer = (index: number) => {
@@ -106,21 +140,7 @@ export default function Voting({ ideas }: any) {
     };
   }, []);
 
-  const handleSubmit = (values: typeof form.values) => {
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      const payload = {
-        ideaIndex: currentIdeaIndex,
-        votes,
-        formValues: values,
-      };
-
-      console.log('Sending payload to backend:', payload);
-
-      socketRef.current.send(JSON.stringify(payload));
-    } else {
-      console.error('WebSocket is not open. Current readyState:', socketRef.current?.readyState);
-    }
-
+  const handleSubmit = () => {
     goToNextIdea();
   };
 
@@ -234,8 +254,6 @@ export default function Voting({ ideas }: any) {
                 <Button className="Idea-button" type="submit">Submit</Button>
             </Center>
       </form>
-
-      {/* Modal for entering reason */}
       <Modal
         opened={modalOpened}
         onClose={modalHandlers.close}
