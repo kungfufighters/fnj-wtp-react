@@ -6,8 +6,10 @@ import './Idea.css';
 import './Voting.css';
 import NextImage from 'next/image';
 import { RadioGroup, Radio, Flex, Button, Stack, Center, Image, Modal, Textarea } from '@mantine/core';
-import { useDisclosure, useMediaQuery } from '@mantine/hooks'
+import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 //import { CustomModal } from '../../components/CustomModal/CustomModal';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
 import { Graph } from '../../components/Graph/Graph';
 import oneF from '../../public/OneFinger.png';
 import fiveF from '../../public/FiveFingers.png';
@@ -23,15 +25,19 @@ interface InfoProps {
   message: string;
 }
 
+// result is 1 2D array with the new votes
+// outlier is a number corresponding to the vote category for which they have become an outlier
 interface WebSocketMessage {
-  message: string;
+  result: number[][];
+  outlier: number
 }
 
 export default function Voting({ ideas }: any) {
   const NUMCATS = 6;
-  const TIMERLENGTH = 5;
+  const TIMERLENGTH = 2;
   const VOTEOPTIONS = 5;
   const form = useForm({ mode: 'uncontrolled' });
+  const [userID, setUserID] = useState(-1);
   const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
   const [currentOptionIndex, setCurrentOptionIndex] = useState(-1);
   const [isVoted, setIsVoted] = useState(Array.from({ length: NUMCATS }, () => false));
@@ -41,13 +47,38 @@ export default function Voting({ ideas }: any) {
   const [modalOpened, modalHandlers] = useDisclosure(false);
   const [currentReasonIndex, setCurrentReasonIndex] = useState(-1);
   const [reasonInput, setReasonInput] = useState('');
-  const [curVotes, setCurVotes] = useState(Array.from({ length: NUMCATS }, () => Array.from({ length: VOTEOPTIONS }, () => 0)));
+  const [curVotes, setCurVotes] =
+  useState(Array.from({ length: NUMCATS }, () => Array.from({ length: VOTEOPTIONS }, () => 0)));
+  const router = useRouter();
 
   // Check for mobile device
   const isMobile = useMediaQuery('(max-width: 50em)') ?? false;
-  
   const idea = ideas[currentIdeaIndex];
   const socketRef = useRef<WebSocket | null>(null);
+
+  if (typeof window !== 'undefined' && !localStorage.getItem('accessToken')) {
+    router.push('/login');
+  }
+
+  const getID = async () => {
+    if (typeof window === 'undefined') return;
+    const TOKEN = localStorage.getItem('accessToken');
+    await axios
+        .get('http://localhost:8000/api/query/id/', {
+          headers: {
+            AUTHORIZATION: `Bearer ${TOKEN}`,
+          },
+        })
+        .then(res => {
+            console.log(res);
+            setUserID(res.data.id);
+        })
+        .catch(error => {
+          console.log(error);
+        });
+      };
+
+    if (userID === -1) getID();
 
 // Manage the timer and lock state with a countdown and vote submission
 useEffect(() => {
@@ -66,6 +97,7 @@ useEffect(() => {
     }
   }, 1000);
 
+  // eslint-disable-next-line consistent-return
   return () => clearInterval(intervalId);
 }, [timeRemaining]);
 
@@ -74,7 +106,7 @@ const sendVoteData = (criteria_id: number, vote_score: number) => {
   if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
     const payload = {
       session_id: '12345', // known as "code" in the workspace database
-      user_id: 1, // Placeholder
+      user_id: userID, // Placeholder
       votes: [
         {
           criteria_id,
@@ -93,19 +125,17 @@ const sendVoteData = (criteria_id: number, vote_score: number) => {
 // Update the radioClick function to start the countdown on each selection
 const radioClick = (index: number, val: number) => {
   if (isVoted[index]) return; // Skip if this criteria has already been voted on
-
-  setCurrentOptionIndex(index); // Set the index of the current criteria being voted
-  setTimeRemaining(2); // Start the 5-second countdown timer
+  startStopTimer(index);
   updateVotes(index, val); // Update the vote with the selected value
 };
-
-
 
   const updateVotes = (index: number, val: number) => {
     const newVotes = [...votes];
     newVotes[index] = val;
     setVotes(newVotes);
     setCurrentReasonIndex(index); // Track which option is requesting a reason
+
+    // Disable modals for now
     //modalHandlers.open();
   };
 
@@ -121,9 +151,16 @@ const radioClick = (index: number, val: number) => {
       console.log('WebSocket connection opened');
     };
 
+    // Message from server, either a vote update or an outlier notification
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
-      console.log('Message received from server:', data.message);
+      console.log('Response from server!');
+
+      if (data.outlier === -1) console.log('not an outlier');
+      else console.log(`outlier for catgory ${data.outlier}`);
+
+      console.log(data.result);
+      setCurVotes(data.result);
     };
 
     socketRef.current.onerror = (error: Event) => {
