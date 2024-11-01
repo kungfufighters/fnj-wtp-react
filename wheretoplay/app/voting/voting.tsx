@@ -56,12 +56,12 @@ export default function Voting({ ideas }: any) {
   const idea = ideas[currentIdeaIndex];
   const socketRef = useRef<WebSocket | null>(null);
 
-  if (typeof window !== 'undefined' && !localStorage.getItem('accessToken')) {
+  if (!localStorage.getItem('accessToken')) {
     router.push('/login');
   }
 
   const getID = async () => {
-    if (typeof window === 'undefined') return;
+    // if (typeof window === 'undefined') return;
     const TOKEN = localStorage.getItem('accessToken');
     await axios
         .get('http://localhost:8000/api/query/id/', {

@@ -88,11 +88,11 @@ const ResultsPage = ({ /*ideas*/ }) => {
   return (
     <div>
         <h1 style={{ textAlign: 'center' }}>
-            Owner&apos;s View
+            Results
         </h1>
 
         <h2 style={{ textAlign: 'center' }}>
-            Idea #{currentIdeaIndex + 1} Results: {`${idea[0]} ( ${idea[1]})`}
+            Opportunity #{currentIdeaIndex + 1} Results: {`${idea[0]} ( ${idea[1]})`}
         </h2>
 
         {idea[3] && (
@@ -193,7 +193,7 @@ const ResultsPage = ({ /*ideas*/ }) => {
 
       <div className="navigation-buttons" style={{ marginTop: '20px', textAlign: 'center'  }}>
         <button onClick={goToPreviousIdea} disabled={currentIdeaIndex === 0} type="button">
-          Previous Idea
+          Previous Opportunity
         </button>
         <button
           onClick={goToNextIdea}
@@ -201,7 +201,7 @@ const ResultsPage = ({ /*ideas*/ }) => {
           style={{ marginLeft: '10px' }}
           type="button"
         >
-          Next Idea
+          Next Opportunity
         </button>
       </div>
     </div>

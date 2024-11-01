@@ -1,33 +1,54 @@
 import cx from 'clsx';
 import { useState } from 'react';
-import { Container, Group, Burger, Menu, UnstyledButton, Text,Avatar } from '@mantine/core';
+// import NextImage from 'next/image';
+import { Container, Group, Burger, Menu, UnstyledButton, Text, Avatar} from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import classes from './Header.module.css';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import classes from './Header.module.css';
 
 const links = [
   { link: '../', label: 'Create Session' },
   { link: '/dashboard', label: 'Dashboard' },
 ];
 
-
-const user = {
-    name: 'Account Placeholder',
-    image: '',
-  };
-
-
-
-
-export function HeaderSimple() {
-  const router = useRouter(); 
+export function HeaderSimple({ glowIndex } : any) {
+  const router = useRouter();
   const [opened, { toggle }] = useDisclosure(false);
   const [userMenuOpened, setUserMenuOpened] = useState(false);
-  const [active, setActive] = useState(links[0].link);
+  const [active, setActive] = useState(links[glowIndex].link);
+  const [accountLabel, setAccountLabel] = useState('');
   const handleLogout = () => {
     localStorage.clear();
     router.push('/login');
-  }
+  };
+
+  const getEmail = async () => {
+    if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
+        const TOKEN = localStorage.getItem('accessToken');
+        await axios
+            .get('http://localhost:8000/api/query/email/', {
+              headers: {
+                AUTHORIZATION: `Bearer ${TOKEN}`,
+              },
+            })
+            .then(res => {
+                console.log(res);
+                setAccountLabel(res.data.email);
+            })
+            .catch(error => {
+              console.log(error);
+            });
+      }
+};
+
+  if (accountLabel === '') getEmail();
+
+  const user = {
+    name: accountLabel,
+    image: '',
+  };
+
   const items = links.map((link) => (
     <a
       key={link.label}
@@ -35,7 +56,6 @@ export function HeaderSimple() {
       className={classes.link}
       data-active={active === link.link || undefined}
       onClick={(event) => {
-        //event.preventDefault();
         setActive(link.link);
       }}
     >
@@ -45,14 +65,14 @@ export function HeaderSimple() {
 
   return (
     <header className={classes.header}>
+        
         <Container className={classes.mainSection} size="md">
         <Group justify="flex-end">
-
           <Burger opened={opened} onClick={toggle} hiddenFrom="xs" size="sm" />
 
           <Menu
             width={260}
-            position="bottom-end"
+            position="center"
             transitionProps={{ transition: 'pop-top-right' }}
             onClose={() => setUserMenuOpened(false)}
             onOpen={() => setUserMenuOpened(true)}
@@ -87,16 +107,15 @@ export function HeaderSimple() {
             </Menu.Dropdown>
           </Menu>
         </Group>
-      </Container>
-
+        </Container>
       <Container size="md" className={classes.inner}>
-        
-        <Group gap={5} visibleFrom="xs" ml='auto'>
+        <Group gap={5} visibleFrom="xs" ml="auto">
           {items}
         </Group>
 
         <Burger opened={opened} onClick={toggle} hiddenFrom="xs" size="sm" />
       </Container>
+        
     </header>
   );
 }
