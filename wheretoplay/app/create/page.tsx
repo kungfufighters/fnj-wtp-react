@@ -46,6 +46,7 @@ function App() {
         name: idea[0],
         customer_segment: idea[1],
         description: idea[2],
+        image: idea[3]
       }));
 
       // Send each idea in a separate request
