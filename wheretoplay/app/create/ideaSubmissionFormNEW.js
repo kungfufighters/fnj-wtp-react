@@ -4,6 +4,11 @@ import React, { useState } from "react"
 
 const IdeaSubmissionForm = ({ onSubmit }) => {
   const [ideas, setIdeas] = useState([["", "", "", "Pursue Now", null]])
+  const [company, setCompany] = useState("")
+
+  function changeCompany(e) {
+    setCompany(e.target.value)
+  }
 
   function addIdea(e) {
     setIdeas([...ideas, ["", "", "", "Pursue Now", null]])
@@ -17,7 +22,7 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    onSubmit(ideas);  // Pass submitted ideas to the parent (App.js)
+    onSubmit(ideas, company);  // Pass submitted ideas to the parent (App.js)
   };
 
   function IdeaForm({i, name, seg, desc, stat, source}) {
@@ -71,6 +76,19 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
       setIdeas(newIdeas)
     }
 
+
+    // Code for the current status dropdown that we decided to remove
+    /*
+    <div className="Idea-vert Idea-vert-item">
+                <label className="Idea-label" htmlFor="statusL">Current Status</label>
+                <select className="Idea-text" name="status" value={status} onChange={changeStatus}>
+                    <option value="pursueNow">Pursue Now</option>
+                    <option value="keepOpen">Keep Open</option>
+                    <option value="shelve">Shelve</option>
+                </select>
+            </div>
+    */
+
     return (
         <>
             <div className="Idea-vert Idea-vert-item">
@@ -85,14 +103,6 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
                 <label className="Idea-label" htmlFor="description">Description</label>
                 <textarea className="Idea-text" name="description" id="description" value={description}
                           onChange={changeDescription}></textarea>
-            </div>
-            <div className="Idea-vert Idea-vert-item">
-                <label className="Idea-label" htmlFor="statusL">Current Status</label>
-                <select className="Idea-text" name="status" value={status} onChange={changeStatus}>
-                    <option value="pursueNow">Pursue Now</option>
-                    <option value="keepOpen">Keep Open</option>
-                    <option value="shelve">Shelve</option>
-                </select>
             </div>
             <div className="Idea-vert">
                 <label htmlFor={"files" + i} className="Idea-button Idea-vert-item">Select Image</label>
@@ -113,12 +123,16 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
         <div className="Idea">
             <header className="Idea-header">
                 <nav>
-                    <p><strong>Opportunity Submission</strong></p>
+                    <p><strong>Workspace Creation</strong></p>
                 </nav>
             </header>
 
             <form onSubmit={handleSubmit}>
                 <div className="Idea-vert">
+                  <div className="Idea-vert Idea-vert-item">
+                    <label className="Idea-label" htmlFor="company">Company Name</label>
+                    <input type="text" className="Idea-text" name="company" id="company" value={company} onChange={changeCompany} />
+                  </div>
           {ideas.map((idea, i) => (
             <div key={i}>
               <IdeaForm i={i} name={ideas[i][0]} seg={ideas[i][1]} desc={ideas[i][2]} stat={ideas[i][3]} source={ideas[i][4]}/>
