@@ -7,9 +7,11 @@ Account (change password)
 'use client';
 
 import { useState } from 'react';
-import { Accordion, Center, Stack, PasswordInput, TextInput, Button } from '@mantine/core';
+import { Accordion, Center, Stack, PasswordInput, TextInput, Button, Collapse, Box, Group } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { useDisclosure } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
+import { HeaderSimple } from '@/components/Header/Header';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -245,9 +247,10 @@ export default function Dashboard() {
                 </Button>
             </Stack>
         </form>;
-
+const [opened, { toggle }] = useDisclosure(false);
     return (
         <>
+        <HeaderSimple/>
             <Toaster />
             <Center>
                 <Stack>
@@ -272,10 +275,17 @@ export default function Dashboard() {
                         <p>Loading...</p>
                     )}
                     <h1>My Feedback</h1>
-                    <Accordion>
-                        <OpportunitySummary id={4} label="Reverse Bike" segment="Commuters" curStatus="Keep Open" parts={5} rating={2.6} />
-                        <OpportunitySummary id={5} label="Butter Stick" segment="City Dwellers" curStatus="Pursue" parts={4} rating={3.9} />
-                    </Accordion>
+                    <Box maw={400} mx="auto">
+                        <Group justify="center" mb={5}>
+                            <Button onClick={toggle}>Good Ideas Workspace</Button>
+                        </Group>
+                        <Collapse in={opened}>
+                        <Accordion>
+                            <OpportunitySummary id={4} label="Reverse Bike" segment="Commuters" curStatus="Keep Open" parts={5} rating={2.6} />
+                            <OpportunitySummary id={5} label="Butter Stick" segment="City Dwellers" curStatus="Pursue" parts={4} rating={3.9} />
+                        </Accordion>
+                    </Collapse>
+                    </Box>
                     <h1>Change Email</h1>
                     <p>Current email is: {email}</p>
                     {changeEmailForm()}

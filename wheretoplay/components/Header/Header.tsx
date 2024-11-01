@@ -6,8 +6,8 @@ import classes from './Header.module.css';
 import { useRouter } from 'next/navigation';
 
 const links = [
-  { link: '', label: 'Create Session' },
-  { link: '/Dashboard', label: 'Dashboard' },
+  { link: '../', label: 'Create Session' },
+  { link: '/dashboard', label: 'Dashboard' },
 ];
 
 
