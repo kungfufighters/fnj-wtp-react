@@ -1,9 +1,10 @@
 import './Idea.css'
 
 import React, { useState } from "react"
+import axios from "axios";
 
 const IdeaSubmissionForm = ({ onSubmit }) => {
-  const [ideas, setIdeas] = useState([["", "", "", "Pursue Now", null]])
+  const [ideas, setIdeas] = useState([["", "", "", null]])
   const [company, setCompany] = useState("")
 
   function changeCompany(e) {
@@ -11,7 +12,7 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
   }
 
   function addIdea(e) {
-    setIdeas([...ideas, ["", "", "", "Pursue Now", null]])
+    setIdeas([...ideas, ["", "", "", null]])
   }
 
   function removeIdea(e) {
@@ -59,21 +60,35 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
     }
 
 
-    function changeStatus(e) {
+   /**
+    * function changeStatus(e) {
 
       setStatus(e.target.value)
       let newIdeas = ideas
       newIdeas[i][3] = e.target.value
       setIdeas(newIdeas)
     }
+    **/
 
+    function changeImage(e, i) {
+          const file = e.target.files[0];
+          if (!file) return;
+          setImg(URL.createObjectURL(file));
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("upload_preset", "where_to_play_preset");
 
-    function changeImage(e) {
-      const file = e.target.files[0]
-      setImg(URL.createObjectURL(file))
-      let newIdeas = ideas
-      newIdeas[i][4] = URL.createObjectURL(file)
-      setIdeas(newIdeas)
+          axios
+            .post("https://api.cloudinary.com/v1_1/dfijf9w4l/image/upload", formData)
+            .then((response) => {
+              const imageUrl = response.data.secure_url;
+              let newIdeas = [...ideas];
+              newIdeas[i][3] = imageUrl;
+              setIdeas(newIdeas);
+            })
+            .catch((error) => {
+              console.error("Error uploading to Cloudinary:", error);
+            });
     }
 
 
@@ -110,7 +125,7 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
                        className="Hide Idea-vert-item"
                        type="file"
                        aria-label="add image"
-                       onChange={changeImage}
+                       onChange={(e) => changeImage(e, i)}
                 >
                 </input>
             </div>
@@ -135,7 +150,7 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
                   </div>
           {ideas.map((idea, i) => (
             <div key={i}>
-              <IdeaForm i={i} name={ideas[i][0]} seg={ideas[i][1]} desc={ideas[i][2]} stat={ideas[i][3]} source={ideas[i][4]}/>
+              <IdeaForm i={i} name={ideas[i][0]} seg={ideas[i][1]} desc={ideas[i][2]} source={ideas[i][3]}/>
             </div>
           ))}
           {ideas.length <= 10 && <button htmlFor="ideasAdd" className="Idea-button Idea-vert-item" onClick={addIdea} type="button">
