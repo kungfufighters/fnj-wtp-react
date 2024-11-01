@@ -5,6 +5,7 @@ import '@mantine/core/styles.css';
 import { useState } from 'react';
 import { TextInput, Button, Container, Divider } from '@mantine/core';
 import { useRouter } from 'next/navigation'; // useRouter from Next.js
+import { HeaderSimple } from '@/components/Header/Header';
 
 export default function HomePage() {
   const router = useRouter();
@@ -23,6 +24,8 @@ export default function HomePage() {
   };
 
   return (
+    <div>
+      <HeaderSimple/>
     <Container size="sm" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <div style={{ width: '100%' }}>
         {/* Session Pin Input */}
@@ -56,5 +59,6 @@ export default function HomePage() {
         </Button>
       </div>
     </Container>
+    </div>
   );
 }
