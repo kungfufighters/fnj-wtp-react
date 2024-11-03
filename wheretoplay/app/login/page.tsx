@@ -50,7 +50,7 @@ export default function Login() {
         localStorage.setItem('refreshToken', data.tokens.refresh);
 
         // Redirect to the participant view
-        router.push('/participantView');
+        router.push('/dashboard');
       } else {
         console.error('Login failed:', data.error);
       }
