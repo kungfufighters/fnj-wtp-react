@@ -25,7 +25,7 @@ export default function HomePage() {
 
   return (
     <div>
-      <HeaderSimple/>
+      <HeaderSimple glowIndex={0} />
     <Container size="sm" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <div style={{ width: '100%' }}>
         {/* Session Pin Input */}

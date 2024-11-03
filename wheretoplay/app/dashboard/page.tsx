@@ -250,7 +250,7 @@ export default function Dashboard() {
 const [opened, { toggle }] = useDisclosure(false);
     return (
         <>
-        <HeaderSimple/>
+        <HeaderSimple glowIndex={1} />
             <Toaster />
             <Center>
                 <Stack>
