@@ -7,7 +7,7 @@ Account (change password)
 'use client';
 
 import { useState } from 'react';
-import { Accordion, Center, Stack, PasswordInput, TextInput, Button, Collapse, Box, Group } from '@mantine/core';
+import { Accordion, Center, Stack, PasswordInput, TextInput, Button, Collapse, Anchor, Group } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
@@ -34,6 +34,7 @@ type Opp = {
 
 type Workspace = {
     name: string;
+    code: number;
     opportunities: Opp[];
     display: boolean;
 };
@@ -50,7 +51,7 @@ export default function Dashboard() {
     const router = useRouter();
 
     const getOpportunities = async () => {
-        if (typeof window === 'undefined') return;
+       // if (typeof window === 'undefined') return;
         const TOKEN = localStorage.getItem('accessToken');
         await axios
             .get('http://localhost:8000/api/query/owneropps/', {
@@ -64,7 +65,12 @@ export default function Dashboard() {
                 const newWorks: Workspace[] = [];
                 workspaces.forEach((workspace: any[]) => {
                         newWorks.push(
-                            { name: workspace[0], opportunities: workspace[1], display: false }
+                            {
+                                name: workspace[0],
+                                code: workspace[1],
+                                opportunities: workspace[2],
+                                display: false,
+                            }
                         );
                 });
                 setOwnerWorks(newWorks);
@@ -261,7 +267,6 @@ export default function Dashboard() {
                 </Button>
             </Stack>
         </form>;
-// const [opened, { toggle }] = useDisclosure(false);
 
     const toggleDisplay = (i : number) => {
         const newWorks = [...ownerWorks];
@@ -285,6 +290,11 @@ export default function Dashboard() {
                                     <Button onClick={() => toggleDisplay(i)}>{work.name}</Button>
                                 </Group>
                                 <Collapse in={work.display}>
+                                    <Center>
+                                        <Anchor href={`/results/${work.code}`} underline="always">
+                                            View Full Results
+                                        </Anchor>
+                                    </Center>
                                     <Accordion>
                                         {work.opportunities.map((opp, j) => (
                                             <div key={j}>
