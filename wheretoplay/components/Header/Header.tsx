@@ -8,8 +8,9 @@ import axios from 'axios';
 import classes from './Header.module.css';
 
 const links = [
-  { link: '../', label: 'Create Session' },
+  { link: '../', label: 'Session' },
   { link: '/dashboard', label: 'Dashboard' },
+  { link: '/create', label: 'Create a Workspace'}
 ];
 
 export function HeaderSimple({ glowIndex } : any) {
