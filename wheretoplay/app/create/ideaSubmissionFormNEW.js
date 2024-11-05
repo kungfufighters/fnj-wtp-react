@@ -138,7 +138,7 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
         <div className="Idea">
             <header className="Idea-header">
                 <nav>
-                    <p><strong>Workspace Creation</strong></p>
+                    <p><strong>Validate a Startup</strong></p>
                 </nav>
             </header>
 
