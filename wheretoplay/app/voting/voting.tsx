@@ -30,6 +30,8 @@ interface InfoProps {
 interface WebSocketMessage {
   result: number[][];
   outlier: number
+  criteria_id: number;
+  user_id: number;
 }
 
 export default function Voting({ ideas }: any) {
@@ -47,8 +49,9 @@ export default function Voting({ ideas }: any) {
   const [modalOpened, modalHandlers] = useDisclosure(false);
   const [currentReasonIndex, setCurrentReasonIndex] = useState(-1);
   const [reasonInput, setReasonInput] = useState('');
-  const [curVotes, setCurVotes] =
-  useState(Array.from({ length: NUMCATS }, () => Array.from({ length: VOTEOPTIONS }, () => 0)));
+  const [curVotes, setCurVotes] = useState(
+    Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0))
+  );
   const router = useRouter();
 
   // Check for mobile device
@@ -154,15 +157,19 @@ const radioClick = (index: number, val: number) => {
     // Message from server, either a vote update or an outlier notification
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
-      console.log('Response from server!');
-
-      if (data.outlier === -1) console.log('not an outlier');
-      else console.log(`outlier for catgory ${data.outlier}`);
-
-      console.log(data.result);
-      setCurVotes(data.result);
+      console.log('Response from server:', data);
+      if (data.outlier) {
+        modalHandlers.open(); // Open the modal if it's an outlier and matches the current user
+      } else if (data.result) {
+        setCurVotes((prevVotes) => {
+          const newVotes = [...prevVotes];
+          const criteriaIndex = data.criteria_id - 1; // Adjust criteria_id to 0-based index
+          newVotes[criteriaIndex] = data.result;
+          return newVotes;
+        });
+    }
     };
-
+    
     socketRef.current.onerror = (error: Event) => {
       console.error('WebSocket error:', error);
     };
@@ -244,70 +251,69 @@ const radioClick = (index: number, val: number) => {
       </Stack>
     </Center>
   );
+  console.log("curVotes:", curVotes);
+  console.log("isVoted:", isVoted);
+
+  const categories = [
+    { caption: "Reason to Buy", infoM: "Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]" },
+    { caption: "Market Volume", infoM: "Based on: Current market size and Expected growth. [HIGH is GOOD]" },
+    { caption: "Economic Viability", infoM: "Based on: Margins (value vs. cost), Customers' ability to pay, and Customer stickiness? [HIGH is GOOD]" },
+    { caption: "Obstacles to Implementation", infoM: "Based on: Product development difficulties and Funding challenges [WANT LOW]" },
+    { caption: "Time To Revenue", infoM: "Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]" },
+    { caption: "Economic Risks", infoM: "Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" }
+  ];
 
   return (
-    <>
-        <h2 style={{ textAlign: 'center' }}>
-            Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
-        </h2>
+  <>
+    <h2 style={{ textAlign: 'center' }}>
+      Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
+    </h2>
 
-        {idea[3] && (
-        <div style={{ textAlign: 'center' }}>
-            <Center>
-              <Image
-                src={idea[3]}
-                alt=""
-                style={{ width: '300px', marginBottom: '20px' }}
-              />
-            </Center>
-        </div>
-        )}
-      <form onSubmit={form.onSubmit(handleSubmit)}>
+    {idea[3] && (
+      <div style={{ textAlign: 'center' }}>
         <Center>
-        <Stack
-          bg="var(--mantine-color-body)"
-          align="stretch"
-          justify="center"
-          gap="sm"
-            >
-            <Selection caption="Reason to Buy" index={0} infoM="Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]" />
-            {isVoted[0] && <Graph key="0" graphTitle="" votes={[[1, curVotes[0][0]], [2, curVotes[0][1]], [3, curVotes[0][2]], [4, curVotes[0][3]], [5, curVotes[0][4]]]} />}
-
-            <Selection caption="Market Volume" index={1} infoM="Based on: Current market size and Expected growth. [HIGH is GOOD]" />
-            {isVoted[1] && <Graph key="1" graphTitle="" votes={[[1, curVotes[1][0]], [2, curVotes[1][1]], [3, curVotes[1][2]], [4, curVotes[1][3]], [5, curVotes[1][4]]]} />}
-
-            <Selection caption="Economic Viability" index={2} infoM="Based on: Margins (value vs. cost), Customers' ability to pay, and Customer stickiness? [HIGH is GOOD]" />
-            {isVoted[2] && <Graph key="2" graphTitle="" votes={[[1, curVotes[2][0]], [2, curVotes[2][1]], [3, curVotes[2][2]], [4, curVotes[2][3]], [5, curVotes[2][4]]]} />}
-
-            <Selection caption="Obstacles to Implementation" index={3} infoM="Based on: Product development difficulties and Funding challenges [WANT LOW]" />
-            {isVoted[3] && <Graph key="3" graphTitle="" votes={[[1, curVotes[3][0]], [2, curVotes[3][1]], [3, curVotes[3][2]], [4, curVotes[3][3]], [5, curVotes[3][4]]]} />}
-
-            <Selection caption="Time To Revenue" index={4} infoM="Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]" />
-            {isVoted[4] && <Graph key="4" graphTitle="" votes={[[1, curVotes[4][0]], [2, curVotes[4][1]], [3, curVotes[4][2]], [4, curVotes[4][3]], [5, curVotes[4][4]]]} />}
-
-            <Selection caption="Economic Risks" index={5} infoM="Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" />
-            {isVoted[5] && <Graph key="5" graphTitle="" votes={[[1, curVotes[5][0]], [2, curVotes[5][1]], [3, curVotes[5][2]], [4, curVotes[5][3]], [5, curVotes[5][4]]]} />}
-        </Stack>
+          <Image src={idea[3]} alt="" style={{ width: '300px', marginBottom: '20px' }} />
         </Center>
-            <Center>
-                <Button className="Idea-button" type="submit">Submit</Button>
-            </Center>
-      </form>
-      <Modal
-        opened={modalOpened}
-        onClose={modalHandlers.close}
-        title="Enter your reason"
-        centered
-        fullScreen={isMobile}
-        transitionProps={{ transition: 'fade', duration: 200 }}
-      >
-        <Textarea
-          placeholder="Explain your reasoning for your vote here"
-          value={reasonInput}
-          onChange={(e) => setReasonInput(e.target.value)}
-        />
-        <Button onClick={handleReasonSubmit} mt="md">Submit Reason</Button>
-      </Modal>
-    </>
-  );
+      </div>
+    )}
+    
+    <form onSubmit={form.onSubmit(handleSubmit)}>
+      <Center>
+        <Stack bg="var(--mantine-color-body)" align="stretch" justify="center" gap="sm">
+          {categories.map((category, index) => (
+            <React.Fragment key={index}>
+              <Selection caption={category.caption} index={index} infoM={category.infoM} />
+              {isVoted[index] && (
+                <Graph
+                  key={index}
+                  graphTitle=""
+                  votes={Array.from({ length: VOTEOPTIONS }, (_, i) => [i + 1, curVotes[index][i]])}
+                />
+              )}
+            </React.Fragment>
+          ))}
+        </Stack>
+      </Center>
+      <Center>
+        <Button className="Idea-button" type="submit">Submit</Button>
+      </Center>
+    </form>
+
+    <Modal
+      opened={modalOpened}
+      onClose={modalHandlers.close}
+      title="Enter your reason"
+      centered
+      fullScreen={isMobile}
+      transitionProps={{ transition: 'fade', duration: 200 }}
+    >
+      <Textarea
+        placeholder="Explain your reasoning for your vote here"
+        value={reasonInput}
+        onChange={(e) => setReasonInput(e.target.value)}
+      />
+      <Button onClick={handleReasonSubmit} mt="md">Submit Reason</Button>
+    </Modal>
+  </>
+);
 }
