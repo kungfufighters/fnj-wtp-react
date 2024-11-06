@@ -21,7 +21,8 @@ interface OppProps {
     segment: string;
     curStatus: string;
     parts: number;
-    rating: number;
+    ratingP: number;
+    ratingC: number;
 }
 
 type Opp = {
@@ -29,7 +30,8 @@ type Opp = {
     customer_segment: string;
     label: string;
     participants: number;
-    score: number
+    scoreP: number;
+    scoreC: number;
 };
 
 type Workspace = {
@@ -99,7 +101,7 @@ export default function Dashboard() {
             });
     };
 
-    if (typeof window !== 'undefined' && !localStorage.getItem('accessToken')) {
+    if (!localStorage.getItem('accessToken')) {
         router.push('/login');
     }
 
@@ -114,14 +116,15 @@ export default function Dashboard() {
     }
 
     const OpportunitySummary: React.FC<OppProps> =
-      ({ id, label, segment, curStatus, parts, rating }) => (
+      ({ id, label, segment, curStatus, parts, ratingP, ratingC }) => (
         <Accordion.Item key={id} value={`${id}`}>
             <Accordion.Control>{label}</Accordion.Control>
             <Accordion.Panel>
                 <p>{segment}</p>
                 <p>{curStatus}</p>
                 <p>{parts} participant{parts === 1 ? '' : 's'}</p>
-                <p>{rating}/5</p>
+                <p>Potential: {ratingP === 0 ? 'N/A' : `${ratingP}/5`}</p>
+                <p>Challenge: {ratingC === 0 ? 'N/A' : `${ratingC}/5`}</p>
             </Accordion.Panel>
         </Accordion.Item>
     );
@@ -304,7 +307,8 @@ export default function Dashboard() {
                                               segment={opp.customer_segment}
                                               curStatus={opp.label}
                                               parts={opp.participants}
-                                              rating={Math.floor(opp.score * 100) / 100} />
+                                              ratingP={Math.floor(opp.scoreP * 100) / 100}
+                                              ratingC={Math.floor(opp.scoreC * 100) / 100} />
                                             </div>
                                         ))}
                                     </Accordion>

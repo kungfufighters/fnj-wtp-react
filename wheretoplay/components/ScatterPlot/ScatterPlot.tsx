@@ -8,8 +8,8 @@ const ScatterPlot = ({points}) => {
         // Create gradient background
         const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
         grad.addColorStop(0, "green");
-        grad.addColorStop(.4, "yellow");
-        grad.addColorStop(.6, "yellow");
+        grad.addColorStop(.4, "orange");
+        grad.addColorStop(.6, "orange");
         grad.addColorStop(1, "red");
 
 
@@ -18,16 +18,21 @@ const ScatterPlot = ({points}) => {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, canvas.width, canvas.height); // Fill entire canvas
 
-        /*
-        // Scatter points (plot is 300 by 300)
-        const points = [
-            { x: 50, y: 70 },
-            { x: 150, y: 150 }
-        ];
-        */
+        
+
 
         // Draw scatter points
         ctx.fillStyle = "black"; // Color for scatter points
+        ctx.fillText('CHALLENGE', 125, 300);
+        ctx.fillText('P', 0, 120);
+        ctx.fillText('O', 0, 130);
+        ctx.fillText('T', 0, 140);
+        ctx.fillText('E', 0, 150);
+        ctx.fillText('N', 0, 160);
+        ctx.fillText('T', 0, 170);
+        ctx.fillText('I', 0, 180);
+        ctx.fillText('A', 0, 190);
+        ctx.fillText('L', 0, 200);
         points.forEach(point => {
             ctx.beginPath();
             ctx.arc(point.x, point.y, 5, 0, Math.PI * 2); // Draw a circle
