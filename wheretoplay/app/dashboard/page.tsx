@@ -7,7 +7,7 @@ Account (change password)
 'use client';
 
 import { useState } from 'react';
-import { Accordion, Center, Stack, PasswordInput, TextInput, Button, Collapse, Box, Group } from '@mantine/core';
+import { Accordion, Center, Stack, PasswordInput, TextInput, Button, Collapse, Anchor, Group } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
@@ -32,19 +32,26 @@ type Opp = {
     score: number
 };
 
+type Workspace = {
+    name: string;
+    code: number;
+    opportunities: Opp[];
+    display: boolean;
+};
+
 export default function Dashboard() {
     const [passLoading, setPassLoading] = useState(false);
     const [passError, setPassError] = useState<string | null>(null); // To handle errors
     const [mailLoading, setMailLoading] = useState(false);
     const [mailError, setMailError] = useState<string | null>(null); // To handle errors
-    const [ownerOpps, setOwnerOpps] = useState<Opp[]>([]);
+    const [ownerWorks, setOwnerWorks] = useState<Workspace[]>([]);
     const [oppQueryFetched, setOppQueryFetched] = useState<boolean>(false);
     const [mailQueryFetched, setMailQueryFetched] = useState<boolean>(false);
     const [email, setEmail] = useState<string>('Loading...');
     const router = useRouter();
 
     const getOpportunities = async () => {
-        if (typeof window === 'undefined') return;
+       // if (typeof window === 'undefined') return;
         const TOKEN = localStorage.getItem('accessToken');
         await axios
             .get('http://localhost:8000/api/query/owneropps/', {
@@ -54,7 +61,20 @@ export default function Dashboard() {
             })
             .then(res => {
                 console.log(res);
-                setOwnerOpps([...ownerOpps, ...res.data]);
+                const workspaces = res.data;
+                const newWorks: Workspace[] = [];
+                workspaces.forEach((workspace: any[]) => {
+                        newWorks.push(
+                            {
+                                name: workspace[0],
+                                code: workspace[1],
+                                opportunities: workspace[2],
+                                display: false,
+                            }
+                        );
+                });
+                setOwnerWorks(newWorks);
+                console.log(newWorks);
             })
             .catch(error => {
               console.log(error);
@@ -247,45 +267,70 @@ export default function Dashboard() {
                 </Button>
             </Stack>
         </form>;
-const [opened, { toggle }] = useDisclosure(false);
+
+    const toggleDisplay = (i : number) => {
+        const newWorks = [...ownerWorks];
+        newWorks[i].display = !newWorks[i].display;
+        setOwnerWorks(newWorks);
+    };
+
     return (
         <>
-        <HeaderSimple/>
+        <HeaderSimple glowIndex={1} />
             <Toaster />
             <Center>
                 <Stack>
-                    <h1>My Opportunities</h1>
+                    <h1>My Workspaces</h1>
                     {oppQueryFetched ?
                     (
-                        <Accordion>
-                        {ownerOpps.map((opp, i) => (
+                        <>
+                        {ownerWorks.length > 0 && ownerWorks.map((work, i) => (
                             <div key={i}>
-                              <OpportunitySummary
-                                id={i}
-                                label={opp.name}
-                                segment={opp.customer_segment}
-                                curStatus={opp.label}
-                                parts={opp.participants}
-                                rating={Math.floor(opp.score * 100) / 100} />
+                                <Group justify="center" mb={5}>
+                                    <Button onClick={() => toggleDisplay(i)}>{work.name}</Button>
+                                </Group>
+                                <Collapse in={work.display}>
+                                    <Center>
+                                        <Anchor href={`/results/${work.code}`} underline="always">
+                                            View Full Results
+                                        </Anchor>
+                                    </Center>
+                                    <Accordion>
+                                        {work.opportunities.map((opp, j) => (
+                                            <div key={j}>
+                                            <OpportunitySummary
+                                              id={j}
+                                              label={opp.name}
+                                              segment={opp.customer_segment}
+                                              curStatus={opp.label}
+                                              parts={opp.participants}
+                                              rating={Math.floor(opp.score * 100) / 100} />
+                                            </div>
+                                        ))}
+                                    </Accordion>
+                                </Collapse>
                             </div>
                         ))}
-                        </Accordion>
+                        {ownerWorks.length === 0 && <p>You have no workspaces...</p>}
+                        </>
                     ) :
                     (
                         <p>Loading...</p>
                     )}
+                    {/*
                     <h1>My Feedback</h1>
                     <Box maw={400} mx="auto">
                         <Group justify="center" mb={5}>
-                            <Button onClick={toggle}>Good Ideas Workspace</Button>
+                            <Button onClick={() => toggleDisplay(1)}>Good Ideas Workspace</Button>
                         </Group>
-                        <Collapse in={opened}>
+                        <Collapse in={false}>
                         <Accordion>
                             <OpportunitySummary id={4} label="Reverse Bike" segment="Commuters" curStatus="Keep Open" parts={5} rating={2.6} />
                             <OpportunitySummary id={5} label="Butter Stick" segment="City Dwellers" curStatus="Pursue" parts={4} rating={3.9} />
                         </Accordion>
                     </Collapse>
                     </Box>
+                    */}
                     <h1>Change Email</h1>
                     <p>Current email is: {email}</p>
                     {changeEmailForm()}

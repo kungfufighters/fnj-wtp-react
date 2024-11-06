@@ -59,16 +59,6 @@ export default function Voting({ ideas }: any) {
   const idea = ideas[currentIdeaIndex];
   const socketRef = useRef<WebSocket | null>(null);
 
-  const categories = [
-    { caption: "Reason to Buy", infoM: "Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]" },
-    { caption: "Market Volume", infoM: "Based on: Current market size and Expected growth. [HIGH is GOOD]" },
-    { caption: "Economic Viability", infoM: "Based on: Margins (value vs. cost), Customers' ability to pay, and Customer stickiness? [HIGH is GOOD]" },
-    { caption: "Obstacles to Implementation", infoM: "Based on: Product development difficulties and Funding challenges [WANT LOW]" },
-    { caption: "Time To Revenue", infoM: "Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]" },
-    { caption: "Economic Risks", infoM: "Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" }
-  ];
-  
-
   // Check for access token on the client side
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -154,14 +144,25 @@ export default function Voting({ ideas }: any) {
     socketRef.current = new WebSocket('ws://localhost:8000/ws/vote/');
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
-      if (data.result) {
+      console.log('Response from server:', data);
+      if (data.outlier) {
+        modalHandlers.open(); // Open the modal if it's an outlier and matches the current user
+      } else if (data.result) {
         setCurVotes((prevVotes) => {
           const newVotes = [...prevVotes];
-          const criteriaIndex = data.criteria_id - 1;
+          const criteriaIndex = data.criteria_id - 1; // Adjust criteria_id to 0-based index
           newVotes[criteriaIndex] = data.result;
           return newVotes;
         });
-      }
+    }
+    };
+    
+    socketRef.current.onerror = (error: Event) => {
+      console.error('WebSocket error:', error);
+    };
+
+    socketRef.current.onclose = (event: CloseEvent) => {
+      console.log('WebSocket connection closed:', event);
     };
   };
 
@@ -236,57 +237,69 @@ export default function Voting({ ideas }: any) {
       </Stack>
     </Center>
   );
+  console.log("curVotes:", curVotes);
+  console.log("isVoted:", isVoted);
+
+  const categories = [
+    { caption: "Reason to Buy", infoM: "Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]" },
+    { caption: "Market Volume", infoM: "Based on: Current market size and Expected growth. [HIGH is GOOD]" },
+    { caption: "Economic Viability", infoM: "Based on: Margins (value vs. cost), Customers' ability to pay, and Customer stickiness? [HIGH is GOOD]" },
+    { caption: "Obstacles to Implementation", infoM: "Based on: Product development difficulties and Funding challenges [WANT LOW]" },
+    { caption: "Time To Revenue", infoM: "Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]" },
+    { caption: "Economic Risks", infoM: "Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" }
+  ];
 
   return (
-    <>
-      <h2 style={{ textAlign: 'center' }}>
-        Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
-      </h2>
-      {idea[3] && (
-        <div style={{ textAlign: 'center' }}>
-          <Center>
-            <Image src={idea[3]} alt="" style={{ width: '300px', marginBottom: '20px' }} />
-          </Center>
-        </div>
-      )}
+  <>
+    <h2 style={{ textAlign: 'center' }}>
+      Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
+    </h2>
 
-      <form onSubmit={form.onSubmit(handleSubmit)}>
+    {idea[3] && (
+      <div style={{ textAlign: 'center' }}>
         <Center>
-          <Stack bg="var(--mantine-color-body)" align="stretch" justify="center" gap="sm">
-            {categories.map((category, index) => (
-              <React.Fragment key={index}>
-                <Selection caption={category.caption} index={index} infoM={category.infoM} />
-                {isVoted[index] && (
-                  <Graph
-                    key={index}
-                    graphTitle=""
-                    votes={Array.from({ length: VOTEOPTIONS }, (_, i) => [i + 1, curVotes[index][i]])}
-                  />
-                )}
-              </React.Fragment>
-            ))}
-          </Stack>
+          <Image src={idea[3]} alt="" style={{ width: '300px', marginBottom: '20px' }} />
         </Center>
-        <Center>
-          <Button className="Idea-button" type="submit">Submit</Button>
-        </Center>
-      </form>
+      </div>
+    )}
+    
+    <form onSubmit={form.onSubmit(handleSubmit)}>
+      <Center>
+        <Stack bg="var(--mantine-color-body)" align="stretch" justify="center" gap="sm">
+          {categories.map((category, index) => (
+            <React.Fragment key={index}>
+              <Selection caption={category.caption} index={index} infoM={category.infoM} />
+              {isVoted[index] && (
+                <Graph
+                  key={index}
+                  graphTitle=""
+                  votes={Array.from({ length: VOTEOPTIONS }, (_, i) => [i + 1, curVotes[index][i]])}
+                />
+              )}
+            </React.Fragment>
+          ))}
+        </Stack>
+      </Center>
+      <Center>
+        <Button className="Idea-button" type="submit">Submit</Button>
+      </Center>
+    </form>
 
-      <Modal
-        opened={modalOpened}
-        onClose={modalHandlers.close}
-        title="Enter your reason"
-        centered
-        fullScreen={isMobile}
-        transitionProps={{ transition: 'fade', duration: 200 }}
-      >
-        <Textarea
-          placeholder="Explain your reasoning for your vote here"
-          value={reasonInput}
-          onChange={(e) => setReasonInput(e.target.value)}
-        />
-        <Button onClick={handleReasonSubmit} mt="md">Submit Reason</Button>
-      </Modal>
-    </>
-  );
+    <Modal
+      opened={modalOpened}
+      onClose={modalHandlers.close}
+      title="Enter your reason"
+      centered
+      fullScreen={isMobile}
+      transitionProps={{ transition: 'fade', duration: 200 }}
+    >
+      <Textarea
+        placeholder="Explain your reasoning for your vote here"
+        value={reasonInput}
+        onChange={(e) => setReasonInput(e.target.value)}
+      />
+      <Button onClick={handleReasonSubmit} mt="md">Submit Reason</Button>
+    </Modal>
+  </>
+);
 }

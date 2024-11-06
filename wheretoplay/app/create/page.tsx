@@ -9,13 +9,13 @@ function CreateWorkspace() {
   const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
 
-  if (typeof window !== 'undefined' && !localStorage.getItem('accessToken')) {
+  if (!localStorage.getItem('accessToken')) {
     router.push('/login');
   }
 
   const handleFormSubmit = async (submittedIdeas: any, company: string) => {
     try {
-      if (typeof window === 'undefined') return;
+      //if (typeof window === 'undefined') return;
       const TOKEN = localStorage.getItem('accessToken');
   
       const workspaceResponse = await axios.post(
