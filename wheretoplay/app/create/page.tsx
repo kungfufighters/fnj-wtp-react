@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import IdeaSubmissionForm from './ideaSubmissionFormNEW';
 import axios from 'axios';
 
-function App() {
+function CreateWorkspace() {
   const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
 
@@ -13,23 +13,14 @@ function App() {
     router.push('/login');
   }
 
-  // Function to generate a unique 5-digit code
-  const generateCode = () => {
-    return Math.floor(10000 + Math.random() * 90000).toString();
-  };
-
-  // Function to handle form submission
   const handleFormSubmit = async (submittedIdeas: any, company: string) => {
     try {
       if (typeof window === 'undefined') return;
       const TOKEN = localStorage.getItem('accessToken');
   
-      // Generate a unique code for the workspace
-      const code = generateCode();
-  
-      const response = await axios.post(
+      const workspaceResponse = await axios.post(
         'http://localhost:8000/api/create_workspace/',
-        { name: company, code }, // Include the code here
+        { name: company },
         {
           headers: {
             AUTHORIZATION: `Bearer ${TOKEN}`,
@@ -37,21 +28,23 @@ function App() {
         }
       );
   
-      console.log('Workspace created:', response.data);
+      console.log('Workspace created:', workspaceResponse.data);
   
-
       // Prepare ideas to be associated with the created workspace
       const formattedIdeas = submittedIdeas.map((idea: any[]) => ({
-        workspace: response.data.workspace_id,
+        workspace: workspaceResponse.data.workspace_id,
         name: idea[0],
         customer_segment: idea[1],
         description: idea[2],
-        image: idea[3]
+        image: idea[3],
       }));
-
+  
+      // Get the sessionPin from workspaceResponse
+      const sessionPin = workspaceResponse.data.code;
+  
       // Send each idea in a separate request
       for (const idea of formattedIdeas) {
-        const responseSub = await axios.post(
+        const opportunityResponse = await axios.post(
           'http://localhost:8000/api/create_opportunity/',
           idea,
           {
@@ -60,10 +53,11 @@ function App() {
             },
           }
         );
-        console.log('Opportunity created:', responseSub.data);
+        console.log('Opportunity created:', opportunityResponse.data);
       }
-      
-      router.push('/invite');
+  
+      // Redirect to the invite page with the sessionPin
+      router.push(`/invite/${sessionPin}`);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('Axios error creating workspace:', error.response?.data);
@@ -74,11 +68,11 @@ function App() {
   };
 
   return (
-    <div className="App">
+    <div className="CreateWorkspace">
       {!submitted && <IdeaSubmissionForm onSubmit={handleFormSubmit} />}
       {submitted && <h1>Thank you for your submission!</h1>}
     </div>
   );
 }
 
-export default App;
+export default CreateWorkspace;
