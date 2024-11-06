@@ -58,7 +58,7 @@ export default function Signup() {
                 localStorage.setItem('refreshToken', refresh);
 
                 // Redirect to dashboard
-                router.push('/dashboard');
+                router.push('/');
             }
         } catch (error) {
             console.error(error);

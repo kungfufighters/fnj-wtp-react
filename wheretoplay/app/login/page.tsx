@@ -26,7 +26,7 @@ export default function Login() {
     if (accessToken) {
       setIsAlreadyLoggedIn(true); // Show redirecting message
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push('/');
       }, 500);
     } else {
       setIsLoading(false);  // Allow rendering of the login form if not logged in
@@ -66,7 +66,7 @@ export default function Login() {
         localStorage.setItem('refreshToken', data.tokens.refresh);
 
         // Redirect to the dashboard
-        router.push('/dashboard');
+        router.push('/');
       } else {
         console.error('Login failed:', data.error);
       }

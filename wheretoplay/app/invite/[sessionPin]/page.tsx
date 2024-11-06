@@ -7,6 +7,7 @@ import { HeaderSimple } from '@/components/Header/Header';
 import { Container, TextInput, Button } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import { QRCodeCanvas } from 'qrcode.react';
+import toast, { Toaster } from 'react-hot-toast';
 
 type WorkspaceData = {
   name: string;
@@ -60,23 +61,27 @@ export default function InvitePage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          email: email,
+          email,
           session_pin: sessionPin,
         }),
       });
       const data = await response.json();
       if (response.ok) {
+        /*
         showNotification({
           title: 'Success',
           message: 'Invite email sent successfully',
           color: 'green',
-        });
+        }); */
+        toast.success('Invite email sent successfully');
       } else {
+        /*
         showNotification({
           title: 'Error',
           message: data.error,
           color: 'red',
-        });
+        }); */
+        toast.error('Invite email could not be sent');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -85,7 +90,8 @@ export default function InvitePage() {
 
   return (
     <div>
-      <HeaderSimple />
+      <HeaderSimple glowIndex={2} />
+      <Toaster />
       <Container size="sm" style={{ marginTop: '2rem' }}>
         <h1>Invite Collaborators</h1>
         <p>Workspace: {workspaceData.name || 'N/A'}</p>

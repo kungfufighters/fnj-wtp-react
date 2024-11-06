@@ -14,10 +14,15 @@ export default function HomePage() {
   const isAuthenticated = () => {
     // Check if token exists in localStorage or cookies
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('access_token') !== null;
+      if (localStorage.getItem('access_token')) return true;
+      return false;
     }
     return false;
   };
+
+  if (!localStorage.getItem('accessToken')) {
+    router.push('/login');
+  }
 
   const handleEnterSession = () => {
     if (sessionPin) {
@@ -26,7 +31,8 @@ export default function HomePage() {
         router.push(`/voting/${sessionPin}`);
       } else {
         // User is not logged in, navigate to guest info page
-        router.push(`/guest-info?sessionPin=${sessionPin}`);
+        //  router.push(`/guest-info?sessionPin=${sessionPin}`);
+        router.push(`/voting/${sessionPin}`);
       }
     } else {
       console.error('Session pin is required');

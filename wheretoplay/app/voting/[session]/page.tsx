@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from '@mantine/form';
@@ -9,9 +9,9 @@ import { RadioGroup, Radio, Flex, Button, Stack, Center, Image, Modal, Textarea 
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { Graph } from '../../components/Graph/Graph';
-import oneF from '../../public/OneFinger.png';
-import fiveF from '../../public/FiveFingers.png';
+import { Graph } from '../../../components/Graph/Graph';
+import oneF from '../../../public/OneFinger.png';
+import fiveF from '../../../public/FiveFingers.png';
 
 // TypeScript Interfaces
 interface VotingProps {
@@ -33,7 +33,16 @@ interface WebSocketMessage {
   user_id: number;
 }
 
-export default function Voting({ ideas }: any) {
+type Opp = {
+  name: string;
+  customer_segment: string;
+  description: string;
+  opportunity_id: number[][];
+  reasons: string[];
+  imgurl: string;
+};
+
+const Voting = ({ params }) => {
   const NUMCATS = 6;
   const TIMERLENGTH = 3;
   const VOTEOPTIONS = 5;
@@ -53,10 +62,13 @@ export default function Voting({ ideas }: any) {
     Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0))
   );
   const router = useRouter();
+  const [ideas, setIdeas] = useState<Opp[]>([]);
+  const [idea, setIdea] = useState(null);
+  const [session, setSession] = useState(0);
+  const [queryFetched, setQueryFetched] = useState(false);
 
   // Check for mobile device
   const isMobile = useMediaQuery('(max-width: 50em)') ?? false;
-  const idea = ideas[currentIdeaIndex];
   const socketRef = useRef<WebSocket | null>(null);
 
   // Check for access token on the client side
@@ -111,10 +123,57 @@ export default function Voting({ ideas }: any) {
     return () => clearInterval(intervalId);
   }, [timeRemaining]);
 
+  const getSession = async () => {
+    const TOKEN = localStorage.getItem('accessToken');
+    const sesh = (await params).session;
+    const requestString = `http://localhost:8000/api/query/oppvoting?code=${sesh}`;
+    setSession(sesh);
+    await axios
+         .get(requestString, {
+           headers: {
+             AUTHORIZATION: `Bearer ${TOKEN}`,
+           },
+         })
+         .then(res => {
+             const newIdeas: React.SetStateAction<any[]> = [];
+             const opportunities = res.data;
+             opportunities.forEach((
+               opp: {
+                 name: any;
+                 customer_segment: any;
+                 description: any;
+                 opportunity_id: any;
+                 reasons: any;
+                 imgurl: string }) => {
+               newIdeas.push([
+                 opp.name,
+                 opp.customer_segment,
+                 opp.description,
+                 opp.opportunity_id,
+                 opp.reasons,
+                 opp.imgurl]);
+             });
+             console.log(newIdeas);
+             setIdeas(newIdeas);
+             setIdea(newIdeas[currentIdeaIndex]);
+             console.log(newIdeas[currentIdeaIndex]);
+         })
+         .catch(error => {
+           console.log(error);
+         });
+  };
+
+
+  if (!queryFetched) {
+    getSession();
+    setQueryFetched(true);
+  }
+
   const sendVoteData = (criteria_id: number, vote_score: number) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       const payload = {
-        session_id: '12345',
+        opportunity_id: idea[3],
+        session_id: session,
         user_id: userID,
         votes: [{ criteria_id, vote_score }],
       };
@@ -141,7 +200,7 @@ export default function Voting({ ideas }: any) {
   };
 
   const connectWebSocket = () => {
-    socketRef.current = new WebSocket('ws://localhost:8000/ws/vote/');
+    socketRef.current = new WebSocket(`ws://localhost:8000/ws/vote/${session}/`);
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
       console.log('Response from server:', data);
@@ -167,11 +226,11 @@ export default function Voting({ ideas }: any) {
   };
 
   useEffect(() => {
-    connectWebSocket();
+    if (idea) connectWebSocket();
     return () => {
-      socketRef.current?.close();
+      if (idea) socketRef.current?.close();
     };
-  }, []);
+  }, [idea]);
 
   const handleSubmit = () => {
     goToNextIdea();
@@ -179,8 +238,10 @@ export default function Voting({ ideas }: any) {
 
   const goToNextIdea = () => {
     if (currentIdeaIndex < ideas.length - 1) {
+      setIdea(ideas[currentIdeaIndex + 1]);
       setCurrentIdeaIndex(currentIdeaIndex + 1);
     }
+    else router.push('/dashboard');
     setCurrentOptionIndex(-1);
     setIsVoted(Array.from({ length: NUMCATS }, () => false));
     setVotes(Array.from({ length: NUMCATS }, () => 0));
@@ -188,12 +249,27 @@ export default function Voting({ ideas }: any) {
     setTimeRemaining(0);
   };
 
-  const handleReasonSubmit = () => {
+  const handleReasonSubmit = async () => {
+    const TOKEN = localStorage.getItem('accessToken');
     const newReasons = [...reasons];
     newReasons[currentReasonIndex] = reasonInput;
-    setReasons(newReasons);
-    setReasonInput('');
-    modalHandlers.close();
+    try {
+      const response = await axios.post('http://localhost:8000/api/add/reason/', {
+        opportunity_id: idea[3],
+        reason: reasonInput,
+        criteria_id: currentReasonIndex + 1,
+      }, {
+        headers: {
+          AUTHORIZATION: `Bearer ${TOKEN}`,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setReasons(newReasons);
+      setReasonInput('');
+      modalHandlers.close();
+    }
   };
 
   const InfoButton: React.FC<InfoProps> = ({ message }) => {
@@ -249,16 +325,26 @@ export default function Voting({ ideas }: any) {
     { caption: "Economic Risks", infoM: "Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" }
   ];
 
+  if (!queryFetched || !idea) {
+    return (
+        <p>Loading...</p>
+    );
+  }
+
   return (
   <>
     <h2 style={{ textAlign: 'center' }}>
       Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
     </h2>
 
-    {idea[3] && (
+    <p style={{ textAlign: 'center', width: '50%', margin: 'auto'}}>
+        {idea[2]}
+    </p>
+
+    {idea[5] && (
       <div style={{ textAlign: 'center' }}>
         <Center>
-          <Image src={idea[3]} alt="" style={{ width: '300px', marginBottom: '20px' }} />
+          <Image src={idea[5]} alt="" style={{ width: '300px', marginBottom: '20px' }} />
         </Center>
       </div>
     )}
@@ -281,20 +367,20 @@ export default function Voting({ ideas }: any) {
         </Stack>
       </Center>
       <Center>
-        <Button className="Idea-button" type="submit">Submit</Button>
+        <Button className="Idea-button" type="submit">Proceed</Button>
       </Center>
     </form>
 
     <Modal
       opened={modalOpened}
       onClose={modalHandlers.close}
-      title="Enter your reason"
+      title="You are an outlier"
       centered
       fullScreen={isMobile}
       transitionProps={{ transition: 'fade', duration: 200 }}
     >
       <Textarea
-        placeholder="Explain your reasoning for your vote here"
+        placeholder="Please share your valuable input"
         value={reasonInput}
         onChange={(e) => setReasonInput(e.target.value)}
       />
@@ -302,4 +388,6 @@ export default function Voting({ ideas }: any) {
     </Modal>
   </>
 );
-}
+};
+
+export default Voting;

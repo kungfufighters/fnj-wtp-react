@@ -1,8 +1,9 @@
+/*
 'use client';
 
 import React, { useState } from 'react';
-import IdeaSubmissionForm from '../create/ideaSubmissionFormNEW.js';
-import Voting from './voting';
+import IdeaSubmissionForm from '../../create/ideaSubmissionFormNEW.js';
+import Voting from './page.jsx';
 
 function App() {
   // State to track if the owner has submitted ideas
@@ -31,3 +32,4 @@ function App() {
 }
 
 export default App;
+*/
