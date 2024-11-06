@@ -6,6 +6,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import classes from './Header.module.css';
+import toast, { Toaster } from 'react-hot-toast';
 
 const links = [
   { link: '../', label: 'Session' },
@@ -24,8 +25,23 @@ export function HeaderSimple({ glowIndex } : any) {
     router.push('/login');
   };
 
+  const handleDelete = async () => {
+    const TOKEN = localStorage.getItem('accessToken');
+    const response = await axios.post('http://localhost:8000/api/delete_user/', {}, {
+        headers: {
+            AUTHORIZATION: `Bearer ${TOKEN}`,
+        },
+    });
+    if(response.status == 200) {
+      toast.success('Success! Hang Tight...');
+      await new Promise(resolve => setTimeout(resolve, 2000) );
+      handleLogout();
+    }
+    else console.log(response.data.error);
+  }
+
   const getEmail = async () => {
-    if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
+    if (localStorage.getItem('accessToken')) {
         const TOKEN = localStorage.getItem('accessToken');
         await axios
             .get('http://localhost:8000/api/query/email/', {
@@ -66,7 +82,7 @@ export function HeaderSimple({ glowIndex } : any) {
 
   return (
     <header className={classes.header}>
-        
+        <Toaster />
         <Container className={classes.mainSection} size="md">
         <Group justify="flex-end">
           <Burger opened={opened} onClick={toggle} hiddenFrom="xs" size="sm" />
@@ -102,6 +118,7 @@ export function HeaderSimple({ glowIndex } : any) {
 
               <Menu.Item 
                 color="red"
+                onClick={handleDelete}
               >
                 Delete account
               </Menu.Item>

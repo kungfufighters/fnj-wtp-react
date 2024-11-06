@@ -32,6 +32,7 @@ type Opp = {
     description: string;
     cur_votes: number[][];
     reasons: string[];
+    imgurl: string;
 };
 
 const ResultsPage = ({ params }) => {
@@ -75,8 +76,9 @@ const ResultsPage = ({ params }) => {
 
   const getSession = async () => {
        const TOKEN = localStorage.getItem('accessToken');
-       const requestString = `http://localhost:8000/api/query/oppresults?code=${params.session}`;
-       setSession(params.session);
+       const sesh = (await params).session;
+       const requestString = `http://localhost:8000/api/query/oppresults?code=${sesh}`;
+       setSession(sesh);
        await axios
             .get(requestString, {
               headers: {
@@ -92,17 +94,20 @@ const ResultsPage = ({ params }) => {
                     customer_segment: any;
                     description: any;
                     cur_votes: any;
-                    reasons: any}) => {
+                    reasons: any;
+                    imgurl: string }) => {
                   newIdeas.push([
                     opp.name,
                     opp.customer_segment,
                     opp.description,
                     opp.cur_votes,
-                    opp.reasons]);
+                    opp.reasons,
+                    opp.imgurl]);
                 });
                 console.log(newIdeas);
                 setIdeas(newIdeas);
                 setIdea(newIdeas[currentIdeaIndex]);
+                console.log(newIdeas[currentIdeaIndex]);
             })
             .catch(error => {
               console.log(error);
@@ -124,6 +129,7 @@ const ResultsPage = ({ params }) => {
   const goToNextIdea = () => {
     if (currentIdeaIndex < ideas.length - 1) {
       setIdea(ideas[currentIdeaIndex + 1]);
+      console.log(ideas[currentIdeaIndex + 1]);
       setCurrentIdeaIndex(currentIdeaIndex + 1);
     }
   };
@@ -190,21 +196,17 @@ const ResultsPage = ({ params }) => {
             Opportunity #{currentIdeaIndex + 1} Results: {`${idea[0]} (${idea[1]})`}
         </h2>
 
-        <p style={{ textAlign: 'center' }}>
+        <p style={{ textAlign: 'center', width: '50%', margin: 'auto'}}>
             {idea[2]}
         </p>
 
-        {/*
-        {idea[3] && (
         <div style={{ textAlign: 'center' }}>
             <img
-                src={ideas[currentIdeaIndex][3]}
+                src={idea[5]}
                 alt=""  // Empty alt attribute for decorative images
                 style={{ width: '300px', marginBottom: '20px' }}
             />
         </div>
-        )}
-        */}
 
       {/* Center the entire graph container */}
       <div
@@ -298,9 +300,11 @@ const ResultsPage = ({ params }) => {
       </Stack>
 
       <div className="navigation-buttons" style={{ marginTop: '20px', textAlign: 'center'  }}>
+        {currentIdeaIndex > 0 &&
         <button className="Idea-button" onClick={goToPreviousIdea} disabled={currentIdeaIndex === 0} type="button">
           Previous Opportunity
-        </button>
+        </button>}
+        {currentIdeaIndex < ideas.length - 1 &&
         <button
           className="Idea-button"
           onClick={goToNextIdea}
@@ -309,7 +313,7 @@ const ResultsPage = ({ params }) => {
           type="button"
         >
           Next Opportunity
-        </button>
+        </button>}
       </div>
       <br />
       <br />

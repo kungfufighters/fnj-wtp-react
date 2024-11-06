@@ -36,7 +36,7 @@ interface WebSocketMessage {
 
 export default function Voting({ ideas }: any) {
   const NUMCATS = 6;
-  const TIMERLENGTH = 2;
+  const TIMERLENGTH = 3;
   const VOTEOPTIONS = 5;
   const form = useForm({ mode: 'uncontrolled' });
   const [userID, setUserID] = useState(-1);

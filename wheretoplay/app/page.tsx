@@ -11,6 +11,10 @@ export default function HomePage() {
   const router = useRouter();
   const [sessionPin, setSessionPin] = useState('');
 
+  if (!localStorage.getItem('accessToken')) {
+    router.push('/login');
+}
+
   const handleEnterSession = () => {
     // Handle session enter logic here
     router.push('/voting');
