@@ -1,24 +1,36 @@
 'use client';
 
 import '@mantine/core/styles.css';
-
 import { useState } from 'react';
 import { TextInput, Button, Container, Divider } from '@mantine/core';
-import { useRouter } from 'next/navigation'; // useRouter from Next.js
+import { useRouter } from 'next/navigation';
 import { HeaderSimple } from '@/components/Header/Header';
 
 export default function HomePage() {
   const router = useRouter();
   const [sessionPin, setSessionPin] = useState('');
 
-  if (!localStorage.getItem('accessToken')) {
-    router.push('/login');
-}
+  // Function to check if user is authenticated
+  const isAuthenticated = () => {
+    // Check if token exists in localStorage or cookies
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('access_token') !== null;
+    }
+    return false;
+  };
 
   const handleEnterSession = () => {
-    // Handle session enter logic here
-    router.push('/voting');
-    console.log('Entered session pin:', sessionPin);
+    if (sessionPin) {
+      if (isAuthenticated()) {
+        // User is logged in, navigate to voting page
+        router.push(`/voting/${sessionPin}`);
+      } else {
+        // User is not logged in, navigate to guest info page
+        router.push(`/guest-info?sessionPin=${sessionPin}`);
+      }
+    } else {
+      console.error('Session pin is required');
+    }
   };
 
   const handleCreateSession = () => {
@@ -62,7 +74,7 @@ export default function HomePage() {
           Create Session
         </Button>
       </div>
-    </Container>
+      </Container>
     </div>
   );
 }

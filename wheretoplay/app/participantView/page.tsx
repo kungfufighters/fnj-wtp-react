@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import IdeaSubmissionForm from '../create/ideaSubmissionFormNEW.js';
-import Voting from '../voting/voting.tsx';
+import Voting from '../voting/voting';
 
 function App() {
   // State to track if the owner has submitted ideas

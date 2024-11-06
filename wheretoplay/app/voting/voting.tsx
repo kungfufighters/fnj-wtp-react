@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from '@mantine/form';
@@ -7,7 +7,6 @@ import './Voting.css';
 import NextImage from 'next/image';
 import { RadioGroup, Radio, Flex, Button, Stack, Center, Image, Modal, Textarea } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
-//import { CustomModal } from '../../components/CustomModal/CustomModal';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Graph } from '../../components/Graph/Graph';
@@ -29,7 +28,7 @@ interface InfoProps {
 // outlier is a number corresponding to the vote category for which they have become an outlier
 interface WebSocketMessage {
   result: number[][];
-  outlier: number
+  outlier: number;
   criteria_id: number;
   user_id: number;
 }
@@ -40,6 +39,7 @@ export default function Voting({ ideas }: any) {
   const VOTEOPTIONS = 5;
   const form = useForm({ mode: 'uncontrolled' });
   const [userID, setUserID] = useState(-1);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track if the user is logged in
   const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
   const [currentOptionIndex, setCurrentOptionIndex] = useState(-1);
   const [isVoted, setIsVoted] = useState(Array.from({ length: NUMCATS }, () => false));
@@ -59,87 +59,80 @@ export default function Voting({ ideas }: any) {
   const idea = ideas[currentIdeaIndex];
   const socketRef = useRef<WebSocket | null>(null);
 
-  if (!localStorage.getItem('accessToken')) {
-    router.push('/login');
-  }
+  // Check for access token on the client side
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    if (token) {
+      setIsLoggedIn(true);
+    } else {
+      router.push('/login'); // Redirect if not logged in
+    }
+  }, [router]);
 
-  const getID = async () => {
-    // if (typeof window === 'undefined') return;
-    const TOKEN = localStorage.getItem('accessToken');
-    await axios
+  // Fetch user ID if logged in
+  useEffect(() => {
+    const getID = async () => {
+      const TOKEN = localStorage.getItem('accessToken');
+      await axios
         .get('http://localhost:8000/api/query/id/', {
           headers: {
             AUTHORIZATION: `Bearer ${TOKEN}`,
           },
         })
-        .then(res => {
-            console.log(res);
-            setUserID(res.data.id);
+        .then((res) => {
+          setUserID(res.data.id);
         })
-        .catch(error => {
+        .catch((error) => {
           console.log(error);
         });
-      };
-
-    if (userID === -1) getID();
-
-// Manage the timer and lock state with a countdown and vote submission
-useEffect(() => {
-  if (timeRemaining <= 0) return; // Exit early if no countdown is active
-
-  const intervalId = setInterval(() => {
-    setTimeRemaining((prev) => prev - 1);
-
-    if (timeRemaining === 1) {
-      // Lock this criteria as "voted"
-      const newIsVoted = [...isVoted];
-      newIsVoted[currentOptionIndex] = true;
-      setIsVoted(newIsVoted);
-
-      sendVoteData(currentOptionIndex + 1, votes[currentOptionIndex]); // Send only current vote data
-    }
-  }, 1000);
-
-  // eslint-disable-next-line consistent-return
-  return () => clearInterval(intervalId);
-}, [timeRemaining]);
-
-// Function to send vote data through WebSocket
-const sendVoteData = (criteria_id: number, vote_score: number) => {
-  if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-    const payload = {
-      session_id: '12345', // known as "code" in the workspace database
-      user_id: userID, // Placeholder
-      votes: [
-        {
-          criteria_id,
-          vote_score,
-        },
-      ],
     };
 
-    console.log('Sending payload to backend:', JSON.stringify(payload, null, 2)); // Indented for clarity
-    socketRef.current.send(JSON.stringify(payload));
-  } else {
-    console.error('WebSocket is not open. Current readyState:', socketRef.current?.readyState);
-  }
-};
+    if (isLoggedIn && userID === -1) {
+      getID();
+    }
+  }, [isLoggedIn, userID]);
 
-// Update the radioClick function to start the countdown on each selection
-const radioClick = (index: number, val: number) => {
-  if (isVoted[index]) return; // Skip if this criteria has already been voted on
-  startStopTimer(index);
-  updateVotes(index, val); // Update the vote with the selected value
-};
+  // Manage the timer and lock state with a countdown and vote submission
+  useEffect(() => {
+    if (timeRemaining <= 0) return; // Exit early if no countdown is active
+
+    const intervalId = setInterval(() => {
+      setTimeRemaining((prev) => prev - 1);
+
+      if (timeRemaining === 1) {
+        const newIsVoted = [...isVoted];
+        newIsVoted[currentOptionIndex] = true;
+        setIsVoted(newIsVoted);
+
+        sendVoteData(currentOptionIndex + 1, votes[currentOptionIndex]);
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [timeRemaining]);
+
+  const sendVoteData = (criteria_id: number, vote_score: number) => {
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      const payload = {
+        session_id: '12345',
+        user_id: userID,
+        votes: [{ criteria_id, vote_score }],
+      };
+      socketRef.current.send(JSON.stringify(payload));
+    }
+  };
+
+  const radioClick = (index: number, val: number) => {
+    if (isVoted[index]) return;
+    startStopTimer(index);
+    updateVotes(index, val);
+  };
 
   const updateVotes = (index: number, val: number) => {
     const newVotes = [...votes];
     newVotes[index] = val;
     setVotes(newVotes);
-    setCurrentReasonIndex(index); // Track which option is requesting a reason
-
-    // Disable modals for now
-    //modalHandlers.open();
+    setCurrentReasonIndex(index);
   };
 
   const startStopTimer = (index: number) => {
@@ -149,12 +142,6 @@ const radioClick = (index: number, val: number) => {
 
   const connectWebSocket = () => {
     socketRef.current = new WebSocket('ws://localhost:8000/ws/vote/');
-
-    socketRef.current.onopen = () => {
-      console.log('WebSocket connection opened');
-    };
-
-    // Message from server, either a vote update or an outlier notification
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
       console.log('Response from server:', data);
@@ -205,7 +192,7 @@ const radioClick = (index: number, val: number) => {
     const newReasons = [...reasons];
     newReasons[currentReasonIndex] = reasonInput;
     setReasons(newReasons);
-    setReasonInput(''); // Clear input
+    setReasonInput('');
     modalHandlers.close();
   };
 
@@ -224,10 +211,9 @@ const radioClick = (index: number, val: number) => {
   const Selection: React.FC<VotingProps> = ({ caption, index, infoM }) => (
     <Center>
       <Stack>
-        {timeRemaining > 0 && currentOptionIndex === index &&
-        <h4 style={{ textAlign: 'center' }}>
-          Time Remaining: {timeRemaining}s
-        </h4>}
+        {timeRemaining > 0 && currentOptionIndex === index && (
+          <h4 style={{ textAlign: 'center' }}>Time Remaining: {timeRemaining}s</h4>
+        )}
         <Flex>
           <InfoButton message={infoM} />
           <RadioGroup
@@ -237,15 +223,15 @@ const radioClick = (index: number, val: number) => {
             bg="rgba(0, 0, 0, .3)"
             required
           >
-              <Flex gap="md">
-                  <Image alt="One finger" component={NextImage} src={oneF} h={35} />
-                  <Radio value="1" onClick={() => radioClick(index, 1)} color="grape" />
-                  <Radio value="2" onClick={() => radioClick(index, 2)} color="grape" />
-                  <Radio value="3" onClick={() => radioClick(index, 3)} color="grape" />
-                  <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
-                  <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
-                  <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
-              </Flex>
+            <Flex gap="md">
+              <Image alt="One finger" component={NextImage} src={oneF} h={35} />
+              <Radio value="1" onClick={() => radioClick(index, 1)} color="grape" />
+              <Radio value="2" onClick={() => radioClick(index, 2)} color="grape" />
+              <Radio value="3" onClick={() => radioClick(index, 3)} color="grape" />
+              <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
+              <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
+              <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
+            </Flex>
           </RadioGroup>
         </Flex>
       </Stack>

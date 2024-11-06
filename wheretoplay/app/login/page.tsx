@@ -8,14 +8,30 @@ import {
   Button,
   Title,
   Container,
+  Text,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Login() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);  // Used to block initial render
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [isAlreadyLoggedIn, setIsAlreadyLoggedIn] = useState(false); // New state to handle message display
+
+  // Redirect if the user is already logged in
+  useEffect(() => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
+      setIsAlreadyLoggedIn(true); // Show redirecting message
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 500);
+    } else {
+      setIsLoading(false);  // Allow rendering of the login form if not logged in
+    }
+  }, [router]);
 
   const form = useForm({
     initialValues: {
@@ -30,9 +46,9 @@ export default function Login() {
     },
   });
 
-  // New login logic to handle API call to the Django backend
+  // Login logic to handle API call to the Django backend
   const handleSubmit = async (values: { email: string; password: string }) => {
-    setLoading(true);
+    setLoginLoading(true);
     try {
       const response = await fetch('http://localhost:8000/api/login/', {
         method: 'POST',
@@ -49,7 +65,7 @@ export default function Login() {
         localStorage.setItem('accessToken', data.tokens.access);
         localStorage.setItem('refreshToken', data.tokens.refresh);
 
-        // Redirect to the participant view
+        // Redirect to the dashboard
         router.push('/dashboard');
       } else {
         console.error('Login failed:', data.error);
@@ -57,13 +73,35 @@ export default function Login() {
     } catch (err) {
       console.error('Error during login:', err);
     } finally {
-      setLoading(false);
+      setLoginLoading(false);
     }
   };
 
   const handleSignupRedirect = () => {
     router.push('/signup');
   };
+
+  // Display a "redirecting" message if already logged in
+  if (isAlreadyLoggedIn) {
+    return (
+      <Container
+        size="xs"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text>You are already logged in, redirecting...</Text>
+      </Container>
+    );
+  }
+
+  // Show the login form if the user is not logged in and loading has completed
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <Container
@@ -92,8 +130,8 @@ export default function Login() {
             mt="md"
           />
           <Group justify="space-between" mt="md">
-            <Button type="submit" loading={loading}>
-              {loading ? 'Logging in...' : 'Log in'}
+            <Button type="submit" loading={loginLoading}>
+              {loginLoading ? 'Logging in...' : 'Log in'}
             </Button>
             <Button variant="subtle" onClick={handleSignupRedirect}>
               Don't have an account? Sign Up

@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from 'react';
-import { TextInput, PasswordInput, Button, Paper, Group, Stack, Title, Container } from '@mantine/core';
+import { useState, useEffect } from 'react';
+import { TextInput, PasswordInput, Button, Paper, Group, Stack, Title, Container, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useRouter } from 'next/navigation'; // Import useRouter for navigation
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
 
 export default function Signup() {
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null); // To handle errors
-    const router = useRouter(); // Initialize router
+    const [error, setError] = useState<string | null>(null);
+    const [isAlreadyLoggedIn, setIsAlreadyLoggedIn] = useState(false); // New state for redirect message
+    const router = useRouter();
 
     const form = useForm({
         initialValues: {
@@ -27,6 +28,17 @@ export default function Signup() {
         },
     });
 
+    // Redirect if the user is already logged in
+    useEffect(() => {
+        const accessToken = localStorage.getItem('accessToken');
+        if (accessToken) {
+            setIsAlreadyLoggedIn(true); // Show redirecting message
+            setTimeout(() => {
+                router.push('/dashboard');
+            }, 1000); // 1-second delay before redirecting
+        }
+    }, [router]);
+
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
         setError(null);
@@ -35,8 +47,8 @@ export default function Signup() {
             const response = await axios.post('http://localhost:8000/api/signup/', {
                 email: values.email,
                 password: values.password,
-                password2: values.confirmPassword, // Send confirm password field as well
-                username: values.email, // Assuming username is the same as email in the backend
+                password2: values.confirmPassword,
+                username: values.email,
             });
 
             if (response.status === 201) {
@@ -45,7 +57,7 @@ export default function Signup() {
                 localStorage.setItem('accessToken', access);
                 localStorage.setItem('refreshToken', refresh);
 
-                // Redirect to dashboard or login page
+                // Redirect to dashboard
                 router.push('/dashboard');
             }
         } catch (error) {
@@ -59,6 +71,23 @@ export default function Signup() {
             setLoading(false);
         }
     };
+
+    // Display a "redirecting" message if already logged in
+    if (isAlreadyLoggedIn) {
+        return (
+            <Container
+                size="xs"
+                style={{
+                    minHeight: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                <Text>You are already logged in, redirecting...</Text>
+            </Container>
+        );
+    }
 
     return (
         <Container
@@ -98,7 +127,7 @@ export default function Signup() {
                             {...form.getInputProps('confirmPassword')}
                         />
 
-                        {error && <p style={{ color: 'red' }}>{error}</p>} {/* Display error message */}
+                        {error && <p style={{ color: 'red' }}>{error}</p>}
 
                         <Group justify="space-between" mt="md">
                             <Button type="submit" loading={loading}>
