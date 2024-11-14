@@ -74,6 +74,18 @@ const ResultsPage = ({ params }) => {
     return points;
   };
 
+  //GetIdeaStatus function returns a ratio, if this ratio is less than .4 the point is red, if it's between .4 and .6, it's orange, and if it's above .6 it's green
+    const getIdeaStatus = (points: { x: number; y: number; label: string }[]): void => {
+      points.forEach(point => {
+        //the position of the point on the line y=x, the middle of the graph
+        const a = (point.x + point.y)/2;
+        //The length of one side of the graph, which should always be a square
+        const s = 300;
+        const ratio = ( (2*(a-s)**2)**(.5) ) / (s*(2**.5));
+        console.log(ratio);
+      });
+    };
+
   const getSession = async () => {
        const TOKEN = localStorage.getItem('accessToken');
        const sesh = (await params).session;
@@ -189,6 +201,9 @@ const ResultsPage = ({ params }) => {
         <p>Loading...</p>
     );
   }
+
+  //placeholder getIdeaStatus function call, just to make sure it runs and gets the right ratio
+  getIdeaStatus(getScatterValues());
 
   return (
     <div>
