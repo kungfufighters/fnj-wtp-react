@@ -207,7 +207,6 @@ const ResultsPage = ({ params }) => {
   getIdeaStatus(getScatterValues());
 
   return (
-    
     <div>
       <HeaderSimple glowIndex={2} />
         <h2 style={{ textAlign: 'center' }}>
