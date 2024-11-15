@@ -5,7 +5,7 @@ import { useForm } from '@mantine/form';
 import './Idea.css';
 import './Voting.css';
 import NextImage from 'next/image';
-import { RadioGroup, Radio, Flex, Button, Stack, Center, Image, Modal, Textarea } from '@mantine/core';
+import { RadioGroup, Radio, Flex, Button, Stack, Center, Image, Modal, Textarea, Tooltip, Badge } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -58,6 +58,7 @@ const Voting = ({ params }) => {
   const [modalOpened, modalHandlers] = useDisclosure(false);
   const [currentReasonIndex, setCurrentReasonIndex] = useState(-1);
   const [reasonInput, setReasonInput] = useState('');
+  const [previousVotes, setPreviousVotes] = useState(Array.from({ length: NUMCATS }, () => null)); // Store previous votes
   const [curVotes, setCurVotes] = useState(
     Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0))
   );
@@ -164,7 +165,7 @@ const Voting = ({ params }) => {
   };
 
 
-  if (!queryFetched) {
+  if (!queryFetched && typeof window !== 'undefined') {
     getSession();
     setQueryFetched(true);
   }
@@ -182,7 +183,6 @@ const Voting = ({ params }) => {
   };
 
   const radioClick = (index: number, val: number) => {
-    if (isVoted[index]) return;
     startStopTimer(index);
     updateVotes(index, val);
   };
@@ -191,7 +191,14 @@ const Voting = ({ params }) => {
     const newVotes = [...votes];
     newVotes[index] = val;
     setVotes(newVotes);
-    setCurrentReasonIndex(index);
+    if (isVoted[index]) {
+      const newPreviousVotes = [...previousVotes];
+      newPreviousVotes[index] = votes[index];
+      setPreviousVotes(newPreviousVotes);
+    }
+    const newIsVoted = [...isVoted];
+    newIsVoted[index] = true;
+    setIsVoted(newIsVoted);
   };
 
   const startStopTimer = (index: number) => {
@@ -307,14 +314,17 @@ const Voting = ({ params }) => {
               <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
               <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
               <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
+              <Tooltip label={`Previous Vote: ${previousVotes[index]}`} withArrow>
+              <Badge color="red" size="md" variant="filled"/>
+              </Tooltip>
             </Flex>
           </RadioGroup>
         </Flex>
       </Stack>
     </Center>
   );
-  console.log("curVotes:", curVotes);
-  console.log("isVoted:", isVoted);
+  //console.log("curVotes:", curVotes);
+  //console.log("isVoted:", isVoted);
 
   const categories = [
     { caption: "Reason to Buy", infoM: "Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]" },
