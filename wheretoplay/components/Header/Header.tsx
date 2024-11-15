@@ -84,7 +84,8 @@ export function HeaderSimple({ glowIndex } : any) {
     <header className={classes.header}>
         <Toaster />
         <Container className={classes.mainSection} size="md">
-        <Group justify="flex-end">
+        <Group justify="space-between">          
+        <img src={new URL('../../public/wtp.png', import.meta.url).href} alt="Logo" height={40} />
           <Burger opened={opened} onClick={toggle} hiddenFrom="xs" size="sm" />
 
           <Menu

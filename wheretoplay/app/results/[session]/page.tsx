@@ -15,6 +15,7 @@ import ScatterPlot from '@/components/ScatterPlot/ScatterPlot';
 import '../../Idea.css';
 import { ScrollArea, Center, Stack} from '@mantine/core';
 import axios from 'axios';
+import { HeaderSimple } from '@/components/Header/Header';
 
 ChartJS.register(
   CategoryScale,
@@ -206,7 +207,9 @@ const ResultsPage = ({ params }) => {
   getIdeaStatus(getScatterValues());
 
   return (
+    
     <div>
+      <HeaderSimple glowIndex={2} />
         <h2 style={{ textAlign: 'center' }}>
             Opportunity #{currentIdeaIndex + 1} Results: {`${idea[0]} (${idea[1]})`}
         </h2>
