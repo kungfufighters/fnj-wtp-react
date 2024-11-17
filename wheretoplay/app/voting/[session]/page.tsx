@@ -10,6 +10,7 @@ import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Graph } from '../../../components/Graph/Graph';
+import { HeaderSimple } from '@/components/Header/Header';
 import oneF from '../../../public/OneFinger.png';
 import fiveF from '../../../public/FiveFingers.png';
 
@@ -371,6 +372,7 @@ const Voting = ({ params }) => {
 
   return (
   <>
+  <HeaderSimple glowIndex={-1} />
     <h2 style={{ textAlign: 'center' }}>
       Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
     </h2>
