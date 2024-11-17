@@ -63,7 +63,7 @@ export default function GuestInfoPage() {
 
   return (
     <div>
-      <HeaderSimple />
+      <HeaderSimple glowIndex={0} />
       <Container size="sm" style={{ marginTop: '2rem' }}>
         <TextInput
           label="First Name"

@@ -31,6 +31,7 @@ interface WebSocketMessage {
   outlier: number;
   criteria_id: number;
   user_id: number;
+  median: number;
 }
 
 type Opp = {
@@ -57,6 +58,7 @@ const Voting = ({ params }) => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [modalOpened, modalHandlers] = useDisclosure(false);
   const [currentReasonIndex, setCurrentReasonIndex] = useState(-1);
+  const [median, setMedian] = useState<number>(0);
   const [reasonInput, setReasonInput] = useState('');
   const [curVotes, setCurVotes] = useState<number[][][]>(
     [Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0))]
@@ -218,6 +220,7 @@ const Voting = ({ params }) => {
       const data: WebSocketMessage = JSON.parse(event.data);
       console.log('Response from server:', data);
       if (data.outlier) {
+        setMedian(data.median);
         modalHandlers.open(); // Open the modal if it's an outlier and matches the current user
       } else if (data.result) {
         setCurVotes((prevVotes) => {
@@ -414,7 +417,7 @@ const Voting = ({ params }) => {
     <Modal
       opened={modalOpened}
       onClose={modalHandlers.close}
-      title="You are an outlier"
+      title={`You are an outlier. Your vote: ${votes[currentIdeaIndex][currentReasonIndex]}. Median: ${Math.floor((median * 10)) / 10}.`}
       centered
       fullScreen={isMobile}
       transitionProps={{ transition: 'fade', duration: 200 }}

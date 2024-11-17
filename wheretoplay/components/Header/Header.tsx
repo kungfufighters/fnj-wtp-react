@@ -26,6 +26,9 @@ export function HeaderSimple({ glowIndex } : any) {
   };
 
   const handleDelete = async () => {
+    var confirm : boolean = window.confirm("Are you sure you want to delete your account?")
+    if(!confirm)
+        return;
     const TOKEN = localStorage.getItem('accessToken');
     const response = await axios.post('http://localhost:8000/api/delete_user/', {}, {
         headers: {

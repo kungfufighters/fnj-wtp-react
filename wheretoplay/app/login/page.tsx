@@ -129,12 +129,15 @@ export default function Login() {
             required
             mt="md"
           />
-          <Group justify="space-between" mt="md">
-            <Button type="submit" loading={loginLoading}>
+            <Button type="submit" loading={loginLoading} mt="md">
               {loginLoading ? 'Logging in...' : 'Log in'}
             </Button>
+          <Group justify="space-between" mt="md">
             <Button variant="subtle" onClick={handleSignupRedirect}>
-              Don't have an account? Sign Up
+              Don't have an account?
+            </Button>
+            <Button variant="subtle" onClick={() => router.push('/forgotPassword')}>
+              Forgot Password?
             </Button>
           </Group>
         </form>
