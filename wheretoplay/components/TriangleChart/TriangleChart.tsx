@@ -61,22 +61,38 @@ const TriangleChart = ({points}) => {
           stroke="black"
           strokeWidth="0.01"
         />
+
+        <text x="0.5" y="0.8333" textAnchor="middle" fontSize="0.07" fill="white">
+          Shelve
+        </text>
+
         <polygon
           points="0.1667,0.6667 0.8333,0.6667 0.6667,0.3333 0.3333,0.3333"
           fill="#e08d49"
           stroke="black"
           strokeWidth="0.01"
         />
-        {/* Top Triangle */}
+
+        <text x="0.5" y="0.53" textAnchor="middle" fontSize="0.07" fill="white">
+          Keep Open
+        </text>
+        
         <polygon
           points="0.3333,0.3333 0.6667,0.3333 0.5,0"
           fill="#9bbb59"
           stroke="black"
           strokeWidth="0.01"
         />
+
+        <text x="0.5" y="0.2" textAnchor="middle" fontSize="0.05" fill="white">
+          Pursue
+        </text>
+        <text x="0.5" y="0.25" textAnchor="middle" fontSize="0.05" fill="white">
+          Now
+        </text>
+
       </svg>
 
-      {/* Scatter Chart */}
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         <Scatter data={data} options={options} />
       </div>
