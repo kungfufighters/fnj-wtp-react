@@ -18,7 +18,7 @@ export function HeaderSimple({ glowIndex } : any) {
   const router = useRouter();
   const [opened, { toggle }] = useDisclosure(false);
   const [userMenuOpened, setUserMenuOpened] = useState(false);
-  const [active, setActive] = useState(links[glowIndex].link);
+  const [active, setActive] = useState(links[glowIndex]?.link || '');
   const [accountLabel, setAccountLabel] = useState('');
   const handleLogout = () => {
     localStorage.clear();

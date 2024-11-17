@@ -334,7 +334,7 @@ const Voting = ({ params }) => {
 
   return (
   <>
-  <HeaderSimple glowIndex={2} />
+  <HeaderSimple glowIndex={-1} />
     <h2 style={{ textAlign: 'center' }}>
       Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
     </h2>

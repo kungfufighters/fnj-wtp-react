@@ -90,7 +90,7 @@ export default function InvitePage() {
 
   return (
     <div>
-      <HeaderSimple glowIndex={2} />
+      <HeaderSimple glowIndex={-1} />
       <Toaster />
       <Container size="sm" style={{ marginTop: '2rem' }}>
         <h1>Invite Collaborators</h1>
