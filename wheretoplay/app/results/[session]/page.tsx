@@ -86,7 +86,8 @@ const ResultsPage = ({ params }) => {
       const ratio = (Math.sqrt(2 * (a - s) ** 2)) / (s * Math.sqrt(2)); // Calculate the ratio
       const minX =  (ratio) / 2;
       const maxX = (ratio - 2) / (-2);
-      const newX = (Math.random() * (maxX - minX) + minX); // Random x within the range of the triangle
+
+      const newX = (point.x/300)*(maxX-minX) + minX;  //Transposing the old x value onto the triangle gives a meaningless(?) result but is consistent
       return { x: newX, y: ratio, label: point.label };
     });
   };
@@ -206,10 +207,6 @@ const ResultsPage = ({ params }) => {
         <p>Loading...</p>
     );
   }
-
-  //placeholder getIdeaStatus function call, just to make sure it runs and gets the right ratio
-console.log('test');
-  console.table(getTriValues(getScatterValues()));
 
   return (
     
