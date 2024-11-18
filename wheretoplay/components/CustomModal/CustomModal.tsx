@@ -18,7 +18,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
   title, 
   placeholder, 
   buttonText, 
-  isMobile 
+  isMobile,
 }) => {
   const [input, setInput] = useState('');
 

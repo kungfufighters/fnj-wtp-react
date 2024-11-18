@@ -1,24 +1,26 @@
-"use client";
+'use client';
 
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  TextInput,
-  PasswordInput,
-  Paper,
-  Group,
   Button,
-  Title,
   Container,
+  Group,
+  Paper,
+  PasswordInput,
   Text,
+  TextInput,
+  Title,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 export default function Login() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);  // Used to block initial render
+  const [isLoading, setIsLoading] = useState(true); // Used to block initial render
   const [loginLoading, setLoginLoading] = useState(false);
   const [isAlreadyLoggedIn, setIsAlreadyLoggedIn] = useState(false); // New state to handle message display
+  const [error, setError] = useState<string | null>(null); //Error state 
+
 
   // Redirect if the user is already logged in
   useEffect(() => {
@@ -29,7 +31,7 @@ export default function Login() {
         router.push('/');
       }, 500);
     } else {
-      setIsLoading(false);  // Allow rendering of the login form if not logged in
+      setIsLoading(false); // Allow rendering of the login form if not logged in
     }
   }, [router]);
 
@@ -39,10 +41,8 @@ export default function Login() {
       password: '',
     },
     validate: {
-      email: (value) =>
-        /^\S+@\S+$/.test(value) ? null : 'Invalid email',
-      password: (value) =>
-        value.length >= 6 ? null : 'Password must be at least 6 characters',
+      email: (value) => (/^\S+@\S+$/.test(value) ? null : 'Invalid email'),
+      password: (value) => (value.length >= 6 ? null : 'Password must be at least 6 characters'),
     },
   });
 
@@ -69,6 +69,7 @@ export default function Login() {
         router.push('/');
       } else {
         console.error('Login failed:', data.error);
+        setError('Login failed: Invalid email or password'); 
       }
     } catch (err) {
       console.error('Error during login:', err);
@@ -129,14 +130,22 @@ export default function Login() {
             required
             mt="md"
           />
-          <Group justify="space-between" mt="md">
-            <Button type="submit" loading={loginLoading}>
+            <Button type="submit" loading={loginLoading} mt="md">
               {loginLoading ? 'Logging in...' : 'Log in'}
             </Button>
+          <Group justify="space-between" mt="md">
             <Button variant="subtle" onClick={handleSignupRedirect}>
-              Don't have an account? Sign Up
+              Don't have an account?
+            </Button>
+            <Button variant="subtle" onClick={() => router.push('/forgotPassword')}>
+              Forgot Password?
             </Button>
           </Group>
+          {error && (
+        <Text color="red" mt="sm">
+          {error}
+        </Text>
+      )}
         </form>
       </Paper>
     </Container>

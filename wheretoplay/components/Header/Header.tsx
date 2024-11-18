@@ -18,7 +18,7 @@ export function HeaderSimple({ glowIndex } : any) {
   const router = useRouter();
   const [opened, { toggle }] = useDisclosure(false);
   const [userMenuOpened, setUserMenuOpened] = useState(false);
-  const [active, setActive] = useState(links[glowIndex].link);
+  const [active, setActive] = useState(links[glowIndex]?.link || '');
   const [accountLabel, setAccountLabel] = useState('');
   const handleLogout = () => {
     localStorage.clear();
@@ -26,6 +26,9 @@ export function HeaderSimple({ glowIndex } : any) {
   };
 
   const handleDelete = async () => {
+    var confirm : boolean = window.confirm("Are you sure you want to delete your account?")
+    if(!confirm)
+        return;
     const TOKEN = localStorage.getItem('accessToken');
     const response = await axios.post('http://localhost:8000/api/delete_user/', {}, {
         headers: {
@@ -84,7 +87,8 @@ export function HeaderSimple({ glowIndex } : any) {
     <header className={classes.header}>
         <Toaster />
         <Container className={classes.mainSection} size="md">
-        <Group justify="flex-end">
+        <Group justify="space-between">          
+        <img src={new URL('../../public/wtp.png', import.meta.url).href} alt="Logo" height={40} />
           <Burger opened={opened} onClick={toggle} hiddenFrom="xs" size="sm" />
 
           <Menu
