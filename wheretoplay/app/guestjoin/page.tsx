@@ -1,15 +1,15 @@
 'use client';
 
 import '@mantine/core/styles.css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { TextInput, Button, Container } from '@mantine/core';
 import { HeaderSimple } from '@/components/Header/Header';
-import { Container, TextInput, Button } from '@mantine/core';
 
-export default function GuestInfoPage() {
+export default function GuestJoinPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sessionPin = searchParams.get('sessionPin');
+  const sessionPin = searchParams.get('sessionPin'); // Extract session pin from query parameters
 
   const [guestInfo, setGuestInfo] = useState({
     first_name: '',
@@ -17,49 +17,31 @@ export default function GuestInfoPage() {
     email: '',
   });
 
-  // Check if user is logged in or sessionPin is missing
-  useEffect(() => {
-    const isAuthenticated = () => {
-      if (typeof window !== 'undefined') {
-        return localStorage.getItem('accessToken') !== null;
-      }
-      return false;
-    };
-
-    if (isAuthenticated()) {
-      // Redirect logged-in users
-      router.push('/');
-    } else if (!sessionPin) {
-      // Redirect if sessionPin is missing
-      router.push('/');
-    }
-  }, [router, sessionPin]);
-
-  const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setGuestInfo({ ...guestInfo, [field]: event.currentTarget.value });
+  const handleInputChange = (field) => (event) => {
+    setGuestInfo({ ...guestInfo, [field]: event.target.value });
   };
 
   const handleSubmit = async () => {
-    // Send guest info to the backend
     try {
-      const response = await fetch('/api/guests/', {
+      const response = await fetch('http://localhost:8000/api/guests/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(guestInfo),
+        body: JSON.stringify({ ...guestInfo, sessionPin }),
       });
+
       const data = await response.json();
       if (response.ok) {
-        // Store guest identifier (e.g., guest ID) in localStorage
         localStorage.setItem('guest_id', data.guest_id);
-        // Navigate to voting session
         router.push(`/voting/${sessionPin}`);
       } else {
-        console.error('Error submitting guest info:', data);
+        alert(data.error || 'Failed to join the session. Please try again.');
       }
     } catch (error) {
       console.error('Error:', error);
+      alert('An unexpected error occurred. Please try again.');
     }
   };
+
 
   return (
     <div>

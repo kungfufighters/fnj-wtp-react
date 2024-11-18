@@ -1,52 +1,61 @@
 .header {
-    height: rem(100px);
-    margin-bottom: rem(10px);
-    background-color: var(--mantine-color-body);
-    border-bottom: rem(1px) solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
-  }
-  
-  .inner {
-    height: rem(56px);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .link {
-    display: block;
-    line-height: 1;
-    padding: rem(8px) rem(12px);
-    border-radius: var(--mantine-radius-sm);
-    text-decoration: none;
-    color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
-    font-size: var(--mantine-font-size-sm);
-    font-weight: 500;
-  
-    @mixin hover {
-      background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
-    }
-  
-    [data-mantine-color-scheme] &[data-active] {
-      background-color: var(--mantine-color-blue-filled);
-      color: var(--mantine-color-white);
-    }
-  }
-  .user {
-    color: light-dark(var(--mantine-color-black), var(--mantine-color-dark-0));
-    padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
-    border-radius: var(--mantine-radius-sm);
-    transition: background-color 100ms ease;
-  
-    &:hover {
-      background-color: light-dark(var(--mantine-color-white), var(--mantine-color-dark-8));
-    }
-  
-    @media (max-width: $mantine-breakpoint-xs) {
-      display: none;
-    }
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--mantine-color-body);
+  height: rem(100px);
+  border-bottom: rem(1px) solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+}
 
-  .mainSection {
-    /*padding-bottom: var(--mantine-spacing-sm);*/
-  }
-  
+.mainSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Ensures space between the logo and other elements */
+  width: 100%;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Ensures logo is on the left, others on the right */
+  width: 100%;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  /* Aligns the logo to the left */
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  /* Aligns links and menu to the right */
+  gap: rem(20px);
+  /* Adds spacing between navigation links and user menu */
+}
+
+.navLinks {
+  display: flex;
+  gap: rem(15px);
+  /* Adds spacing between each navigation link */
+}
+
+.user {
+  display: flex;
+  align-items: center;
+}
+
+.link {
+  text-decoration: none;
+  font-size: var(--mantine-font-size-sm);
+  color: light-dark(var(--mantine-color-gray-7), var(--mantine-color-dark-0));
+}
+
+.link:hover {
+  text-decoration: underline;
+}
