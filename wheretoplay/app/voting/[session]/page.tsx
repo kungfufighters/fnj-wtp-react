@@ -10,6 +10,7 @@ import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Graph } from '../../../components/Graph/Graph';
+import { HeaderSimple } from '@/components/Header/Header';
 import oneF from '../../../public/OneFinger.png';
 import fiveF from '../../../public/FiveFingers.png';
 
@@ -24,20 +25,21 @@ interface InfoProps {
   message: string;
 }
 
-// result is 1 2D array with the new votes
+// result is 1D array with the new votes
 // outlier is a number corresponding to the vote category for which they have become an outlier
 interface WebSocketMessage {
-  result: number[][];
+  result: number[];
   outlier: number;
   criteria_id: number;
   user_id: number;
+  median: number;
 }
 
 type Opp = {
   name: string;
   customer_segment: string;
   description: string;
-  opportunity_id: number[][];
+  opportunity_id: number;
   reasons: string[];
   imgurl: string;
 };
@@ -52,14 +54,15 @@ const Voting = ({ params }) => {
   const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
   const [currentOptionIndex, setCurrentOptionIndex] = useState(-1);
   const [isVoted, setIsVoted] = useState(Array.from({ length: NUMCATS }, () => false));
-  const [votes, setVotes] = useState(Array.from({ length: NUMCATS }, () => 0));
+  const [votes, setVotes] = useState<number[][]>([[0, 0, 0, 0, 0, 0]]);
   const [reasons, setReasons] = useState(Array.from({ length: NUMCATS }, () => ''));
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [modalOpened, modalHandlers] = useDisclosure(false);
   const [currentReasonIndex, setCurrentReasonIndex] = useState(-1);
+  const [median, setMedian] = useState<number>(0);
   const [reasonInput, setReasonInput] = useState('');
-  const [curVotes, setCurVotes] = useState(
-    Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0))
+  const [curVotes, setCurVotes] = useState<number[][][]>(
+    [Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0))]
   );
   const router = useRouter();
   const [ideas, setIdeas] = useState<Opp[]>([]);
@@ -116,7 +119,7 @@ const Voting = ({ params }) => {
         newIsVoted[currentOptionIndex] = true;
         setIsVoted(newIsVoted);
 
-        sendVoteData(currentOptionIndex + 1, votes[currentOptionIndex]);
+        sendVoteData(currentOptionIndex + 1, votes[currentIdeaIndex][currentOptionIndex]);
       }
     }, 1000);
 
@@ -136,6 +139,8 @@ const Voting = ({ params }) => {
          })
          .then(res => {
              const newIdeas: React.SetStateAction<any[]> = [];
+             const newVotes: React.SetStateAction<any[]> = [];
+             const newAllVotes: React.SetStateAction<any[]> = [];
              const opportunities = res.data;
              opportunities.forEach((
                opp: {
@@ -152,9 +157,13 @@ const Voting = ({ params }) => {
                  opp.opportunity_id,
                  opp.reasons,
                  opp.imgurl]);
+               newVotes.push([0, 0, 0, 0, 0, 0]);
+               newAllVotes.push(Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0)));
              });
              console.log(newIdeas);
              setIdeas(newIdeas);
+             setVotes(newVotes);
+             setCurVotes(newAllVotes);
              setIdea(newIdeas[currentIdeaIndex]);
              console.log(newIdeas[currentIdeaIndex]);
          })
@@ -170,6 +179,11 @@ const Voting = ({ params }) => {
   }
 
   const sendVoteData = (criteria_id: number, vote_score: number) => {
+    const newVotesAll = [...votes];
+    const newVotesOpp = [...votes[currentIdeaIndex]];
+    newVotesOpp[criteria_id - 1] = vote_score;
+    newVotesAll[currentIdeaIndex] = newVotesOpp;
+    setVotes(newVotesAll);
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       const payload = {
         opportunity_id: idea[3],
@@ -182,15 +196,17 @@ const Voting = ({ params }) => {
   };
 
   const radioClick = (index: number, val: number) => {
-    if (isVoted[index]) return;
+    if (timeRemaining > 0 && index !== currentOptionIndex) return;
     startStopTimer(index);
     updateVotes(index, val);
   };
 
   const updateVotes = (index: number, val: number) => {
-    const newVotes = [...votes];
-    newVotes[index] = val;
-    setVotes(newVotes);
+    const newVotesAll = [...votes];
+    const newVotesOpp = [...votes[currentIdeaIndex]];
+    newVotesOpp[index] = val;
+    newVotesAll[currentIdeaIndex] = newVotesOpp;
+    setVotes(newVotesAll);
     setCurrentReasonIndex(index);
   };
 
@@ -205,13 +221,16 @@ const Voting = ({ params }) => {
       const data: WebSocketMessage = JSON.parse(event.data);
       console.log('Response from server:', data);
       if (data.outlier) {
+        setMedian(data.median);
         modalHandlers.open(); // Open the modal if it's an outlier and matches the current user
       } else if (data.result) {
         setCurVotes((prevVotes) => {
-          const newVotes = [...prevVotes];
+          const allVotes = [...prevVotes];
+          const newVotes = [...allVotes[currentIdeaIndex]];
           const criteriaIndex = data.criteria_id - 1; // Adjust criteria_id to 0-based index
           newVotes[criteriaIndex] = data.result;
-          return newVotes;
+          allVotes[currentIdeaIndex] = newVotes;
+          return allVotes;
         });
     }
     };
@@ -244,9 +263,27 @@ const Voting = ({ params }) => {
     else router.push('/dashboard');
     setCurrentOptionIndex(-1);
     setIsVoted(Array.from({ length: NUMCATS }, () => false));
-    setVotes(Array.from({ length: NUMCATS }, () => 0));
     setReasons(Array.from({ length: NUMCATS }, () => ''));
     setTimeRemaining(0);
+  };
+
+
+  const goToPreviousIdea = () => {
+    if (currentIdeaIndex > 0) {
+      setIdea(ideas[currentIdeaIndex - 1]);
+      setCurrentIdeaIndex(currentIdeaIndex - 1);
+    }
+    setCurrentOptionIndex(-1);
+    setIsVoted(Array.from({ length: NUMCATS }, () => false));
+    setReasons(Array.from({ length: NUMCATS }, () => ''));
+    setTimeRemaining(0);
+  }
+
+  const isEmpty = (vs : number[]) => {
+    for (let i = 0; i < vs.length; i += 1) {
+      if (vs[i] > 0) return false;
+    }
+    return true;
   };
 
   const handleReasonSubmit = async () => {
@@ -292,23 +329,25 @@ const Voting = ({ params }) => {
         )}
         <Flex>
           <InfoButton message={infoM} />
-          <RadioGroup
-            value={votes[index].toString()}
-            label={caption}
-            className={timeRemaining > 0 && currentOptionIndex !== index ? 'Disabled' : ''}
-            bg="rgba(0, 0, 0, .3)"
-            required
-          >
-            <Flex gap="md">
-              <Image alt="One finger" component={NextImage} src={oneF} h={35} />
-              <Radio value="1" onClick={() => radioClick(index, 1)} color="grape" />
-              <Radio value="2" onClick={() => radioClick(index, 2)} color="grape" />
-              <Radio value="3" onClick={() => radioClick(index, 3)} color="grape" />
-              <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
-              <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
-              <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
-            </Flex>
-          </RadioGroup>
+            <RadioGroup
+              value={votes[currentIdeaIndex][index].toString()}
+              label={caption}
+              description={currentIdeaIndex > 0 && votes[currentIdeaIndex - 1][index] > 0 ?
+                `You voted ${votes[currentIdeaIndex - 1][index]} for ${ideas[currentIdeaIndex - 1][0]}` : ''}
+              className={timeRemaining > 0 && currentOptionIndex !== index ? 'Disabled' : ''}
+              bg="rgba(0, 0, 0, .3)"
+              required
+            >
+              <Flex gap="md">
+                <Image alt="One finger" component={NextImage} src={oneF} h={35} />
+                <Radio value="1" onClick={() => radioClick(index, 1)} color="grape" />
+                <Radio value="2" onClick={() => radioClick(index, 2)} color="grape" />
+                <Radio value="3" onClick={() => radioClick(index, 3)} color="grape" />
+                <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
+                <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
+                <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
+              </Flex>
+            </RadioGroup>
         </Flex>
       </Stack>
     </Center>
@@ -333,6 +372,7 @@ const Voting = ({ params }) => {
 
   return (
   <>
+  <HeaderSimple glowIndex={-1} />
     <h2 style={{ textAlign: 'center' }}>
       Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
     </h2>
@@ -355,11 +395,13 @@ const Voting = ({ params }) => {
           {categories.map((category, index) => (
             <React.Fragment key={index}>
               <Selection caption={category.caption} index={index} infoM={category.infoM} />
-              {isVoted[index] && (
+              {votes[currentIdeaIndex][index] > 0 &&
+              !isEmpty(curVotes[currentIdeaIndex][index]) && (
                 <Graph
                   key={index}
                   graphTitle=""
-                  votes={Array.from({ length: VOTEOPTIONS }, (_, i) => [i + 1, curVotes[index][i]])}
+                  votes={Array.from({ length: VOTEOPTIONS },
+                    (_, i) => [i + 1, curVotes[currentIdeaIndex][index][i]])}
                 />
               )}
             </React.Fragment>
@@ -367,14 +409,17 @@ const Voting = ({ params }) => {
         </Stack>
       </Center>
       <Center>
-        <Button className="Idea-button" type="submit">Proceed</Button>
+        {currentIdeaIndex > 0 &&
+          <Button className="Idea-button" type="button" onClick={goToPreviousIdea} mx="md">Return</Button>
+        }
+        <Button className="Idea-button" type="submit">{currentIdeaIndex < ideas.length - 1 ? 'Proceed' : 'Finish'}</Button>
       </Center>
     </form>
 
     <Modal
       opened={modalOpened}
       onClose={modalHandlers.close}
-      title="You are an outlier"
+      title={`You are an outlier. Your vote: ${votes[currentIdeaIndex][currentReasonIndex]}. Median: ${Math.floor((median * 10)) / 10}.`}
       centered
       fullScreen={isMobile}
       transitionProps={{ transition: 'fade', duration: 200 }}

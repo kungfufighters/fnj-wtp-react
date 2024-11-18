@@ -23,16 +23,22 @@ const ScatterPlot = ({points}) => {
 
         // Draw scatter points
         ctx.fillStyle = "black"; // Color for scatter points
-        ctx.fillText('CHALLENGE', 125, 300);
-        ctx.fillText('P', 0, 120);
-        ctx.fillText('O', 0, 130);
-        ctx.fillText('T', 0, 140);
-        ctx.fillText('E', 0, 150);
-        ctx.fillText('N', 0, 160);
-        ctx.fillText('T', 0, 170);
-        ctx.fillText('I', 0, 180);
-        ctx.fillText('A', 0, 190);
-        ctx.fillText('L', 0, 200);
+        
+        ctx.fillText('1', 0, 300);
+
+        ctx.fillText('2', 75, 300);
+        ctx.fillText('3', 150, 300);
+        ctx.fillText('4', 225, 300);
+        ctx.fillText('5', 290, 300);
+
+        
+        ctx.fillText('2', 0, 225);
+        ctx.fillText('3', 0, 150);
+        ctx.fillText('4', 0, 75);
+        ctx.fillText('5', 0, 10);
+
+
+
         points.forEach(point => {
             ctx.beginPath();
             ctx.arc(point.x, point.y, 5, 0, Math.PI * 2); // Draw a circle

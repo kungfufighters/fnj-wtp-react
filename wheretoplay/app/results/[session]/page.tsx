@@ -13,8 +13,10 @@ import {
 import { Bar, Scatter} from 'react-chartjs-2';
 import ScatterPlot from '@/components/ScatterPlot/ScatterPlot';
 import '../../Idea.css';
-import { ScrollArea, Center, Stack} from '@mantine/core';
+import { ScrollArea, Center, Stack,Flex} from '@mantine/core';
 import axios from 'axios';
+import { HeaderSimple } from '@/components/Header/Header';
+import TriangleChart from '@/components/TriangleChart/TriangleChart';
 
 ChartJS.register(
   CategoryScale,
@@ -71,7 +73,23 @@ const ResultsPage = ({ params }) => {
       points.push({ x: xVal, y: yVal, label: ide[0] });
       index += 1;
     });
+    console.table(points);
     return points;
+  };
+
+  //transformPoints converts points on the graph into points from the triangle.
+  //the y is equal to each point's position on the diagonal, the x is a random value within the width of the triangle graph
+  const getTriValues = (points: { x: number; y: number; label: string }[]): { x: number; y: number; label: string }[] => {
+    return points.map(point => {
+      const a = (point.x + point.y) / 2; // Position on the y=x line
+      const s = 300; // Length of one side of the square
+      const ratio = (Math.sqrt(2 * (a - s) ** 2)) / (s * Math.sqrt(2)); // Calculate the ratio
+      const minX =  (ratio) / 2;
+      const maxX = (ratio - 2) / (-2);
+
+      const newX = (point.x/300)*(maxX-minX) + minX;  //Transposing the old x value onto the triangle gives a meaningless(?) result but is consistent
+      return { x: newX, y: ratio, label: point.label };
+    });
   };
 
   const getSession = async () => {
@@ -191,7 +209,9 @@ const ResultsPage = ({ params }) => {
   }
 
   return (
+    
     <div>
+      <HeaderSimple glowIndex={-1} />
         <h2 style={{ textAlign: 'center' }}>
             Opportunity #{currentIdeaIndex + 1} Results: {`${idea[0]} (${idea[1]})`}
         </h2>
@@ -269,12 +289,10 @@ const ResultsPage = ({ params }) => {
           <div style={{ height: '150px' }}>
             <Bar key={`chart-revenue-${currentIdeaIndex}`} data={graphData('Time to Revenue', idea[3][5])} options={chartOptions} />
           </div>
-          
         </div>
         <div className="right-text-areas" style={{ width: '20%' }}>
           <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  } }> 
-            
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  } }>
           <ScrollArea h={150} scrollbars="y"> {idea[4][3]}</ScrollArea>
           </div>
 
@@ -289,15 +307,36 @@ const ResultsPage = ({ params }) => {
           </div>
         </div>
       </div>
-
-      <Stack>
-        <h3 style={{textAlign: 'center'}}>Where to Play</h3>
-        <div style={{height: '350px'}}>
-        <Center>
-          <ScatterPlot points={getScatterValues()} />
+      
+    <div style={{
+        display:'flex',
+        justifyContent: 'space-between',
+        width:'70%',
+        margin: '0 auto',
+        padding: '0 20px'
+      }}>
+      <div style={{width:'50%'}}>
+        <Center><h3>Where To Play Triangle</h3></Center>
+          <Center>
+            <div style={{ height: '300px' }}>
+              <TriangleChart points = {getTriValues(getScatterValues())}/>
+            </div>
         </Center>
+      </div>
+
+        <div style={{width:'50%'}}>
+        <h3 style={{textAlign: 'center'}}>Where to Play</h3>
+          <Center>
+          <Flex align='center'>
+            <div style={{writingMode: 'vertical-rl', transform: 'rotate(180deg)'}}>
+            <p>Potential</p>
+            </div>
+            <ScatterPlot points={getScatterValues()} />
+          </Flex>
+          </Center>
+          <Center><p>Challenges</p></Center>
         </div>
-      </Stack>
+      </div>
 
       <div className="navigation-buttons" style={{ marginTop: '20px', textAlign: 'center'  }}>
         {currentIdeaIndex > 0 &&

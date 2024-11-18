@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios, { AxiosError } from 'axios';
 import IdeaSubmissionForm from './ideaSubmissionFormNEW';
+import { HeaderSimple } from '@/components/Header/Header';
+
 
 function CreateWorkspace() {
   const router = useRouter();
@@ -150,6 +152,7 @@ function CreateWorkspace() {
 
   return (
     <div className="CreateWorkspace">
+      <HeaderSimple glowIndex={2}/>
       {!submitted && <IdeaSubmissionForm onSubmit={handleFormSubmit} />}
       {submitted && <h1>Thank you for your submission!</h1>}
     </div>
