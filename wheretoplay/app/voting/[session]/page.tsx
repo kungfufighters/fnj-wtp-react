@@ -208,7 +208,7 @@ const Voting = ({ params }) => {
     setVotes(newVotes);
     if (isVoted[index]) {
       const newPreviousVotes = [...previousVotes];
-      newPreviousVotes[index] = votes[index];
+      newPreviousVotes[index] = votes[currentIdeaIndex][index];
       setPreviousVotes(newPreviousVotes);
     }
     const newIsVoted = [...isVoted];
@@ -358,30 +358,11 @@ const Voting = ({ params }) => {
               <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
               <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
               <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
-              <Tooltip label={`Previous Vote: ${previousVotes[index]}`} withArrow>
+              <Tooltip label={`Previous Vote: ${previousVotes[index] || 'None'}`} withArrow>
               <Badge color="red" size="md" variant="filled"/>
               </Tooltip>
             </Flex>
           </RadioGroup>
-            <RadioGroup
-              value={votes[currentIdeaIndex][index].toString()}
-              label={caption}
-              description={currentIdeaIndex > 0 && votes[currentIdeaIndex - 1][index] > 0 ?
-                `You voted ${votes[currentIdeaIndex - 1][index]} for ${ideas[currentIdeaIndex - 1][0]}` : ''}
-              className={timeRemaining > 0 && currentOptionIndex !== index ? 'Disabled' : ''}
-              bg="rgba(0, 0, 0, .3)"
-              required
-            >
-              <Flex gap="md">
-                <Image alt="One finger" component={NextImage} src={oneF} h={35} />
-                <Radio value="1" onClick={() => radioClick(index, 1)} color="grape" />
-                <Radio value="2" onClick={() => radioClick(index, 2)} color="grape" />
-                <Radio value="3" onClick={() => radioClick(index, 3)} color="grape" />
-                <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
-                <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
-                <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
-              </Flex>
-            </RadioGroup>
         </Flex>
       </Stack>
     </Center>
