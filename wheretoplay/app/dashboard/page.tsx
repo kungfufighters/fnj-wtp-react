@@ -11,7 +11,6 @@ import { Accordion, Center, Stack, PasswordInput, TextInput, Button, Collapse, A
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
-import { HeaderSimple } from '@/components/Header/Header';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -442,7 +441,6 @@ export default function Dashboard() {
 
     return (
         <>
-        <HeaderSimple glowIndex={1} />
             <Toaster />
             <Center>
                 <Stack>
