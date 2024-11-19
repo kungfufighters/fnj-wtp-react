@@ -136,12 +136,6 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
 
     return (
         <div className="Idea">
-            <header className="Idea-header">
-                <nav>
-                    <p><strong>Validate a Startup</strong></p>
-                </nav>
-            </header>
-
             <form onSubmit={handleSubmit}>
                 <div className="Idea-vert">
                   <div className="Idea-vert Idea-vert-item">
