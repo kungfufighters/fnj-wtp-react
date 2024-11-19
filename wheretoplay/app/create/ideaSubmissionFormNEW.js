@@ -1,11 +1,14 @@
 import './Idea.css'
 
 import React, { useState } from "react"
+import { RadioGroup, Radio, Collapse, Flex, Center, Button } from '@mantine/core';
 import axios from "axios";
 
 const IdeaSubmissionForm = ({ onSubmit }) => {
   const [ideas, setIdeas] = useState([["", "", "", null]])
   const [company, setCompany] = useState("")
+  const [thresholdSensitivity, setThresholdSensitivity] = useState("Standard")
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false)
 
   function changeCompany(e) {
     setCompany(e.target.value)
@@ -23,7 +26,7 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    onSubmit(ideas, company);  // Pass submitted ideas to the parent (App.js)
+    onSubmit(ideas, company, thresholdSensitivity);  // Pass submitted ideas to the parent (App.js)
   };
 
   function IdeaForm({i, name, seg, desc, stat, source}) {
@@ -136,12 +139,6 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
 
     return (
         <div className="Idea">
-            <header className="Idea-header">
-                <nav>
-                    <p><strong>Validate a Startup</strong></p>
-                </nav>
-            </header>
-
             <form onSubmit={handleSubmit}>
                 <div className="Idea-vert">
                   <div className="Idea-vert Idea-vert-item">
@@ -153,6 +150,25 @@ const IdeaSubmissionForm = ({ onSubmit }) => {
               <IdeaForm i={i} name={ideas[i][0]} seg={ideas[i][1]} desc={ideas[i][2]} source={ideas[i][3]}/>
             </div>
           ))}
+          <Center>
+              <button className="Idea-button" type="button" onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}>{showAdvancedSettings ? "Close" : "Open"} Advanced Settings</button>
+          </Center>
+          <Collapse in={showAdvancedSettings}>
+            <RadioGroup
+                value={thresholdSensitivity}
+                label={"Choose outlier sensitivity"}
+                description={"More sensitive means it is more easier to be an outlier"}
+                required
+              >
+              <Center>
+                <Flex gap="md">
+                  <Radio label="Sensitive" value="Sensitive" onClick={() => setThresholdSensitivity("Sensitive")} color="grape" />
+                  <Radio label="Standard" value="Standard" onClick={() => setThresholdSensitivity("Standard")} color="grape" />
+                  <Radio label="Insensitive" value="Insensitive" onClick={() => setThresholdSensitivity("Insensitive")} color="grape" />
+                </Flex>
+              </Center>
+            </RadioGroup>
+          </Collapse>
           {ideas.length <= 10 && <button htmlFor="ideasAdd" className="Idea-button Idea-vert-item" onClick={addIdea} type="button">
             Add Idea
           </button>}
