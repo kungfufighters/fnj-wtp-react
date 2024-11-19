@@ -15,15 +15,18 @@ function CreateWorkspace() {
     router.push('/login');
   }
 
-  const handleFormSubmit = async (submittedIdeas: any, company: string) => {
+  const handleFormSubmit = async (submittedIdeas: any, company: string, thresholdSensitivity: string) => {
     const TOKEN = localStorage.getItem('accessToken');
     const RefreshToken = localStorage.getItem('refreshToken'); //Get Refresh Token
+    let threshold = 2;
+
+    if (thresholdSensitivity !== 'Standard') threshold = (thresholdSensitivity === 'Sensitive') ? 1 : 3;
 
     //Try Using Access Token
     try {
       const workspaceResponse = await axios.post(
         'http://localhost:8000/api/create_workspace/',
-        { name: company },
+        { name: company, outlier_threshold: threshold },
 
         {
           headers: {
