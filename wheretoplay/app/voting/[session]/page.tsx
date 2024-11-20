@@ -78,34 +78,44 @@ const Voting = ({ params }) => {
   // Check for access token on the client side
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const guestId = typeof window !== 'undefined' ? localStorage.getItem('guest_id') : null;
+
     if (token) {
-      setIsLoggedIn(true);
+      setIsLoggedIn(true); // Logged-in user
+    } else if (guestId) {
+      setUserID(parseInt(guestId, 10)); // Set guest user ID
     } else {
-      router.push('/login'); // Redirect if not logged in
+      router.push('/login'); // Redirect if neither logged-in nor guest
     }
   }, [router]);
+
 
   // Fetch user ID if logged in
   useEffect(() => {
     const getID = async () => {
       const TOKEN = localStorage.getItem('accessToken');
-      await axios
-        .get('http://localhost:8000/api/query/id/', {
-          headers: {
-            AUTHORIZATION: `Bearer ${TOKEN}`,
-          },
-        })
-        .then((res) => {
-          setUserID(res.data.id);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    };
+      const guestId = localStorage.getItem('guest_id');
 
-    if (isLoggedIn && userID === -1) {
-      getID();
-    }
+      if (guestId) {
+        setUserID(parseInt(guestId, 10)); // Use guest ID directly
+        return;
+      }
+
+      if (TOKEN) {
+        await axios
+          .get('http://localhost:8000/api/query/id/', {
+            headers: {
+              AUTHORIZATION: `Bearer ${TOKEN}`,
+            },
+          })
+          .then((res) => {
+            setUserID(res.data.id);
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
+    };
   }, [isLoggedIn, userID]);
 
   // Manage the timer and lock state with a countdown and vote submission
@@ -129,48 +139,44 @@ const Voting = ({ params }) => {
 
   const getSession = async () => {
     const TOKEN = localStorage.getItem('accessToken');
+    const guestId = localStorage.getItem('guest_id');
     const sesh = (await params).session;
     const requestString = `http://localhost:8000/api/query/oppvoting?code=${sesh}`;
     setSession(sesh);
+
+    const headers = guestId
+      ? {}
+      : { AUTHORIZATION: `Bearer ${TOKEN}` };
+
     await axios
-         .get(requestString, {
-           headers: {
-             AUTHORIZATION: `Bearer ${TOKEN}`,
-           },
-         })
-         .then(res => {
-             const newIdeas: React.SetStateAction<any[]> = [];
-             const newVotes: React.SetStateAction<any[]> = [];
-             const newAllVotes: React.SetStateAction<any[]> = [];
-             const opportunities = res.data;
-             opportunities.forEach((
-               opp: {
-                 name: any;
-                 customer_segment: any;
-                 description: any;
-                 opportunity_id: any;
-                 reasons: any;
-                 imgurl: string }) => {
-               newIdeas.push([
-                 opp.name,
-                 opp.customer_segment,
-                 opp.description,
-                 opp.opportunity_id,
-                 opp.reasons,
-                 opp.imgurl]);
-               newVotes.push([0, 0, 0, 0, 0, 0]);
-               newAllVotes.push(Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0)));
-             });
-             console.log(newIdeas);
-             setIdeas(newIdeas);
-             setVotes(newVotes);
-             setCurVotes(newAllVotes);
-             setIdea(newIdeas[currentIdeaIndex]);
-             console.log(newIdeas[currentIdeaIndex]);
-         })
-         .catch(error => {
-           console.log(error);
-         });
+      .get(requestString, { headers })
+      .then((res) => {
+        const newIdeas: React.SetStateAction<any[]> = [];
+        const newVotes: React.SetStateAction<any[]> = [];
+        const newAllVotes: React.SetStateAction<any[]> = [];
+        const opportunities = res.data;
+        opportunities.forEach((opp: { name: any; customer_segment: any; description: any; opportunity_id: any; reasons: any; imgurl: string }) => {
+          newIdeas.push([
+            opp.name,
+            opp.customer_segment,
+            opp.description,
+            opp.opportunity_id,
+            opp.reasons,
+            opp.imgurl,
+          ]);
+          newVotes.push([0, 0, 0, 0, 0, 0]);
+          newAllVotes.push(Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0)));
+        });
+        console.log(newIdeas);
+        setIdeas(newIdeas);
+        setVotes(newVotes);
+        setCurVotes(newAllVotes);
+        setIdea(newIdeas[currentIdeaIndex]);
+        console.log(newIdeas[currentIdeaIndex]);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
 
@@ -185,11 +191,14 @@ const Voting = ({ params }) => {
     newVotesOpp[criteria_id - 1] = vote_score;
     newVotesAll[currentIdeaIndex] = newVotesOpp;
     setVotes(newVotesAll);
+
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       const payload = {
         opportunity_id: idea[3],
         session_id: session,
-        user_id: userID,
+        ...(localStorage.getItem('guest_id')
+          ? { guest_id: parseInt(localStorage.getItem('guest_id')!, 10) }
+          : { user_id: userID }),
         votes: [{ criteria_id, vote_score }],
       };
       socketRef.current.send(JSON.stringify(payload));
