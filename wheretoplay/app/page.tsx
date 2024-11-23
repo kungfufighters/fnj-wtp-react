@@ -57,7 +57,7 @@ export default function HomePage() {
           </Button>
           <Divider my="lg" label="or" labelPosition="center" />
           <Button onClick={handleCreateSession} fullWidth variant="outline">
-            Create Session
+            Create a Workspace
           </Button>
         </div>
       </Container>

@@ -1,19 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios, { AxiosError } from 'axios';
-import IdeaSubmissionForm from './ideaSubmissionFormNEW';
+import IdeaSubmissionForm from './ideaSubmissionForm';
 import { HeaderSimple } from '@/components/Header/Header';
 
 
 function CreateWorkspace() {
   const router = useRouter();
   const [submitted, setSubmitted] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
-  if (!localStorage.getItem('accessToken')) {
-    router.push('/login');
-  }
+  useEffect(() => {
+    // Check for access token in localStorage on the client side
+    if (!localStorage.getItem('accessToken')) {
+      router.push('/login');
+    } else {
+      setIsAuthorized(true);
+    }
+  }, [router]);
 
   const handleFormSubmit = async (submittedIdeas: any, company: string) => {
     const TOKEN = localStorage.getItem('accessToken');
