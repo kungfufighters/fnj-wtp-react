@@ -17,7 +17,6 @@ import classes from './Header.module.css';
 import toast, { Toaster } from 'react-hot-toast';
 
 const links = [
-  { link: '../', label: 'Session' },
   { link: '/dashboard', label: 'Dashboard' },
   { link: '/create', label: 'Create a Workspace' }
 ];
@@ -35,32 +34,6 @@ export function HeaderSimple({ glowIndex }: any) {
     router.push('/login');
   };
 
-  const handleDelete = async () => {
-    const confirm = window.confirm('Are you sure you want to delete your account?');
-    if (!confirm) return;
-
-    const TOKEN = localStorage.getItem('accessToken');
-    try {
-      const response = await axios.post(
-        'https://wheretoplay-6af95d3b28f7.herokuapp.com/api/delete_user/',
-        {},
-        {
-          headers: {
-            AUTHORIZATION: `Bearer ${TOKEN}`
-          }
-        }
-      );
-      if (response.status === 200) {
-        toast.success('Success! Hang Tight...');
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        handleLogout();
-      } else {
-        console.error(response.data.error);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   const getEmail = async () => {
     if (localStorage.getItem('accessToken')) {
@@ -182,11 +155,6 @@ export function HeaderSimple({ glowIndex }: any) {
                 {isLoggedIn ? (
                   <>
                     <Menu.Item onClick={handleLogout}>Logout</Menu.Item>
-                    <Menu.Divider />
-                    <Menu.Label>Danger zone</Menu.Label>
-                    <Menu.Item color="red" onClick={handleDelete}>
-                      Delete account
-                    </Menu.Item>
                   </>
                 ) : (
                   <Menu.Item onClick={() => router.push('/login')}>Login</Menu.Item>

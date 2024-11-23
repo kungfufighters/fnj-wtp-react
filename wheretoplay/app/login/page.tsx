@@ -22,18 +22,42 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null); //Error state 
 
 
+  const isValidToken = async (token: string): Promise<boolean> => {
+    try {
+      const response = await fetch('http://localhost:8000/api/custom/token/verify/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      return response.ok
+    } catch {
+      return false;
+    }
+  };
+  
+
   // Redirect if the user is already logged in
   useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (accessToken) {
-      setIsAlreadyLoggedIn(true); // Show redirecting message
-      setTimeout(() => {
-        router.push('/');
-      }, 500);
-    } else {
-      setIsLoading(false); // Allow rendering of the login form if not logged in
-    }
+    const checkLoginStatus = async () => {
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken) {
+        const valid = await isValidToken(accessToken);
+        if (valid) {
+          setIsAlreadyLoggedIn(true);
+          setTimeout(() => router.push('/'), 500);
+        } else {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    };
+  
+    checkLoginStatus();
   }, [router]);
+  
 
   const form = useForm({
     initialValues: {
