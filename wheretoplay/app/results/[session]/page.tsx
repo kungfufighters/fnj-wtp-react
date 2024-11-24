@@ -13,10 +13,11 @@ import {
 import { Bar, Scatter} from 'react-chartjs-2';
 import ScatterPlot from '@/components/ScatterPlot/ScatterPlot';
 import '../../Idea.css';
-import { ScrollArea, Center, Stack,Flex} from '@mantine/core';
+import { ScrollArea, Center, Stack,Flex, Button, Modal, Table} from '@mantine/core';
 import axios from 'axios';
 import { HeaderSimple } from '@/components/Header/Header';
 import TriangleChart from '@/components/TriangleChart/TriangleChart';
+import {useDisclosure} from '@mantine/hooks';
 
 ChartJS.register(
   CategoryScale,
@@ -43,6 +44,8 @@ const ResultsPage = ({ params }) => {
   const [idea, setIdea] = useState(null);
   const [session, setSession] = useState(0);
   const [queryFetched, setQueryFetched] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [tableData, setTableData] = useState<any[]>([]);
 
   const getScatterValues = () => {
     const points: { x: number; y: number; label: string }[] = [];
@@ -208,9 +211,62 @@ const ResultsPage = ({ params }) => {
     );
   }
 
+  const handleOpenModal = (inputStr: String) => {
+    const parsedData = parseReasons(inputStr); // Parse the input string
+    setTableData(parsedData); // Store the parsed data
+    setModalOpen(true); // Open the modal
+  };
+
+  const parseReasons = (inputStr) => {
+    inputStr = String(inputStr);
+    if (inputStr === "No outliers") {
+      return [];
+    }
+    const rows = inputStr.split(";").map(row => row.trim()).filter(row => row !== "");
+  
+    return rows.map(row => {
+      const emailStart = 0;
+      const emailEnd = row.indexOf(" voted ");
+      const voteStart = emailEnd + " voted ".length;
+      const voteEnd = row.indexOf(": ");
+      const reasonStart = voteEnd + ": ".length;
+  
+      return {
+        email: row.substring(emailStart, emailEnd).trim(),
+        vote: row.substring(voteStart, voteEnd).trim(),
+        reason: row.substring(reasonStart).trim(),
+      };
+    });
+  };
+  
   return (
     
     <div>
+      <Modal
+        opened={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Justifications"
+      >
+                <Table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Vote</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody >
+            {tableData.map((row, index) => (
+              <tr key={index}>
+                <td>{row.email}</td>
+                <td style = {{textAlign:'center'}}>{row.vote}</td>
+                <td>{row.reason}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </Modal>
+
       <HeaderSimple glowIndex={-1} />
         <h2 style={{ textAlign: 'center' }}>
             Opportunity #{currentIdeaIndex + 1} Results: {`${idea[0]} (${idea[1]})`}
@@ -257,18 +313,18 @@ const ResultsPage = ({ params }) => {
         </div>
 
         <div className="middle-text-areas" style={{ width: '20%' }}>
-          <h3>Justifications</h3>
+        <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][0])}>Expand</Button></Center></Flex>
           <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  } }> 
             
           <ScrollArea h={150} scrollbars="y"> {idea[4][0]}</ScrollArea>
           </div>
 
-          <h3>Justifications</h3>
+          <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][1])}>Expand</Button></Center></Flex>
           <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
           <ScrollArea h={150} scrollbars="y"> {idea[4][1]}</ScrollArea>
           </div>
 
-          <h3>Justifications</h3>
+          <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][2])}>Expand</Button></Center></Flex>
           <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
           <ScrollArea h={150} scrollbars="y"> {idea[4][2]}</ScrollArea>
           </div>
@@ -291,17 +347,17 @@ const ResultsPage = ({ params }) => {
           </div>
         </div>
         <div className="right-text-areas" style={{ width: '20%' }}>
-          <h3>Justifications</h3>
+          <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][3])}>Expand</Button></Center></Flex>
           <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  } }>
           <ScrollArea h={150} scrollbars="y"> {idea[4][3]}</ScrollArea>
           </div>
 
-          <h3>Justifications</h3>
+          <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][4])}>Expand</Button></Center></Flex>
           <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0 }}>
           <ScrollArea h={150} scrollbars="y"> {idea[4][4]}</ScrollArea>
           </div>
 
-          <h3>Justifications</h3>
+          <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][5])}>Expand</Button></Center></Flex>
           <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
           <ScrollArea h={150} scrollbars="y"> {idea[4][5]}</ScrollArea>
           </div>
