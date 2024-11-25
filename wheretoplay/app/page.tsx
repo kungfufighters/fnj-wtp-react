@@ -2,7 +2,7 @@
 
 import '@mantine/core/styles.css';
 import { useState } from 'react';
-import { TextInput, Button, Container, Divider } from '@mantine/core';
+import { TextInput, Button, Container, Divider, Image } from '@mantine/core';
 import { useRouter } from 'next/navigation';
 import { HeaderSimple } from '@/components/Header/Header';
 
@@ -44,7 +44,15 @@ export default function HomePage() {
         size="sm"
         style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
       >
-        <div style={{ width: '100%' }}>
+        <div style={{ width: '100%', textAlign: 'center' }}>
+          {/* Add the logo */}
+          <Image
+            src="/wtp.png"
+            alt="Logo"
+            width="auto" // Adjust the width as needed
+            height="auto" // Adjust the height as needed
+            style={{ margin: '0 auto', marginBottom: '2rem' }} // Center the image and add spacing
+          />
           <TextInput
             label="Session Pin"
             placeholder="Enter session pin"
