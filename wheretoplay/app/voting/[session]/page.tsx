@@ -74,6 +74,8 @@ const Voting = ({ params }) => {
   // Check for mobile device
   const isMobile = useMediaQuery('(max-width: 50em)') ?? false;
   const socketRef = useRef<WebSocket | null>(null);
+  const TOKEN = localStorage.getItem('accessToken');
+  const RefreshToken = localStorage.getItem('refreshToken');
 
   // Check for access token on the client side
   useEffect(() => {
@@ -88,7 +90,6 @@ const Voting = ({ params }) => {
   // Fetch user ID if logged in
   useEffect(() => {
     const getID = async () => {
-      const TOKEN = localStorage.getItem('accessToken');
       await axios
         .get('http://localhost:8000/api/query/id/', {
           headers: {
@@ -98,9 +99,42 @@ const Voting = ({ params }) => {
         .then((res) => {
           setUserID(res.data.id);
         })
-        .catch((error) => {
+        .catch(async error => {
           console.log(error);
-        });
+          if (
+            axios.isAxiosError(error) &&
+            error.response &&
+            error.response.status === 401 &&
+            RefreshToken
+          ) {
+            try {
+                const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                    refresh: RefreshToken,
+                });
+
+                localStorage.setItem('accessToken', refreshResponse.data.access);
+
+                await axios
+                .get('http://localhost:8000/api/query/id/', {
+                  headers: {
+                    AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
+                  },
+                })
+                .then((res) => {
+                  setUserID(res.data.id);
+                });
+            } catch (refreshError) {
+                            if (refreshError.response && refreshError.response.status === 401) {
+                              console.log('Refresh token expired. Redirecting to login.');
+                              localStorage.removeItem('accessToken');
+                              localStorage.removeItem('refreshToken');
+                              router.push('/login');
+                            } else {
+                            console.error('An unexpected error occurred:', refreshError);
+                          }
+                    }
+                }
+            });
     };
 
     if (isLoggedIn && userID === -1) {
@@ -128,9 +162,40 @@ const Voting = ({ params }) => {
   }, [timeRemaining]);
 
   const getSession = async () => {
-    const TOKEN = localStorage.getItem('accessToken');
     const sesh = (await params).session;
     const requestString = `http://localhost:8000/api/query/oppvoting?code=${sesh}`;
+
+    const successlogic = res => {
+      const newIdeas: React.SetStateAction<any[]> = [];
+      const newVotes: React.SetStateAction<any[]> = [];
+      const newAllVotes: React.SetStateAction<any[]> = [];
+      const opportunities = res.data;
+      opportunities.forEach((
+        opp: {
+          name: any;
+          customer_segment: any;
+          description: any;
+          opportunity_id: any;
+          reasons: any;
+          imgurl: string }) => {
+        newIdeas.push([
+          opp.name,
+          opp.customer_segment,
+          opp.description,
+          opp.opportunity_id,
+          opp.reasons,
+          opp.imgurl]);
+        newVotes.push([0, 0, 0, 0, 0, 0]);
+        newAllVotes.push(Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0)));
+      });
+      console.log(newIdeas);
+      setIdeas(newIdeas);
+      setVotes(newVotes);
+      setCurVotes(newAllVotes);
+      setIdea(newIdeas[currentIdeaIndex]);
+      console.log(newIdeas[currentIdeaIndex]);
+  };
+
     setSession(sesh);
     await axios
          .get(requestString, {
@@ -138,41 +203,42 @@ const Voting = ({ params }) => {
              AUTHORIZATION: `Bearer ${TOKEN}`,
            },
          })
-         .then(res => {
-             const newIdeas: React.SetStateAction<any[]> = [];
-             const newVotes: React.SetStateAction<any[]> = [];
-             const newAllVotes: React.SetStateAction<any[]> = [];
-             const opportunities = res.data;
-             opportunities.forEach((
-               opp: {
-                 name: any;
-                 customer_segment: any;
-                 description: any;
-                 opportunity_id: any;
-                 reasons: any;
-                 imgurl: string }) => {
-               newIdeas.push([
-                 opp.name,
-                 opp.customer_segment,
-                 opp.description,
-                 opp.opportunity_id,
-                 opp.reasons,
-                 opp.imgurl]);
-               newVotes.push([0, 0, 0, 0, 0, 0]);
-               newAllVotes.push(Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0)));
-             });
-             console.log(newIdeas);
-             setIdeas(newIdeas);
-             setVotes(newVotes);
-             setCurVotes(newAllVotes);
-             setIdea(newIdeas[currentIdeaIndex]);
-             console.log(newIdeas[currentIdeaIndex]);
-         })
-         .catch(error => {
-           console.log(error);
-         });
-  };
+         .then(successlogic)
+         .catch(async error => {
+          console.log(error);
+          if (
+            axios.isAxiosError(error) &&
+            error.response &&
+            error.response.status === 401 &&
+            RefreshToken
+          ) {
+            try {
+                const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                    refresh: RefreshToken,
+                });
 
+                localStorage.setItem('accessToken', refreshResponse.data.access);
+
+                await axios
+                    .get(requestString, {
+                    headers: {
+                        AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
+                    },
+                    })
+                    .then(successlogic);
+            } catch (refreshError) {
+                            if (refreshError.response && refreshError.response.status === 401) {
+                              console.log('Refresh token expired. Redirecting to login.');
+                              localStorage.removeItem('accessToken');
+                              localStorage.removeItem('refreshToken');
+                              router.push('/login');
+                            } else {
+                            console.error('An unexpected error occurred:', refreshError);
+                          }
+                    }
+                }
+            });
+  };
 
   if (!queryFetched && typeof window !== 'undefined') {
     getSession();
@@ -313,7 +379,39 @@ const Voting = ({ params }) => {
         },
       });
     } catch (error) {
-      console.error(error);
+        if (
+          axios.isAxiosError(error) &&
+          error.response &&
+          error.response.status === 401 &&
+          RefreshToken
+        ) {
+          try {
+              const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                  refresh: RefreshToken,
+              });
+
+              localStorage.setItem('accessToken', refreshResponse.data.access);
+
+              const response = await axios.post('http://localhost:8000/api/add/reason/', {
+                opportunity_id: idea[3],
+                reason: reasonInput,
+                criteria_id: currentReasonIndex + 1,
+              }, {
+                headers: {
+                  AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
+                },
+              });
+          } catch (refreshError) {
+                          if (refreshError.response && refreshError.response.status === 401) {
+                            console.log('Refresh token expired. Redirecting to login.');
+                            localStorage.removeItem('accessToken');
+                            localStorage.removeItem('refreshToken');
+                            router.push('/login');
+                          } else {
+                          console.error('An unexpected error occurred:', refreshError);
+                        }
+                  }
+              }
     } finally {
       setReasons(newReasons);
       setReasonInput('');

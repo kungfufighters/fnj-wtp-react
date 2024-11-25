@@ -46,6 +46,7 @@ export function HeaderSimple({ glowIndex } : any) {
   const getEmail = async () => {
     if (localStorage.getItem('accessToken')) {
         const TOKEN = localStorage.getItem('accessToken');
+        const RefreshToken = localStorage.getItem('refreshToken');
         await axios
             .get('http://localhost:8000/api/query/email/', {
               headers: {
@@ -56,8 +57,47 @@ export function HeaderSimple({ glowIndex } : any) {
                 console.log(res);
                 setAccountLabel(res.data.email);
             })
-            .catch(error => {
-              console.log(error);
+            .catch(async error => {
+              if (
+                axios.isAxiosError(error) &&
+                error.response &&
+                error.response.status === 401 &&
+                RefreshToken
+              ) {
+                try {
+                    const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                        refresh: RefreshToken,
+                    });
+
+                    localStorage.setItem('accessToken', refreshResponse.data.access);
+
+                    await axios
+                        .get('http://localhost:8000/api/query/email/', {
+                        headers: {
+                            AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
+                        },
+                        })
+                        .then(res => {
+                            console.log(res);
+                            setAccountLabel(res.data.email);
+                        });
+                } catch (refreshError) {
+                            if (axios.isAxiosError(refreshError)) {
+                                console.error(
+                                  'Failed to refresh token:',
+                                  refreshError.response?.data || refreshError.message
+                                );
+                                if (refreshError.response && refreshError.response.status === 401) {
+                                  console.log('Refresh token expired. Redirecting to login.');
+                                  localStorage.removeItem('accessToken');
+                                  localStorage.removeItem('refreshToken');
+                                  router.push('/login');
+                                }
+                              } else {
+                                console.error('An unexpected error occurred:', refreshError);
+                              }
+                        }
+                    }
             });
       }
 };

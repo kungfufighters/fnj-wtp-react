@@ -55,37 +55,80 @@ export default function Dashboard() {
     const getOpportunities = async () => {
        // if (typeof window === 'undefined') return;
         const TOKEN = localStorage.getItem('accessToken');
+        const RefreshToken = localStorage.getItem('refreshToken');
+
+        const successLogic = res => {
+            console.log(res);
+            const workspaces = res.data;
+            const newWorks: Workspace[] = [];
+            workspaces.forEach((workspace: any[]) => {
+                    newWorks.push(
+                        {
+                            name: workspace[0],
+                            code: workspace[1],
+                            opportunities: workspace[2],
+                            display: false,
+                        }
+                    );
+            });
+            setOwnerWorks(newWorks);
+            console.log(newWorks);
+        };
+
         await axios
             .get('http://localhost:8000/api/query/owneropps/', {
               headers: {
                 AUTHORIZATION: `Bearer ${TOKEN}`,
               },
             })
-            .then(res => {
-                console.log(res);
-                const workspaces = res.data;
-                const newWorks: Workspace[] = [];
-                workspaces.forEach((workspace: any[]) => {
-                        newWorks.push(
-                            {
-                                name: workspace[0],
-                                code: workspace[1],
-                                opportunities: workspace[2],
-                                display: false,
-                            }
-                        );
-                });
-                setOwnerWorks(newWorks);
-                console.log(newWorks);
-            })
-            .catch(error => {
+            .then(successLogic)
+            .catch(async error => {
               console.log(error);
-            });
+              if (
+                axios.isAxiosError(error) &&
+                error.response &&
+                error.response.status === 401 &&
+                RefreshToken
+              ) {
+                try {
+                    const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                        refresh: RefreshToken,
+                    });
+
+                    localStorage.setItem('accessToken', refreshResponse.data.access);
+
+                    await axios
+                        .get('http://localhost:8000/api/query/owneropps/', {
+                        headers: {
+                            AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
+                        },
+                        })
+                        .then(successLogic);
+                } catch (refreshError) {
+                            if (axios.isAxiosError(refreshError)) {
+                                console.error(
+                                  'Failed to refresh token:',
+                                  refreshError.response?.data || refreshError.message
+                                );
+                                if (refreshError.response && refreshError.response.status === 401) {
+                                  console.log('Refresh token expired. Redirecting to login.');
+                                  localStorage.removeItem('accessToken');
+                                  localStorage.removeItem('refreshToken');
+                                  router.push('/login');
+                                }
+                              } else {
+                                console.error('An unexpected error occurred:', refreshError);
+                              }
+                        }
+                    }
+                });
     };
 
     const getEmail = async () => {
         if (typeof window === 'undefined') return;
         const TOKEN = localStorage.getItem('accessToken');
+        const RefreshToken = localStorage.getItem('refreshToken');
+
         await axios
             .get('http://localhost:8000/api/query/email/', {
               headers: {
@@ -96,9 +139,49 @@ export default function Dashboard() {
                 console.log(res);
                 setEmail(res.data.email);
             })
-            .catch(error => {
+            .catch(async error => {
               console.log(error);
-            });
+              if (
+                axios.isAxiosError(error) &&
+                error.response &&
+                error.response.status === 401 &&
+                RefreshToken
+              ) {
+                try {
+                    const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                        refresh: RefreshToken,
+                    });
+
+                    localStorage.setItem('accessToken', refreshResponse.data.access);
+
+                    await axios
+                        .get('http://localhost:8000/api/query/email/', {
+                        headers: {
+                            AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
+                        },
+                        })
+                        .then(res => {
+                            console.log(res);
+                            setEmail(res.data.email);
+                        });
+                } catch (refreshError) {
+                            if (axios.isAxiosError(refreshError)) {
+                                console.error(
+                                  'Failed to refresh token:',
+                                  refreshError.response?.data || refreshError.message
+                                );
+                                if (refreshError.response && refreshError.response.status === 401) {
+                                  console.log('Refresh token expired. Redirecting to login.');
+                                  localStorage.removeItem('accessToken');
+                                  localStorage.removeItem('refreshToken');
+                                  router.push('/login');
+                                }
+                              } else {
+                                console.error('An unexpected error occurred:', refreshError);
+                              }
+                        }
+                    }
+                });
     };
 
     if (!localStorage.getItem('accessToken')) {
@@ -157,6 +240,7 @@ export default function Dashboard() {
     const mailSubmit = async (values: typeof mailForm.values) => {
         if (typeof window === 'undefined') return;
         const TOKEN = localStorage.getItem('accessToken');
+        const RefreshToken = localStorage.getItem('refreshToken');
         setMailLoading(true);
         setMailError(null);
 
@@ -176,13 +260,51 @@ export default function Dashboard() {
                 console.log('success');
             }
         } catch (error) {
-            console.error(error);
-            if (axios.isAxiosError(error) && error.response) {
+          if (
+            axios.isAxiosError(error) &&
+            error.response &&
+            error.response.status === 401 &&
+            RefreshToken
+          ) {
+            try {
+                const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                    refresh: RefreshToken,
+                });
+
+                localStorage.setItem('accessToken', refreshResponse.data.access);
+
+                const response = await axios
+                    .post('http://localhost:8000/api/change/email/', {
+                        newEmail: values.newEmail,
+                    }, { headers: {
+                        AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
+                    },
+                    });
+
+                    if (response.status === 200) {
+                        setEmail(mailForm.values.newEmail);
+                        mailForm.reset();
+                        toast.success('Email changed');
+                        console.log('success');
+                    }
+            } catch (refreshError) {
+                        if (refreshError.response && refreshError.response.status === 401) {
+                              console.log('Refresh token expired. Redirecting to login.');
+                              localStorage.removeItem('accessToken');
+                              localStorage.removeItem('refreshToken');
+                              router.push('/login');
+                            } else if (axios.isAxiosError(error) && error.response) {
+                                    setMailError(error.response.data.message || 'Something went wrong');
+                                } else {
+                                    setMailError('Email could not be changed');
+                                }
+            }
+            } else if (axios.isAxiosError(error) && error.response) {
                 setMailError(error.response.data.message || 'Something went wrong');
             } else {
                 setMailError('Email could not be changed');
             }
-        } finally {
+            } finally {
             setMailLoading(false);
         }
     };
@@ -190,6 +312,7 @@ export default function Dashboard() {
     const passSubmit = async (values: typeof passForm.values) => {
         if (typeof window === 'undefined') return;
         const TOKEN = localStorage.getItem('accessToken');
+        const RefreshToken = localStorage.getItem('refreshToken');
         setPassLoading(true);
         setPassError(null);
 
@@ -210,15 +333,55 @@ export default function Dashboard() {
                 console.log('success');
             } else setPassError(response.data.error);
         } catch (error) {
-            console.error(error);
-            if (axios.isAxiosError(error) && error.response) {
-                setPassError(error.response.data.message || 'Something went wrong');
-            } else {
-                setPassError('Password could not be changed');
-            }
-        } finally {
-            setPassLoading(false);
-        }
+            if (
+                axios.isAxiosError(error) &&
+                error.response &&
+                error.response.status === 401 &&
+                RefreshToken
+              ) {
+                try {
+                    const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                        refresh: RefreshToken,
+                    });
+                    localStorage.setItem('accessToken', refreshResponse.data.access);
+                    const response = await axios
+                        .get('http://localhost:8000/api/change/password/', {
+                        headers: {
+                            AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
+                        },
+                        });
+                        if (response.status === 200) {
+                            setEmail(mailForm.values.newEmail);
+                            mailForm.reset();
+                            toast.success('Email changed');
+                            console.log('success');
+                        }
+                } catch (refreshError) {
+                            if (refreshError.response && refreshError.response.status === 401) {
+                                console.log('Refresh token expired. Redirecting to login.');
+                                localStorage.removeItem('accessToken');
+                                localStorage.removeItem('refreshToken');
+                                router.push('/login');
+                            }
+                            else {
+                                console.error(error);
+                                if (axios.isAxiosError(error) && error.response) {
+                                    setPassError(error.response.data.message || 'Something went wrong');
+                                } else {
+                                    setPassError('Password could not be changed');
+                                }
+                              }
+                        }
+                    } else {
+                        console.error(error);
+                        if (axios.isAxiosError(error) && error.response) {
+                            setPassError(error.response.data.message || 'Something went wrong');
+                        } else {
+                            setPassError('Password could not be changed');
+                        }
+                      }
+                }
+        setPassLoading(false);
     };
 
     const changeEmailForm = () =>

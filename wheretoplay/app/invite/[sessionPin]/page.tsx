@@ -81,7 +81,7 @@ export default function InvitePage() {
           message: data.error,
           color: 'red',
         }); */
-        toast.error('Invite email could not be sent');
+        toast.error('Invite email could not be sent try refreshing the page and sending again.');
       }
     } catch (error) {
       console.error('Error:', error);
