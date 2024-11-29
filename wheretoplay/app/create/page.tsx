@@ -21,43 +21,49 @@ function CreateWorkspace() {
     }
   }, [router]);
 
-  const handleFormSubmit = async (submittedIdeas: any, company: string, thresholdSensitivity: string) => {
+  const handleFormSubmit = async (
+    submittedIdeas: any[],
+    company: string,
+    guestCap: number | null,
+    madThreshold: number | null
+  ) => {
     const TOKEN = localStorage.getItem('accessToken');
-    const RefreshToken = localStorage.getItem('refreshToken'); //Get Refresh Token
-    let threshold = 2;
-
-    if (thresholdSensitivity !== 'Standard') threshold = (thresholdSensitivity === 'Sensitive') ? 1 : 3;
-
-    //Try Using Access Token
+    const RefreshToken = localStorage.getItem('refreshToken');
+    const threshold = madThreshold || 2; // Default threshold if not provided
+  
     try {
+      // Step 1: Create Workspace
       const workspaceResponse = await axios.post(
         'http://localhost:8000/api/create_workspace/',
-        { name: company, outlier_threshold: threshold },
-
+        {
+          name: company,
+          outlier_threshold: threshold,
+          guest_cap: guestCap || 0, // Default guest cap to 0 if null
+        },
         {
           headers: {
             Authorization: `Bearer ${TOKEN}`,
           },
         }
       );
-
+  
       console.log('Workspace created:', workspaceResponse.data);
-
-      // Prepare ideas to be associated with the created workspace
-      const formattedIdeas = submittedIdeas.map((idea: any[]) => ({
-        workspace: workspaceResponse.data.workspace_id,
-        name: idea[0],
-        customer_segment: idea[1],
-        description: idea[2],
-        image: idea[3],
-      }));
-
-      // Get the sessionPin from workspaceResponse
+      const workspaceId = workspaceResponse.data.workspace_id;
       const sessionPin = workspaceResponse.data.code;
-
-      // Send each idea in a separate request
+  
+      // Step 2: Prepare and Create Opportunities
+      const formattedIdeas = submittedIdeas.map((idea: any) => ({
+        workspace: workspaceId,
+        name: idea.name,
+        customer_segment: idea.segment,
+        description: idea.description,
+        image: idea.media || null, // Optional image field
+      }));
+  
+      console.log('Submitting opportunities:', formattedIdeas);
+  
       for (const idea of formattedIdeas) {
-        const opportunityResponse = await axios.post(
+        await axios.post(
           'http://localhost:8000/api/create_opportunity/',
           idea,
           {
@@ -66,98 +72,44 @@ function CreateWorkspace() {
             },
           }
         );
-        console.log('Opportunity created:', opportunityResponse.data);
+        console.log('Opportunity created:', idea);
       }
-
-      // Redirect to the invite page with the sessionPin
+  
+      // Step 3: Redirect to the Invite Page
+      console.log('All opportunities submitted successfully.');
       router.push(`/invite/${sessionPin}`);
     } catch (error) {
-      // Check 401 unauthorized and RefreshToken existence
-      if (
-        axios.isAxiosError(error) &&
-        error.response &&
-        error.response.status === 401 &&
-        RefreshToken
-      ) {
+      console.error('Error during form submission:', error);
+  
+      // Step 4: Handle Token Refresh if Necessary
+      if (axios.isAxiosError(error) && error.response?.status === 401 && RefreshToken) {
         console.log('Access token expired. Attempting to refresh.');
-
-        //Refresh Token and Try again
+  
         try {
-          const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
-            refresh: RefreshToken,
-          });
-
+          // Refresh Token
+          const refreshResponse = await axios.post(
+            'http://localhost:8000/api/token/refresh/',
+            { refresh: RefreshToken }
+          );
           const newAccessToken = refreshResponse.data.access;
           localStorage.setItem('accessToken', newAccessToken);
-          console.log('Access token refreshed successfully.');
-
-          const retryResponse = await axios.post(
-            'http://localhost:8000/api/create_workspace/',
-            { name: company },
-            {
-              headers: {
-                Authorization: `Bearer ${newAccessToken}`,
-              },
-            }
-          );
-
-          console.log('Workspace created on retry:', retryResponse.data);
-
-          // Prepare ideas to be associated with the created workspace
-          const formattedIdeas = submittedIdeas.map((idea: any[]) => ({
-            workspace: retryResponse.data.workspace_id,
-            name: idea[0],
-            customer_segment: idea[1],
-            description: idea[2],
-            image: idea[3],
-          }));
-
-          // Get the sessionPin from workspaceResponse
-          const sessionPin = retryResponse.data.code;
-
-          // Send each idea in a separate request
-          for (const idea of formattedIdeas) {
-            const opportunityResponse = await axios.post(
-              'http://localhost:8000/api/create_opportunity/',
-              idea,
-              {
-                headers: {
-                  Authorization: `Bearer ${newAccessToken}`,
-                },
-              }
-            );
-            console.log('Opportunity created:', opportunityResponse.data);
-          }
-          router.push(`/invite/${sessionPin}`);
+  
+          console.log('Access token refreshed. Retrying submission.');
+  
+          // Retry Workspace Creation
+          return handleFormSubmit(submittedIdeas, company, guestCap, madThreshold);
         } catch (refreshError) {
-          if (axios.isAxiosError(refreshError)) {
-            console.error(
-              'Failed to refresh token:',
-              refreshError.response?.data || refreshError.message
-            );
-
-            if (refreshError.response && refreshError.response.status === 401) {
-              console.log('Refresh token expired. Redirecting to login.');
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('refreshToken');
-              router.push('/login');
-            }
-          } else {
-            console.error('An unexpected error occurred:', refreshError);
-          }
+          console.error('Token refresh failed:', refreshError);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          router.push('/login');
         }
       } else {
-        const axiosError = error as AxiosError;
-        console.error(
-          'Error creating opportunity, Refresh Token might be missing:',
-          axiosError.response?.data || axiosError.message
-        );
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        router.push('/login');
+        console.error('Unexpected error:', error);
+        alert('Failed to submit ideas. Please check your input and try again.');
       }
     }
-  };
+  };  
 
   return (
     <div className="CreateWorkspace">
