@@ -25,7 +25,7 @@ export default function InvitePage() {
 
     const fetchWorkspaceData = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/query/workspace_by_code/?code=${sessionPin}`, {
+        const response = await fetch(`https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/workspace_by_code/?code=${sessionPin}`, {
           headers: {
             'Content-Type': 'application/json'
           },
@@ -54,7 +54,7 @@ export default function InvitePage() {
   const handleSendEmail = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('http://localhost:8000/api/send_invite_email/', {
+      const response = await fetch('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/send_invite_email/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -31,7 +31,7 @@ const ResetPassword = ({ params }) => {
         setLoading(true);
         try {
             const tok = (await params).token;
-            const response = await axios.post('http://localhost:8000/api/reset_password/', {
+            const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/reset_password/', {
                 newPassword: values.newPassword,
                 confirmNewPassword: values.confirmNewPassword,
                 token: tok,
