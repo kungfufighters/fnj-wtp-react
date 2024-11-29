@@ -199,6 +199,10 @@ const ResultsPage = ({ params } : any) => {
     },
   };
 
+  const optionProps = {
+    options: chartOptions,
+  };
+
   //const outlierSampleText = "Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem";
 
   if (!queryFetched || !idea) {
@@ -240,17 +244,17 @@ const ResultsPage = ({ params } : any) => {
         <div className="left-graphs" style={{ width: '20%' }}>
           <h3>Reason to Buy</h3>
           <div style={{ height: '150px' }}>
-            <Bar key={`chart-reason-${currentIdeaIndex}`} data={graphData('Reason to Buy', idea[3][0])} options={chartOptions} />
+            <Bar key={`chart-reason-${currentIdeaIndex}`} data={graphData('Reason to Buy', idea[3][0])} {...optionProps} />
           </div>
 
           <h3>Market Volume</h3>
           <div style={{ height: '150px' }}>
-            <Bar key={`chart-volume-${currentIdeaIndex}`} data={graphData('Market Volume', idea[3][1])} options={chartOptions} />
+            <Bar key={`chart-volume-${currentIdeaIndex}`} data={graphData('Market Volume', idea[3][1])} {...optionProps} />
           </div>
 
           <h3>Economic Viability</h3>
           <div style={{ height: '150px' }}>
-            <Bar key={`chart-viability-${currentIdeaIndex}`} data={graphData('Economic Viability', idea[3][2])} options={chartOptions} />
+            <Bar key={`chart-viability-${currentIdeaIndex}`} data={graphData('Economic Viability', idea[3][2])} {...optionProps} />
           </div>
         </div>
 
@@ -274,17 +278,17 @@ const ResultsPage = ({ params } : any) => {
         <div className="right-graphs" style={{ width: '20%' }}>
           <h3>Obstacles</h3>
           <div style={{ height: '150px' }}>
-            <Bar key={`chart-obstacles-${currentIdeaIndex}`} data={graphData('Obstacles', idea[3][3])} options={chartOptions} />
+            <Bar key={`chart-obstacles-${currentIdeaIndex}`} data={graphData('Obstacles', idea[3][3])} {...optionProps} />
           </div>
 
           <h3>External Risks</h3>
           <div style={{ height: '150px' }}>
-            <Bar key={`chart-risks-${currentIdeaIndex}`} data={graphData('External Risks', idea[3][4])} options={chartOptions} />
+            <Bar key={`chart-risks-${currentIdeaIndex}`} data={graphData('External Risks', idea[3][4])} {...optionProps} />
           </div>
 
           <h3>Time to Revenue</h3>
           <div style={{ height: '150px' }}>
-            <Bar key={`chart-revenue-${currentIdeaIndex}`} data={graphData('Time to Revenue', idea[3][5])} options={chartOptions} />
+            <Bar key={`chart-revenue-${currentIdeaIndex}`} data={graphData('Time to Revenue', idea[3][5])} {...optionProps} />
           </div>
         </div>
         <div className="right-text-areas" style={{ width: '20%' }}>
