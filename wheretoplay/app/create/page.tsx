@@ -25,7 +25,7 @@ function CreateWorkspace() {
     //Try Using Access Token
     try {
       const workspaceResponse = await axios.post(
-        'http://localhost:8000/api/create_workspace/',
+        'https://wheretoplay-6af95d3b28f7.herokuapp.com/api/create_workspace/',
         { name: company, outlier_threshold: threshold },
 
         {
@@ -52,7 +52,7 @@ function CreateWorkspace() {
       // Send each idea in a separate request
       for (const idea of formattedIdeas) {
         const opportunityResponse = await axios.post(
-          'http://localhost:8000/api/create_opportunity/',
+          'https://wheretoplay-6af95d3b28f7.herokuapp.com/api/create_opportunity/',
           idea,
           {
             headers: {
@@ -77,7 +77,7 @@ function CreateWorkspace() {
 
         //Refresh Token and Try again
         try {
-          const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+          const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
             refresh: RefreshToken,
           });
 
@@ -86,7 +86,7 @@ function CreateWorkspace() {
           console.log('Access token refreshed successfully.');
 
           const retryResponse = await axios.post(
-            'http://localhost:8000/api/create_workspace/',
+            'https://wheretoplay-6af95d3b28f7.herokuapp.com/api/create_workspace/',
             { name: company },
             {
               headers: {
@@ -112,7 +112,7 @@ function CreateWorkspace() {
           // Send each idea in a separate request
           for (const idea of formattedIdeas) {
             const opportunityResponse = await axios.post(
-              'http://localhost:8000/api/create_opportunity/',
+              'https://wheretoplay-6af95d3b28f7.herokuapp.com/api/create_opportunity/',
               idea,
               {
                 headers: {

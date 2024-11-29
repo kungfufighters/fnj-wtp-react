@@ -76,7 +76,7 @@ export default function Dashboard() {
         };
 
         await axios
-            .get('http://localhost:8000/api/query/owneropps/', {
+            .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/owneropps/', {
               headers: {
                 AUTHORIZATION: `Bearer ${TOKEN}`,
               },
@@ -91,14 +91,14 @@ export default function Dashboard() {
                 RefreshToken
               ) {
                 try {
-                    const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                    const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
                         refresh: RefreshToken,
                     });
 
                     localStorage.setItem('accessToken', refreshResponse.data.access);
 
                     await axios
-                        .get('http://localhost:8000/api/query/owneropps/', {
+                        .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/owneropps/', {
                         headers: {
                             AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                         },
@@ -130,7 +130,7 @@ export default function Dashboard() {
         const RefreshToken = localStorage.getItem('refreshToken');
 
         await axios
-            .get('http://localhost:8000/api/query/email/', {
+            .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/email/', {
               headers: {
                 AUTHORIZATION: `Bearer ${TOKEN}`,
               },
@@ -148,14 +148,14 @@ export default function Dashboard() {
                 RefreshToken
               ) {
                 try {
-                    const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                    const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
                         refresh: RefreshToken,
                     });
 
                     localStorage.setItem('accessToken', refreshResponse.data.access);
 
                     await axios
-                        .get('http://localhost:8000/api/query/email/', {
+                        .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/email/', {
                         headers: {
                             AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                         },
@@ -245,7 +245,7 @@ export default function Dashboard() {
         setMailError(null);
 
         try {
-            const response = await axios.post('http://localhost:8000/api/change/email/', {
+            const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/change/email/', {
                 newEmail: values.newEmail,
             }, {
                 headers: {
@@ -267,14 +267,14 @@ export default function Dashboard() {
             RefreshToken
           ) {
             try {
-                const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
                     refresh: RefreshToken,
                 });
 
                 localStorage.setItem('accessToken', refreshResponse.data.access);
 
                 const response = await axios
-                    .post('http://localhost:8000/api/change/email/', {
+                    .post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/change/email/', {
                         newEmail: values.newEmail,
                     }, { headers: {
                         AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
@@ -317,7 +317,7 @@ export default function Dashboard() {
         setPassError(null);
 
         try {
-            const response = await axios.post('http://localhost:8000/api/change/password/', {
+            const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/change/password/', {
                 currentPassword: values.currentPassword,
                 newPassword: values.newPassword,
                 confirmNewPassword: values.confirmNewPassword,
@@ -340,12 +340,12 @@ export default function Dashboard() {
                 RefreshToken
               ) {
                 try {
-                    const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                    const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
                         refresh: RefreshToken,
                     });
                     localStorage.setItem('accessToken', refreshResponse.data.access);
                     const response = await axios
-                        .get('http://localhost:8000/api/change/password/', {
+                        .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/change/password/', {
                         headers: {
                             AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                         },

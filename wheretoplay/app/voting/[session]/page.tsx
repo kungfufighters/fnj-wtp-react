@@ -91,7 +91,7 @@ const Voting = ({ params }) => {
   useEffect(() => {
     const getID = async () => {
       await axios
-        .get('http://localhost:8000/api/query/id/', {
+        .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/id/', {
           headers: {
             AUTHORIZATION: `Bearer ${TOKEN}`,
           },
@@ -108,14 +108,14 @@ const Voting = ({ params }) => {
             RefreshToken
           ) {
             try {
-                const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
                     refresh: RefreshToken,
                 });
 
                 localStorage.setItem('accessToken', refreshResponse.data.access);
 
                 await axios
-                .get('http://localhost:8000/api/query/id/', {
+                .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/id/', {
                   headers: {
                     AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                   },
@@ -163,7 +163,7 @@ const Voting = ({ params }) => {
 
   const getSession = async () => {
     const sesh = (await params).session;
-    const requestString = `http://localhost:8000/api/query/oppvoting?code=${sesh}`;
+    const requestString = `https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/oppvoting?code=${sesh}`;
 
     const successlogic = res => {
       const newIdeas: React.SetStateAction<any[]> = [];
@@ -213,7 +213,7 @@ const Voting = ({ params }) => {
             RefreshToken
           ) {
             try {
-                const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
                     refresh: RefreshToken,
                 });
 
@@ -369,7 +369,7 @@ const Voting = ({ params }) => {
     const newReasons = [...reasons];
     newReasons[currentReasonIndex] = reasonInput;
     try {
-      const response = await axios.post('http://localhost:8000/api/add/reason/', {
+      const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/add/reason/', {
         opportunity_id: idea[3],
         reason: reasonInput,
         criteria_id: currentReasonIndex + 1,
@@ -386,13 +386,13 @@ const Voting = ({ params }) => {
           RefreshToken
         ) {
           try {
-              const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+              const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
                   refresh: RefreshToken,
               });
 
               localStorage.setItem('accessToken', refreshResponse.data.access);
 
-              const response = await axios.post('http://localhost:8000/api/add/reason/', {
+              const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/add/reason/', {
                 opportunity_id: idea[3],
                 reason: reasonInput,
                 criteria_id: currentReasonIndex + 1,

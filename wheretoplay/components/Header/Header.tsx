@@ -30,7 +30,7 @@ export function HeaderSimple({ glowIndex } : any) {
     if(!confirm)
         return;
     const TOKEN = localStorage.getItem('accessToken');
-    const response = await axios.post('http://localhost:8000/api/delete_user/', {}, {
+    const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/delete_user/', {}, {
         headers: {
             AUTHORIZATION: `Bearer ${TOKEN}`,
         },
@@ -48,7 +48,7 @@ export function HeaderSimple({ glowIndex } : any) {
         const TOKEN = localStorage.getItem('accessToken');
         const RefreshToken = localStorage.getItem('refreshToken');
         await axios
-            .get('http://localhost:8000/api/query/email/', {
+            .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/email/', {
               headers: {
                 AUTHORIZATION: `Bearer ${TOKEN}`,
               },
@@ -65,14 +65,14 @@ export function HeaderSimple({ glowIndex } : any) {
                 RefreshToken
               ) {
                 try {
-                    const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+                    const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
                         refresh: RefreshToken,
                     });
 
                     localStorage.setItem('accessToken', refreshResponse.data.access);
 
                     await axios
-                        .get('http://localhost:8000/api/query/email/', {
+                        .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/email/', {
                         headers: {
                             AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                         },
