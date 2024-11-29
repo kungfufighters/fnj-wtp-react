@@ -294,7 +294,7 @@ const Voting = ({ params } : any) => {
   };
 
   const connectWebSocket = () => {
-    socketRef.current = new WebSocket(`https://wheretoplay-6af95d3b28f7.herokuapp.com/ws/vote/${session}/`);
+    socketRef.current = new WebSocket(`ws://wheretoplay-6af95d3b28f7.herokuapp.com/ws/vote/${session}/`);
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
       console.log('Response from server:', data);
