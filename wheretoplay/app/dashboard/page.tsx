@@ -56,7 +56,7 @@ export default function Dashboard() {
     const router = useRouter();
 
     const getOpportunities = async () => {
-       // if (typeof window === 'undefined') return;
+        if (typeof window === 'undefined') return;
         const TOKEN = localStorage.getItem('accessToken');
         const RefreshToken = localStorage.getItem('refreshToken');
 
@@ -187,7 +187,7 @@ export default function Dashboard() {
                 });
     };
 
-    if (!localStorage.getItem('accessToken')) {
+    if (typeof window !== 'undefined' && !localStorage.getItem('accessToken')) {
         router.push('/login');
     }
 

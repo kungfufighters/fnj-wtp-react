@@ -20,7 +20,7 @@ export default function HomePage() {
     return false;
   };
 
-  if (!localStorage.getItem('accessToken')) {
+  if (typeof window !== 'undefined' && !localStorage.getItem('accessToken')) {
     router.push('/login');
   }
 

@@ -92,6 +92,7 @@ const ResultsPage = ({ params } : any) => {
     });
 
   const getSession = async () => {
+       if (typeof window === 'undefined') return;
        const TOKEN = localStorage.getItem('accessToken');
        const sesh = (await params).session;
        const requestString = `https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/oppresults?code=${sesh}`;

@@ -10,7 +10,7 @@ function CreateWorkspace() {
   const router = useRouter();
   const [submitted] = useState(false);
 
-  if (!localStorage.getItem('accessToken')) {
+  if (typeof window !== 'undefined' && !localStorage.getItem('accessToken')) {
     router.push('/login');
   }
 

@@ -26,6 +26,8 @@ export function HeaderSimple({ glowIndex } : any) {
   };
 
   const handleDelete = async () => {
+    if(typeof window === 'undefined')
+        return
     var confirm : boolean = window.confirm("Are you sure you want to delete your account?")
     if(!confirm)
         return;
@@ -44,7 +46,7 @@ export function HeaderSimple({ glowIndex } : any) {
   }
 
   const getEmail = async () => {
-    if (localStorage.getItem('accessToken')) {
+    if (typeof window !== 'undefined' && localStorage.getItem('accessToken')) {
         const TOKEN = localStorage.getItem('accessToken');
         const RefreshToken = localStorage.getItem('refreshToken');
         await axios
