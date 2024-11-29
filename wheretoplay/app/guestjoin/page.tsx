@@ -3,8 +3,8 @@
 import '@mantine/core/styles.css';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { HeaderSimple } from '@/components/Header/Header';
 import { Container, TextInput, Button } from '@mantine/core';
+import { HeaderSimple } from '@/components/Header/Header';
 
 export default function GuestInfoPage() {
   const router = useRouter();

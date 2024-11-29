@@ -7,7 +7,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
-const ResetPassword = ({ params }) => {
+const ResetPassword = ({ params } : any ) => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<boolean>(false);
     const router = useRouter();
@@ -43,7 +43,7 @@ const ResetPassword = ({ params }) => {
                 await new Promise(resolve => { setTimeout(resolve, 2000); });
                 router.push('/login');
             }
-        } catch (err) {
+        } catch (err : any) {
             if (err.response && err.response.data && err.response.data.error)
                 toast.error(err.response.data.error);
             console.log(err);

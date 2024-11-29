@@ -1,5 +1,6 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -8,13 +9,13 @@ import {
   Title,
   Tooltip,
   Legend,
-  PointElement
+  PointElement,
 } from 'chart.js';
-import { Bar, Scatter} from 'react-chartjs-2';
-import ScatterPlot from '@/components/ScatterPlot/ScatterPlot';
+import { Bar } from 'react-chartjs-2';
 import '../../Idea.css';
-import { ScrollArea, Center, Stack,Flex} from '@mantine/core';
+import { ScrollArea, Center, Flex } from '@mantine/core';
 import axios from 'axios';
+import ScatterPlot from '@/components/ScatterPlot/ScatterPlot';
 import { HeaderSimple } from '@/components/Header/Header';
 import TriangleChart from '@/components/TriangleChart/TriangleChart';
 
@@ -37,7 +38,7 @@ type Opp = {
     imgurl: string;
 };
 
-const ResultsPage = ({ params }) => {
+const ResultsPage = ({ params } : any) => {
   const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
   const [ideas, setIdeas] = useState<Opp[]>([]);
   const [idea, setIdea] = useState(null);
@@ -46,7 +47,6 @@ const ResultsPage = ({ params }) => {
 
   const getScatterValues = () => {
     const points: { x: number; y: number; label: string }[] = [];
-    let index = 0;
     ideas.forEach(ide => {
       const votes = ide[3];
       let count = 0;
@@ -71,7 +71,6 @@ const ResultsPage = ({ params }) => {
       const xVal = (sum / count - 1) * 75;
 
       points.push({ x: xVal, y: yVal, label: ide[0] });
-      index += 1;
     });
     console.table(points);
     return points;
@@ -79,18 +78,18 @@ const ResultsPage = ({ params }) => {
 
   //transformPoints converts points on the graph into points from the triangle.
   //the y is equal to each point's position on the diagonal, the x is a random value within the width of the triangle graph
-  const getTriValues = (points: { x: number; y: number; label: string }[]): { x: number; y: number; label: string }[] => {
-    return points.map(point => {
+  const getTriValues = (points: { x: number; y: number; label: string }[]):
+  { x: number; y: number; label: string }[] =>
+    points.map(point => {
       const a = (point.x + point.y) / 2; // Position on the y=x line
       const s = 300; // Length of one side of the square
       const ratio = (Math.sqrt(2 * (a - s) ** 2)) / (s * Math.sqrt(2)); // Calculate the ratio
-      const minX =  (ratio) / 2;
+      const minX = (ratio) / 2;
       const maxX = (ratio - 2) / (-2);
 
-      const newX = (point.x/300)*(maxX-minX) + minX;  //Transposing the old x value onto the triangle gives a meaningless(?) result but is consistent
+      const newX = (point.x / 300) * (maxX - minX) + minX;//Transposing the old x value onto the triangle gives a meaningless(?) result but is consistent
       return { x: newX, y: ratio, label: point.label };
     });
-  };
 
   const getSession = async () => {
        const TOKEN = localStorage.getItem('accessToken');
@@ -152,7 +151,7 @@ const ResultsPage = ({ params }) => {
     }
   };
 
-  const graphData = (label, votes) => ({
+  const graphData = (label : any, votes : any) => ({
     labels: [label],
     datasets: [
       {
@@ -182,15 +181,15 @@ const ResultsPage = ({ params }) => {
         ticks: {
             stepSize: 1,
             precision: 0,
-        font: {size: 10},
+        font: { size: 10 },
         },
-        },  
+        },
       y: {
         min: 0,
         max: 10,
         ticks: {
         stepSize: 2,
-        font: {size: 10},
+        font: { size: 10 },
         },
       },
     },
@@ -209,22 +208,21 @@ const ResultsPage = ({ params }) => {
   }
 
   return (
-    
     <div>
       <HeaderSimple glowIndex={-1} />
         <h2 style={{ textAlign: 'center' }}>
             Opportunity #{currentIdeaIndex + 1} Results: {`${idea[0]} (${idea[1]})`}
         </h2>
 
-        <p style={{ textAlign: 'center', width: '50%', margin: 'auto'}}>
+        <p style={{ textAlign: 'center', width: '50%', margin: 'auto' }}>
             {idea[2]}
         </p>
 
         <div style={{ textAlign: 'center' }}>
             <img
-                src={idea[5]}
-                alt=""  // Empty alt attribute for decorative images
-                style={{ width: '300px', marginBottom: '20px' }}
+              src={idea[5]}
+              alt=""  // Empty alt attribute for decorative images
+              style={{ width: '300px', marginBottom: '20px' }}
             />
         </div>
 
@@ -258,18 +256,17 @@ const ResultsPage = ({ params }) => {
 
         <div className="middle-text-areas" style={{ width: '20%' }}>
           <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  } }> 
-            
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
           <ScrollArea h={150} scrollbars="y"> {idea[4][0]}</ScrollArea>
           </div>
 
           <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
           <ScrollArea h={150} scrollbars="y"> {idea[4][1]}</ScrollArea>
           </div>
 
           <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
           <ScrollArea h={150} scrollbars="y"> {idea[4][2]}</ScrollArea>
           </div>
         </div>
@@ -292,43 +289,42 @@ const ResultsPage = ({ params }) => {
         </div>
         <div className="right-text-areas" style={{ width: '20%' }}>
           <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  } }>
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
           <ScrollArea h={150} scrollbars="y"> {idea[4][3]}</ScrollArea>
           </div>
 
           <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0 }}>
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
           <ScrollArea h={150} scrollbars="y"> {idea[4][4]}</ScrollArea>
           </div>
 
           <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
+          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
           <ScrollArea h={150} scrollbars="y"> {idea[4][5]}</ScrollArea>
           </div>
         </div>
       </div>
-      
     <div style={{
-        display:'flex',
+        display: 'flex',
         justifyContent: 'space-between',
-        width:'70%',
+        width: '70%',
         margin: '0 auto',
-        padding: '0 20px'
+        padding: '0 20px',
       }}>
-      <div style={{width:'50%'}}>
+      <div style={{ width: '50%' }}>
         <Center><h3>Where To Play Triangle</h3></Center>
           <Center>
             <div style={{ height: '300px' }}>
-              <TriangleChart points = {getTriValues(getScatterValues())}/>
+              <TriangleChart points={getTriValues(getScatterValues())} />
             </div>
-        </Center>
+          </Center>
       </div>
 
-        <div style={{width:'50%'}}>
-        <h3 style={{textAlign: 'center'}}>Where to Play</h3>
+        <div style={{ width: '50%' }}>
+        <h3 style={{ textAlign: 'center' }}>Where to Play</h3>
           <Center>
-          <Flex align='center'>
-            <div style={{writingMode: 'vertical-rl', transform: 'rotate(180deg)'}}>
+          <Flex align="center">
+            <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
             <p>Potential</p>
             </div>
             <ScatterPlot points={getScatterValues()} />
@@ -336,9 +332,9 @@ const ResultsPage = ({ params }) => {
           </Center>
           <Center><p>Challenges</p></Center>
         </div>
-      </div>
+    </div>
 
-      <div className="navigation-buttons" style={{ marginTop: '20px', textAlign: 'center'  }}>
+      <div className="navigation-buttons" style={{ marginTop: '20px', textAlign: 'center' }}>
         {currentIdeaIndex > 0 &&
         <button className="Idea-button" onClick={goToPreviousIdea} disabled={currentIdeaIndex === 0} type="button">
           Previous Opportunity

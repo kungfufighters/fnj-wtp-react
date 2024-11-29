@@ -6,16 +6,16 @@ import axios, { AxiosError } from 'axios';
 import IdeaSubmissionForm from './ideaSubmissionFormNEW';
 import { HeaderSimple } from '@/components/Header/Header';
 
-
 function CreateWorkspace() {
   const router = useRouter();
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted] = useState(false);
 
   if (!localStorage.getItem('accessToken')) {
     router.push('/login');
   }
 
-  const handleFormSubmit = async (submittedIdeas: any, company: string, thresholdSensitivity: string) => {
+  const handleFormSubmit = async (submittedIdeas: any, company: string,
+    thresholdSensitivity: string) => {
     const TOKEN = localStorage.getItem('accessToken');
     const RefreshToken = localStorage.getItem('refreshToken'); //Get Refresh Token
     let threshold = 2;

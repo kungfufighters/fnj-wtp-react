@@ -31,7 +31,7 @@ export default function Forgot() {
                 form.reset();
                 toast.success('Check your email for a reset password link');
             }
-        } catch (err) {
+        } catch (err : any) {
             if (err.response && err.response.data && err.response.data.error)
                 toast.error(err.response.data.error);
             console.log(err);

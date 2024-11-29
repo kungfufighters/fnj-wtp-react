@@ -9,11 +9,10 @@ Account (change password)
 import { useState } from 'react';
 import { Accordion, Center, Stack, PasswordInput, TextInput, Button, Collapse, Anchor, Group } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { useDisclosure } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
-import { HeaderSimple } from '@/components/Header/Header';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
+import { HeaderSimple } from '@/components/Header/Header';
 
 interface OppProps {
     id: number;
@@ -41,6 +40,10 @@ type Workspace = {
     display: boolean;
 };
 
+const spaceprops = {
+    spacing: 'md',
+};
+
 export default function Dashboard() {
     const [passLoading, setPassLoading] = useState(false);
     const [passError, setPassError] = useState<string | null>(null); // To handle errors
@@ -57,7 +60,7 @@ export default function Dashboard() {
         const TOKEN = localStorage.getItem('accessToken');
         const RefreshToken = localStorage.getItem('refreshToken');
 
-        const successLogic = res => {
+        const successLogic = (res : any) => {
             console.log(res);
             const workspaces = res.data;
             const newWorks: Workspace[] = [];
@@ -287,7 +290,7 @@ export default function Dashboard() {
                         toast.success('Email changed');
                         console.log('success');
                     }
-            } catch (refreshError) {
+            } catch (refreshError : any) {
                         if (refreshError.response && refreshError.response.status === 401) {
                               console.log('Refresh token expired. Redirecting to login.');
                               localStorage.removeItem('accessToken');
@@ -356,7 +359,7 @@ export default function Dashboard() {
                             toast.success('Email changed');
                             console.log('success');
                         }
-                } catch (refreshError) {
+                } catch (refreshError : any) {
                             if (refreshError.response && refreshError.response.status === 401) {
                                 console.log('Refresh token expired. Redirecting to login.');
                                 localStorage.removeItem('accessToken');
@@ -370,7 +373,7 @@ export default function Dashboard() {
                                 } else {
                                     setPassError('Password could not be changed');
                                 }
-                              }
+                            }
                         }
                     } else {
                         console.error(error);
@@ -386,7 +389,7 @@ export default function Dashboard() {
 
     const changeEmailForm = () =>
         <form onSubmit={mailForm.onSubmit((values) => mailSubmit(values))}>
-            <Stack spacing="md">
+            <Stack {...spaceprops}>
                 <TextInput
                   label="New Email"
                   placeholder="you@example.com"
@@ -404,7 +407,7 @@ export default function Dashboard() {
 
     const changePasswordForm = () =>
         <form onSubmit={passForm.onSubmit((values) => passSubmit(values))}>
-            <Stack spacing="md">
+            <Stack {...spaceprops}>
                 <PasswordInput
                   label="Current Password"
                   placeholder="Your current password"

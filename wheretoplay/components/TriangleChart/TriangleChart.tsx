@@ -32,7 +32,7 @@ const options: ChartOptions<'scatter'> = {
   maintainAspectRatio: false, // Allow chart to fill its container
 };
 
-const TriangleChart = ({points}) => {
+const TriangleChart = ({points} : any) => {
   const data = {
     datasets: [
       {

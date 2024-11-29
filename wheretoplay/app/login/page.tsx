@@ -19,8 +19,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(true); // Used to block initial render
   const [loginLoading, setLoginLoading] = useState(false);
   const [isAlreadyLoggedIn, setIsAlreadyLoggedIn] = useState(false); // New state to handle message display
-  const [error, setError] = useState<string | null>(null); //Error state 
-
+  const [error, setError] = useState<string | null>(null); //Error state
 
   // Redirect if the user is already logged in
   useEffect(() => {
@@ -69,7 +68,7 @@ export default function Login() {
         router.push('/');
       } else {
         console.error('Login failed:', data.error);
-        setError('Login failed: Invalid email or password'); 
+        setError('Login failed: Invalid email or password');
       }
     } catch (err) {
       console.error('Error during login:', err);
@@ -135,7 +134,7 @@ export default function Login() {
             </Button>
           <Group justify="space-between" mt="md">
             <Button variant="subtle" onClick={handleSignupRedirect}>
-              Don't have an account?
+              Don&apos;t have an account?
             </Button>
             <Button variant="subtle" onClick={() => router.push('/forgotPassword')}>
               Forgot Password?

@@ -44,7 +44,7 @@ type Opp = {
   imgurl: string;
 };
 
-const Voting = ({ params }) => {
+const Voting = ({ params } : any) => {
   const NUMCATS = 6;
   const TIMERLENGTH = 3;
   const VOTEOPTIONS = 5;
@@ -123,7 +123,7 @@ const Voting = ({ params }) => {
                 .then((res) => {
                   setUserID(res.data.id);
                 });
-            } catch (refreshError) {
+            } catch (refreshError : any) {
                             if (refreshError.response && refreshError.response.status === 401) {
                               console.log('Refresh token expired. Redirecting to login.');
                               localStorage.removeItem('accessToken');
@@ -165,7 +165,7 @@ const Voting = ({ params }) => {
     const sesh = (await params).session;
     const requestString = `https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/oppvoting?code=${sesh}`;
 
-    const successlogic = res => {
+    const successlogic = (res : any) => {
       const newIdeas: React.SetStateAction<any[]> = [];
       const newVotes: React.SetStateAction<any[]> = [];
       const newAllVotes: React.SetStateAction<any[]> = [];
@@ -226,7 +226,7 @@ const Voting = ({ params }) => {
                     },
                     })
                     .then(successlogic);
-            } catch (refreshError) {
+            } catch (refreshError : any) {
                             if (refreshError.response && refreshError.response.status === 401) {
                               console.log('Refresh token expired. Redirecting to login.');
                               localStorage.removeItem('accessToken');
@@ -312,7 +312,6 @@ const Voting = ({ params }) => {
         });
     }
     };
-    
     socketRef.current.onerror = (error: Event) => {
       console.error('WebSocket error:', error);
     };
@@ -345,7 +344,6 @@ const Voting = ({ params }) => {
     setTimeRemaining(0);
   };
 
-
   const goToPreviousIdea = () => {
     if (currentIdeaIndex > 0) {
       setIdea(ideas[currentIdeaIndex - 1]);
@@ -355,7 +353,7 @@ const Voting = ({ params }) => {
     setIsVoted(Array.from({ length: NUMCATS }, () => false));
     setReasons(Array.from({ length: NUMCATS }, () => ''));
     setTimeRemaining(0);
-  }
+  };
 
   const isEmpty = (vs : number[]) => {
     for (let i = 0; i < vs.length; i += 1) {
@@ -365,11 +363,10 @@ const Voting = ({ params }) => {
   };
 
   const handleReasonSubmit = async () => {
-    const TOKEN = localStorage.getItem('accessToken');
     const newReasons = [...reasons];
     newReasons[currentReasonIndex] = reasonInput;
     try {
-      const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/add/reason/', {
+      await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/add/reason/', {
         opportunity_id: idea[3],
         reason: reasonInput,
         criteria_id: currentReasonIndex + 1,
@@ -392,7 +389,7 @@ const Voting = ({ params }) => {
 
               localStorage.setItem('accessToken', refreshResponse.data.access);
 
-              const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/add/reason/', {
+              await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/add/reason/', {
                 opportunity_id: idea[3],
                 reason: reasonInput,
                 criteria_id: currentReasonIndex + 1,
@@ -401,7 +398,7 @@ const Voting = ({ params }) => {
                   AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                 },
               });
-          } catch (refreshError) {
+          } catch (refreshError : any) {
                           if (refreshError.response && refreshError.response.status === 401) {
                             console.log('Refresh token expired. Redirecting to login.');
                             localStorage.removeItem('accessToken');
@@ -457,10 +454,10 @@ const Voting = ({ params }) => {
               <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
               <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
               <Tooltip label={`Previous Vote: ${previousVotes[index] || 'None'}`} withArrow>
-              <Badge color="red" size="md" variant="filled"/>
+              <Badge color="red" size="md" variant="filled" />
               </Tooltip>
             </Flex>
-          </RadioGroup>
+            </RadioGroup>
         </Flex>
       </Stack>
     </Center>
@@ -469,12 +466,12 @@ const Voting = ({ params }) => {
   //console.log("isVoted:", isVoted);
 
   const categories = [
-    { caption: "Reason to Buy", infoM: "Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]" },
-    { caption: "Market Volume", infoM: "Based on: Current market size and Expected growth. [HIGH is GOOD]" },
-    { caption: "Economic Viability", infoM: "Based on: Margins (value vs. cost), Customers' ability to pay, and Customer stickiness? [HIGH is GOOD]" },
-    { caption: "Obstacles to Implementation", infoM: "Based on: Product development difficulties and Funding challenges [WANT LOW]" },
-    { caption: "Time To Revenue", infoM: "Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]" },
-    { caption: "Economic Risks", infoM: "Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]" }
+    { caption: 'Reason to Buy', infoM: 'Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]' },
+    { caption: 'Market Volume', infoM: 'Based on: Current market size and Expected growth. [HIGH is GOOD]' },
+    { caption: 'Economic Viability', infoM: 'Based on: Margins (value vs. cost), Customers ability to pay, and Customer stickiness? [HIGH is GOOD]' },
+    { caption: 'Obstacles to Implementation', infoM: 'Based on: Product development difficulties and Funding challenges [WANT LOW]' },
+    { caption: 'Time To Revenue', infoM: 'Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]' },
+    { caption: 'Economic Risks', infoM: 'Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]' },
   ];
 
   if (!queryFetched || !idea) {
@@ -490,7 +487,7 @@ const Voting = ({ params }) => {
       Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
     </h2>
 
-    <p style={{ textAlign: 'center', width: '50%', margin: 'auto'}}>
+    <p style={{ textAlign: 'center', width: '50%', margin: 'auto' }}>
         {idea[2]}
     </p>
 
@@ -501,7 +498,6 @@ const Voting = ({ params }) => {
         </Center>
       </div>
     )}
-    
     <form onSubmit={form.onSubmit(handleSubmit)}>
       <Center>
         <Stack bg="var(--mantine-color-body)" align="stretch" justify="center" gap="sm">
