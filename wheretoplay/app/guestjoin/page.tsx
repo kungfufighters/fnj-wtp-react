@@ -1,12 +1,20 @@
 'use client';
 
 import '@mantine/core/styles.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Container, TextInput, Button } from '@mantine/core';
 import { HeaderSimple } from '@/components/Header/Header';
 
 export default function GuestInfoPage() {
+  return (
+    <Suspense>
+      <GuestInfoPagePart />
+    </Suspense>
+  );
+}
+
+function GuestInfoPagePart() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionPin = searchParams.get('sessionPin');
