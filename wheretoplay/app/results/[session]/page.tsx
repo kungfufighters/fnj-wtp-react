@@ -15,7 +15,6 @@ import ScatterPlot from '@/components/ScatterPlot/ScatterPlot';
 import '../../Idea.css';
 import { ScrollArea, Center, Stack,Flex} from '@mantine/core';
 import axios from 'axios';
-import { HeaderSimple } from '@/components/Header/Header';
 import TriangleChart from '@/components/TriangleChart/TriangleChart';
 
 ChartJS.register(
@@ -211,7 +210,6 @@ const ResultsPage = ({ params }) => {
   return (
     
     <div>
-      <HeaderSimple glowIndex={-1} />
         <h2 style={{ textAlign: 'center' }}>
             Opportunity #{currentIdeaIndex + 1} Results: {`${idea[0]} (${idea[1]})`}
         </h2>

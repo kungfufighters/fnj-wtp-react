@@ -4,7 +4,6 @@ import '@mantine/core/styles.css';
 import { useState } from 'react';
 import { TextInput, Button, Container, Divider, Image } from '@mantine/core';
 import { useRouter } from 'next/navigation';
-import { HeaderSimple } from '@/components/Header/Header';
 
 export default function HomePage() {
   const router = useRouter();
@@ -39,7 +38,6 @@ export default function HomePage() {
 
   return (
     <div>
-      <HeaderSimple glowIndex={0} />
       <Container
         size="sm"
         style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}

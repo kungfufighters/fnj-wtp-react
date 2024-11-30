@@ -12,15 +12,15 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
+import { showNotification } from '@mantine/notifications';
 import { useForm } from '@mantine/form';
 
 export default function Login() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true); // Used to block initial render
   const [loginLoading, setLoginLoading] = useState(false);
-  const [isAlreadyLoggedIn, setIsAlreadyLoggedIn] = useState(false); // New state to handle message display
-  const [error, setError] = useState<string | null>(null); //Error state 
-
+  const [isAlreadyLoggedIn, setIsAlreadyLoggedIn] = useState(false); // Handle message display if logged in
+  const [error, setError] = useState<string | null>(null); // Error state
 
   const isValidToken = async (token: string): Promise<boolean> => {
     try {
@@ -29,12 +29,21 @@ export default function Login() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
       });
-      return response.ok
+      return response.ok;
     } catch {
       return false;
     }
   };
-  
+
+  // Check for notification messages from previous redirects
+  useEffect(() => {
+    const notificationData = localStorage.getItem('redirectNotification');
+    if (notificationData) {
+      const { title, message, color } = JSON.parse(notificationData);
+      showNotification({ title, message, color });
+      localStorage.removeItem('redirectNotification'); // Clear notification data
+    }
+  }, []);
 
   // Redirect if the user is already logged in
   useEffect(() => {
@@ -54,10 +63,9 @@ export default function Login() {
         setIsLoading(false);
       }
     };
-  
+
     checkLoginStatus();
   }, [router]);
-  
 
   const form = useForm({
     initialValues: {
@@ -81,19 +89,22 @@ export default function Login() {
         },
         body: JSON.stringify(values),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         // Store tokens in localStorage
         localStorage.setItem('accessToken', data.tokens.access);
         localStorage.setItem('refreshToken', data.tokens.refresh);
-
-        // Redirect to the dashboard
+  
+        // Navigate to the base URL first, then refresh the page
         router.push('/');
+        setTimeout(() => {
+          window.location.reload();
+        }, 100); // Slight delay to ensure navigation happens before reload
       } else {
         console.error('Login failed:', data.error);
-        setError('Login failed: Invalid email or password'); 
+        setError('Login failed: Invalid email or password');
       }
     } catch (err) {
       console.error('Error during login:', err);
@@ -101,6 +112,7 @@ export default function Login() {
       setLoginLoading(false);
     }
   };
+  
 
   const handleSignupRedirect = () => {
     router.push('/signup');
@@ -154,9 +166,9 @@ export default function Login() {
             required
             mt="md"
           />
-            <Button type="submit" loading={loginLoading} mt="md">
-              {loginLoading ? 'Logging in...' : 'Log in'}
-            </Button>
+          <Button type="submit" loading={loginLoading} mt="md">
+            {loginLoading ? 'Logging in...' : 'Log in'}
+          </Button>
           <Group justify="space-between" mt="md">
             <Button variant="subtle" onClick={handleSignupRedirect}>
               Don't have an account?
@@ -166,10 +178,10 @@ export default function Login() {
             </Button>
           </Group>
           {error && (
-        <Text color="red" mt="sm">
-          {error}
-        </Text>
-      )}
+            <Text color="red" mt="sm">
+              {error}
+            </Text>
+          )}
         </form>
       </Paper>
     </Container>

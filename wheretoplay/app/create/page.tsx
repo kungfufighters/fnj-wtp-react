@@ -2,23 +2,32 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import IdeaSubmissionForm from './ideaSubmissionForm';
-import { HeaderSimple } from '@/components/Header/Header';
-
+import { showNotification } from '@mantine/notifications';
 
 function CreateWorkspace() {
   const router = useRouter();
-  const [submitted, setSubmitted] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for access token in localStorage on the client side
-    if (!localStorage.getItem('accessToken')) {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      // Save notification details in localStorage
+      localStorage.setItem(
+        'redirectNotification',
+        JSON.stringify({
+          title: 'Unauthorized',
+          message: 'You need to log in to create a workspace.',
+          color: 'red',
+        })
+      );
       router.push('/login');
     } else {
       setIsAuthorized(true);
     }
+    setIsLoading(false);
   }, [router]);
 
   const handleFormSubmit = async (
@@ -30,7 +39,7 @@ function CreateWorkspace() {
     const TOKEN = localStorage.getItem('accessToken');
     const RefreshToken = localStorage.getItem('refreshToken');
     const threshold = madThreshold || 2; // Default threshold if not provided
-  
+
     try {
       // Step 1: Create Workspace
       const workspaceResponse = await axios.post(
@@ -46,11 +55,11 @@ function CreateWorkspace() {
           },
         }
       );
-  
+
       console.log('Workspace created:', workspaceResponse.data);
       const workspaceId = workspaceResponse.data.workspace_id;
       const sessionPin = workspaceResponse.data.code;
-  
+
       // Step 2: Prepare and Create Opportunities
       const formattedIdeas = submittedIdeas.map((idea: any) => ({
         workspace: workspaceId,
@@ -59,9 +68,9 @@ function CreateWorkspace() {
         description: idea.description,
         image: idea.media || null, // Optional image field
       }));
-  
+
       console.log('Submitting opportunities:', formattedIdeas);
-  
+
       for (const idea of formattedIdeas) {
         await axios.post(
           'http://localhost:8000/api/create_opportunity/',
@@ -74,17 +83,17 @@ function CreateWorkspace() {
         );
         console.log('Opportunity created:', idea);
       }
-  
+
       // Step 3: Redirect to the Invite Page
       console.log('All opportunities submitted successfully.');
       router.push(`/invite/${sessionPin}`);
     } catch (error) {
       console.error('Error during form submission:', error);
-  
+
       // Step 4: Handle Token Refresh if Necessary
       if (axios.isAxiosError(error) && error.response?.status === 401 && RefreshToken) {
         console.log('Access token expired. Attempting to refresh.');
-  
+
         try {
           // Refresh Token
           const refreshResponse = await axios.post(
@@ -93,9 +102,9 @@ function CreateWorkspace() {
           );
           const newAccessToken = refreshResponse.data.access;
           localStorage.setItem('accessToken', newAccessToken);
-  
+
           console.log('Access token refreshed. Retrying submission.');
-  
+
           // Retry Workspace Creation
           return handleFormSubmit(submittedIdeas, company, guestCap, madThreshold);
         } catch (refreshError) {
@@ -106,18 +115,25 @@ function CreateWorkspace() {
         }
       } else {
         console.error('Unexpected error:', error);
-        alert('Failed to submit ideas. Please check your input and try again.');
+        showNotification({
+          title: 'Submission Failed',
+          message: 'Failed to submit ideas. Please check your input and try again.',
+          color: 'red',
+        });
       }
     }
-  };  
+  };
 
-  return (
+  // Prevent rendering the page until authorization is checked
+  if (isLoading) {
+    return null;
+  }
+
+  return isAuthorized ? (
     <div className="CreateWorkspace">
-      <HeaderSimple glowIndex={2}/>
-      {!submitted && <IdeaSubmissionForm onSubmit={handleFormSubmit} />}
-      {submitted && <h1>Thank you for your submission!</h1>}
+      <IdeaSubmissionForm onSubmit={handleFormSubmit} />
     </div>
-  );
+  ) : null;
 }
 
 export default CreateWorkspace;

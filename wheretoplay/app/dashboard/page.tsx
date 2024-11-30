@@ -5,7 +5,6 @@ import { Accordion, Center, Stack, PasswordInput, TextInput, Button, Collapse, A
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
-import { HeaderSimple } from '@/components/Header/Header';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -47,6 +46,15 @@ export default function Dashboard() {
     useEffect(() => {
         // Redirect to login if no access token
         if (typeof window !== 'undefined' && !localStorage.getItem('accessToken')) {
+            // Store notification details in localStorage
+            localStorage.setItem(
+                'redirectNotification',
+                JSON.stringify({
+                    title: 'Unauthorized Access',
+                    message: 'Please log in to access the dashboard.',
+                    color: 'red',
+                })
+            );
             router.push('/login');
         }
     }, [router]);
@@ -205,7 +213,6 @@ export default function Dashboard() {
 
     return (
         <>
-            <HeaderSimple glowIndex={1} />
             <Toaster />
             <Center>
                 <Stack>
