@@ -3,7 +3,6 @@
 import "@mantine/core/styles.css";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { HeaderSimple } from "@/components/Header/Header";
 import {
   Container,
   TextInput,
@@ -146,7 +145,6 @@ export default function InvitePage() {
 
   return (
     <div>
-      <HeaderSimple glowIndex={-1} />
       <Toaster />
       <Container size="sm" style={{ marginTop: "2rem" }}>
         <Paper withBorder shadow="sm" p="md" radius="md">

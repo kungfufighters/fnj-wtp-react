@@ -10,7 +10,6 @@ import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Graph } from '../../../components/Graph/Graph';
-import { HeaderSimple } from '@/components/Header/Header';
 import oneF from '../../../public/OneFinger.png';
 import fiveF from '../../../public/FiveFingers.png';
 
@@ -77,19 +76,27 @@ const Voting = ({ params }) => {
   const TOKEN = localStorage.getItem('accessToken');
   const RefreshToken = localStorage.getItem('refreshToken');
 
-  // Check for access token on the client side
+
+  // Check for access token or guest ID
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
     const guestId = typeof window !== 'undefined' ? localStorage.getItem('guest_id') : null;
-
-    if (token) {
-      setIsLoggedIn(true); // Logged-in user
-    } else if (guestId) {
-      setUserID(parseInt(guestId, 10)); // Set guest user ID
+  
+    if (token || guestId) {
+      // Either logged in or guest, no redirection
+      setIsLoggedIn(Boolean(token)); // Logged-in user if token is present
+      if (guestId) {
+        setUserID(parseInt(guestId, 10)); // Set guest user ID
+      }
     } else {
-      router.push('/login'); // Redirect if neither logged-in nor guest
+      // Save session pin to local storage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sessionPin', params.session);
+      }
+      router.push('/guestjoin');
     }
-  }, [router]);
+  }, [router, params]);
+  
 
 
   // Fetch user ID if logged in
@@ -173,8 +180,14 @@ const Voting = ({ params }) => {
 
   const getSession = async () => {
     const guestId = localStorage.getItem('guest_id');
+<<<<<<< HEAD
     const sesh = (await params).session;
     const requestString = `https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/oppvoting?code=${sesh}`;
+=======
+    const sesh = params.session || localStorage.getItem('sessionPin');
+    const requestString = `http://localhost:8000/api/query/oppvoting?code=${sesh}`;
+    setSession(sesh);
+>>>>>>> de2f4bf (Changed guest join page)
 
     const successlogic = res => {
       const newIdeas: React.SetStateAction<any[]> = [];
@@ -499,7 +512,6 @@ const Voting = ({ params }) => {
 
   return (
   <>
-  <HeaderSimple glowIndex={-1} />
     <h2 style={{ textAlign: 'center' }}>
       Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
     </h2>

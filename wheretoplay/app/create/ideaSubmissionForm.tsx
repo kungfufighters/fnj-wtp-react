@@ -209,9 +209,14 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({ onSubmit }) => 
                 label="Guest Cap"
                 placeholder="Maximum number of guests"
                 value={guestCap}
-                onChange={setGuestCap}
-                min={1}
+                onChange={(value) => setGuestCap(value !== null && value > 0 ? value : 0)}
+                min={0}
               />
+              {guestCap === 0 && (
+                <Text size="sm" color="dimmed" mt="xs">
+                  No Maximum
+                </Text>
+              )}
               <NumberInput
                 label="MAD Threshold"
                 placeholder="Set MAD outlier threshold"
