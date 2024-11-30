@@ -158,6 +158,86 @@ export default function Dashboard() {
         }
     };
 
+    const mailForm = useForm({
+        initialValues: {
+            newEmail: '',
+        },
+        validate: {
+            newEmail: (value) => (/^\S+@\S+$/.test(value) ? null : 'Invalid email'),
+        },
+    });
+
+    const passForm = useForm({
+        initialValues: {
+            currentPassword: '',
+            newPassword: '',
+            confirmNewPassword: '',
+        },
+        validate: {
+            newPassword: (value) =>
+                value.length >= 6 ? null : 'Password must be at least 6 characters long',
+            confirmNewPassword: (value, values) =>
+                value === values.newPassword ? null : 'Passwords do not match',
+        },
+    });
+
+    const mailSubmit = async (values: typeof mailForm.values) => {
+        const TOKEN = localStorage.getItem('accessToken');
+        const RefreshToken = localStorage.getItem('refreshToken');
+        setMailLoading(true);
+        setMailError(null);
+
+        try {
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/change/email/`, {
+                newEmail: values.newEmail,
+            }, {
+                headers: {
+                    AUTHORIZATION: `Bearer ${TOKEN}`,
+                },
+            });
+
+            if (response.status === 200) {
+                setEmail(mailForm.values.newEmail);
+                mailForm.reset();
+                toast.success('Email changed');
+            }
+        } catch (error) {
+            console.error(error);
+            setMailError('Could not update email. Please try again.');
+        } finally {
+            setMailLoading(false);
+        }
+    };
+
+    const passSubmit = async (values: typeof passForm.values) => {
+        const TOKEN = localStorage.getItem('accessToken');
+        const RefreshToken = localStorage.getItem('refreshToken');
+        setPassLoading(true);
+        setPassError(null);
+
+        try {
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/change/password/`, {
+                currentPassword: values.currentPassword,
+                newPassword: values.newPassword,
+                confirmNewPassword: values.confirmNewPassword,
+            }, {
+                headers: {
+                    AUTHORIZATION: `Bearer ${TOKEN}`,
+                },
+            });
+
+            if (response.status === 200) {
+                passForm.reset();
+                toast.success('Password changed');
+            }
+        } catch (error) {
+            console.error(error);
+            setPassError('Could not update password. Please try again.');
+        } finally {
+            setPassLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (!oppQueryFetched) {
             getOpportunities();
@@ -235,9 +315,47 @@ export default function Dashboard() {
                     )}
                     <h1>Change Email</h1>
                     <p>Current email is: {email}</p>
-                    {/* Email change form */}
+                    <form onSubmit={mailForm.onSubmit((values) => mailSubmit(values))}>
+                        <Stack spacing="md">
+                            <TextInput
+                                label="New Email"
+                                placeholder="you@example.com"
+                                withAsterisk
+                                {...mailForm.getInputProps('newEmail')}
+                            />
+                            {mailError && <p style={{ color: 'red' }}>{mailError}</p>}
+                            <Button type="submit" loading={mailLoading}>
+                                {mailLoading ? 'Changing Email...' : 'Change Email'}
+                            </Button>
+                        </Stack>
+                    </form>
                     <h1>Change Password</h1>
-                    {/* Password change form */}
+                    <form onSubmit={passForm.onSubmit((values) => passSubmit(values))}>
+                        <Stack spacing="md">
+                            <PasswordInput
+                                label="Current Password"
+                                placeholder="Your current password"
+                                withAsterisk
+                                {...passForm.getInputProps('currentPassword')}
+                            />
+                            <PasswordInput
+                                label="New Password"
+                                placeholder="Your new password"
+                                withAsterisk
+                                {...passForm.getInputProps('newPassword')}
+                            />
+                            <PasswordInput
+                                label="Confirm New Password"
+                                placeholder="Confirm your new password"
+                                withAsterisk
+                                {...passForm.getInputProps('confirmNewPassword')}
+                            />
+                            {passError && <p style={{ color: 'red' }}>{passError}</p>}
+                            <Button type="submit" loading={passLoading}>
+                                {passLoading ? 'Changing Password...' : 'Change Password'}
+                            </Button>
+                        </Stack>
+                    </form>
                 </Stack>
             </Center>
         </>
