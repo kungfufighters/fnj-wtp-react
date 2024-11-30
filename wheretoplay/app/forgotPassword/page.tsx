@@ -23,7 +23,7 @@ export default function Forgot() {
     const sendResetPasswordEmail = async (values: { email: string }) => {
         setLoading(true);
         try {
-            const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/send_reset_email/', {
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/send_reset_email/`, {
                 email: values.email,
             });
 

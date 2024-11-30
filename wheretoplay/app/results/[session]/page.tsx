@@ -94,7 +94,7 @@ const ResultsPage = ({ params }) => {
   const getSession = async () => {
        const TOKEN = localStorage.getItem('accessToken');
        const sesh = (await params).session;
-       const requestString = `https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/oppresults?code=${sesh}`;
+       const requestString = `${process.env.NEXT_PUBLIC_API_BASE_URL}/query/oppresults?code=${sesh}`;
        setSession(sesh);
        await axios
             .get(requestString, {

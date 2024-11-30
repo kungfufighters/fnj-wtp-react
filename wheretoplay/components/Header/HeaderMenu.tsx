@@ -36,7 +36,7 @@ export function HeaderMenu() {
     const TOKEN = localStorage.getItem('accessToken');
     if (TOKEN) {
       try {
-        const response = await axios.get('http://localhost:8000/api/query/email/', {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/query/email/`, {
           headers: { Authorization: `Bearer ${TOKEN}` },
         });
         setAccountLabel(response.data.email);

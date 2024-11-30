@@ -44,7 +44,7 @@ export default function Signup() {
         setError(null);
 
         try {
-            const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/signup/', {
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/signup/`, {
                 email: values.email,
                 password: values.password,
                 password2: values.confirmPassword,

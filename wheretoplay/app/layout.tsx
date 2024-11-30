@@ -8,6 +8,7 @@ import { theme } from '../theme';
 import { Notifications } from '@mantine/notifications';
 import { HeaderMenu } from '../components/Header/HeaderMenu';
 
+
 export const metadata = {
   title: 'Where-to-Play',
   description: 'FundNJ- Where-to-Play application',

@@ -53,7 +53,7 @@ export default function InvitePage() {
       }
 
       const response = await fetch(
-        `https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/workspace_by_code/?code=${sessionPin}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/query/workspace_by_code/?code=${sessionPin}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -81,7 +81,7 @@ export default function InvitePage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch("http://localhost:8000/api/refresh_session_code/", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/refresh_session_code/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -111,7 +111,7 @@ export default function InvitePage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch("https://wheretoplay-6af95d3b28f7.herokuapp.com/api/send_invite_email/", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/send_invite_email/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

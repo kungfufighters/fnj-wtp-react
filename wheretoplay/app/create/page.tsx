@@ -41,20 +41,13 @@ function CreateWorkspace() {
     const threshold = madThreshold || 2; // Default threshold if not provided
 
     try {
-      // Step 1: Create Workspace
       const workspaceResponse = await axios.post(
-<<<<<<< HEAD
-        'https://wheretoplay-6af95d3b28f7.herokuapp.com/api/create_workspace/',
-        { name: company, outlier_threshold: threshold },
-
-=======
-        'http://localhost:8000/api/create_workspace/',
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/create_workspace/`,
         {
           name: company,
           outlier_threshold: threshold,
           guest_cap: guestCap || 0, // Default guest cap to 0 if null
         },
->>>>>>> f643c3a (Added refresh session pin)
         {
           headers: {
             Authorization: `Bearer ${TOKEN}`,
@@ -66,7 +59,6 @@ function CreateWorkspace() {
       const workspaceId = workspaceResponse.data.workspace_id;
       const sessionPin = workspaceResponse.data.code;
 
-      // Step 2: Prepare and Create Opportunities
       const formattedIdeas = submittedIdeas.map((idea: any) => ({
         workspace: workspaceId,
         name: idea.name,
@@ -78,13 +70,8 @@ function CreateWorkspace() {
       console.log('Submitting opportunities:', formattedIdeas);
 
       for (const idea of formattedIdeas) {
-<<<<<<< HEAD
         const opportunityResponse = await axios.post(
-          'https://wheretoplay-6af95d3b28f7.herokuapp.com/api/create_opportunity/',
-=======
-        await axios.post(
-          'http://localhost:8000/api/create_opportunity/',
->>>>>>> f643c3a (Added refresh session pin)
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/create_opportunity/`,
           idea,
           {
             headers: {
@@ -95,19 +82,17 @@ function CreateWorkspace() {
         console.log('Opportunity created:', idea);
       }
 
-      // Step 3: Redirect to the Invite Page
       console.log('All opportunities submitted successfully.');
       router.push(`/invite/${sessionPin}`);
     } catch (error) {
       console.error('Error during form submission:', error);
 
-      // Step 4: Handle Token Refresh if Necessary
+
       if (axios.isAxiosError(error) && error.response?.status === 401 && RefreshToken) {
         console.log('Access token expired. Attempting to refresh.');
 
         try {
-<<<<<<< HEAD
-          const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
+          const refreshResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`, {
             refresh: RefreshToken,
           });
 
@@ -116,7 +101,7 @@ function CreateWorkspace() {
           console.log('Access token refreshed successfully.');
 
           const retryResponse = await axios.post(
-            'https://wheretoplay-6af95d3b28f7.herokuapp.com/api/create_workspace/',
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/create_workspace/`,
             { name: company },
             {
               headers: {
@@ -142,7 +127,7 @@ function CreateWorkspace() {
           // Send each idea in a separate request
           for (const idea of formattedIdeas) {
             const opportunityResponse = await axios.post(
-              'https://wheretoplay-6af95d3b28f7.herokuapp.com/api/create_opportunity/',
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/create_opportunity/`,
               idea,
               {
                 headers: {
@@ -153,20 +138,6 @@ function CreateWorkspace() {
             console.log('Opportunity created:', opportunityResponse.data);
           }
           router.push(`/invite/${sessionPin}`);
-=======
-          // Refresh Token
-          const refreshResponse = await axios.post(
-            'http://localhost:8000/api/token/refresh/',
-            { refresh: RefreshToken }
-          );
-          const newAccessToken = refreshResponse.data.access;
-          localStorage.setItem('accessToken', newAccessToken);
-
-          console.log('Access token refreshed. Retrying submission.');
-
-          // Retry Workspace Creation
-          return handleFormSubmit(submittedIdeas, company, guestCap, madThreshold);
->>>>>>> f643c3a (Added refresh session pin)
         } catch (refreshError) {
           console.error('Token refresh failed:', refreshError);
           localStorage.removeItem('accessToken');

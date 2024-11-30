@@ -111,7 +111,7 @@ const Voting = ({ params }) => {
 
       if (TOKEN) {
         await axios
-          .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/id/', {
+          .get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/query/id/`, {
             headers: {
               AUTHORIZATION: `Bearer ${TOKEN}`,
             },
@@ -128,14 +128,14 @@ const Voting = ({ params }) => {
             RefreshToken
           ) {
             try {
-                const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
+                const refreshResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`, {
                     refresh: RefreshToken,
                 });
 
                 localStorage.setItem('accessToken', refreshResponse.data.access);
 
                 await axios
-                .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/id/', {
+                .get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/query/id/`, {
                   headers: {
                     AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                   },
@@ -180,14 +180,9 @@ const Voting = ({ params }) => {
 
   const getSession = async () => {
     const guestId = localStorage.getItem('guest_id');
-<<<<<<< HEAD
-    const sesh = (await params).session;
-    const requestString = `https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/oppvoting?code=${sesh}`;
-=======
     const sesh = params.session || localStorage.getItem('sessionPin');
-    const requestString = `http://localhost:8000/api/query/oppvoting?code=${sesh}`;
+    const requestString = `${process.env.NEXT_PUBLIC_API_BASE_URL}/query/oppvoting?code=${sesh}`;
     setSession(sesh);
->>>>>>> de2f4bf (Changed guest join page)
 
     const successlogic = res => {
       const newIdeas: React.SetStateAction<any[]> = [];
@@ -237,7 +232,7 @@ const Voting = ({ params }) => {
             RefreshToken
           ) {
             try {
-                const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
+                const refreshResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`, {
                     refresh: RefreshToken,
                 });
 
@@ -396,7 +391,7 @@ const Voting = ({ params }) => {
     const newReasons = [...reasons];
     newReasons[currentReasonIndex] = reasonInput;
     try {
-      const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/add/reason/', {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/add/reason/`, {
         opportunity_id: idea[3],
         reason: reasonInput,
         criteria_id: currentReasonIndex + 1,
@@ -413,13 +408,13 @@ const Voting = ({ params }) => {
           RefreshToken
         ) {
           try {
-              const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
+              const refreshResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`, {
                   refresh: RefreshToken,
               });
 
               localStorage.setItem('accessToken', refreshResponse.data.access);
 
-              const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/add/reason/', {
+              const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/add/reason/`, {
                 opportunity_id: idea[3],
                 reason: reasonInput,
                 criteria_id: currentReasonIndex + 1,

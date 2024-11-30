@@ -24,7 +24,7 @@ export default function Login() {
 
   const isValidToken = async (token: string): Promise<boolean> => {
     try {
-      const response = await fetch('http://localhost:8000/api/custom/token/verify/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/custom/token/verify/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token }),
@@ -82,7 +82,7 @@ export default function Login() {
   const handleSubmit = async (values: { email: string; password: string }) => {
     setLoginLoading(true);
     try {
-      const response = await fetch('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/login/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
