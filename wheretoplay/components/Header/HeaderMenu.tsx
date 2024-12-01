@@ -19,7 +19,7 @@ import axios from 'axios';
 import classes from './HeaderMenu.module.css';
 
 const links = [
-  { link: '/dashboard', label: 'Dashboard' },
+  { link: '/dashboard/opportunities', label: 'Dashboard' },
   { link: '/create', label: 'Create a Workspace' },
 ];
 
