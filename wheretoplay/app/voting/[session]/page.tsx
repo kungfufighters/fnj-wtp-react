@@ -27,8 +27,12 @@ interface InfoProps {
 // result is 1D array with the new votes
 // outlier is a number corresponding to the vote category for which they have become an outlier
 interface WebSocketMessage {
-  result: number[];
-  outlier: number;
+  notification: string;
+  user_ids?: number[];
+  lower?: number;
+  upper?: number;
+  result?: number[];
+  outlier?: number;
   criteria_id: number;
   user_id: number;
   median: number;
@@ -69,12 +73,14 @@ const Voting = ({ params }) => {
   const [idea, setIdea] = useState(null);
   const [session, setSession] = useState(0);
   const [queryFetched, setQueryFetched] = useState(false);
+  const [badgeState, setBadgeState] = useState<{ [key: number]: boolean }>({});
 
   // Check for mobile device
   const isMobile = useMediaQuery('(max-width: 50em)') ?? false;
   const socketRef = useRef<WebSocket | null>(null);
   const TOKEN = localStorage.getItem('accessToken');
   const RefreshToken = localStorage.getItem('refreshToken');
+  const [submittedReasons, setSubmittedReasons] = useState<{ [key: number]: boolean }>({});
 
 
   // Check for access token or guest ID
@@ -320,9 +326,12 @@ const Voting = ({ params }) => {
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
       console.log('Response from server:', data);
-      if (data.outlier) {
-        setMedian(data.median);
-        modalHandlers.open(); // Open the modal if it's an outlier and matches the current user
+      if (data.notification === 'Outliers by user ID' && data.user_ids && data.criteria_id !== undefined) {
+        const isOutlier = data.user_ids.includes(userID); // Check if current user is an outlier
+        setBadgeState((prevState) => ({
+          ...prevState,
+          [data.criteria_id - 1]: isOutlier, // Update badgeState for the current category (0-based index)
+        }));
       } else if (data.result) {
         setCurVotes((prevVotes) => {
           const allVotes = [...prevVotes];
@@ -400,6 +409,10 @@ const Voting = ({ params }) => {
           AUTHORIZATION: `Bearer ${TOKEN}`,
         },
       });
+      setSubmittedReasons((prev) => ({
+        ...prev,
+        [currentReasonIndex]: true,
+      }));
     } catch (error) {
         if (
           axios.isAxiosError(error) &&
@@ -423,6 +436,10 @@ const Voting = ({ params }) => {
                   AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                 },
               });
+              setSubmittedReasons((prev) => ({
+                ...prev,
+                [currentReasonIndex]: true,
+              }));
           } catch (refreshError) {
                           if (refreshError.response && refreshError.response.status === 401) {
                             console.log('Refresh token expired. Redirecting to login.');
@@ -453,40 +470,71 @@ const Voting = ({ params }) => {
     );
   };
 
-  const Selection: React.FC<VotingProps> = ({ caption, index, infoM }) => (
-    <Center>
-      <Stack>
-        {timeRemaining > 0 && currentOptionIndex === index && (
-          <h4 style={{ textAlign: 'center' }}>Time Remaining: {timeRemaining}s</h4>
-        )}
-        <Flex>
-          <InfoButton message={infoM} />
+  const Selection: React.FC<VotingProps> = ({ caption, index, infoM }) => {
+    const isOutlier = badgeState[index] || false; // Check the badgeState for the current index
+    const hasSubmitted = submittedReasons[index] || false; // Check if input has been submitted for this criterion
+    const badgeColor = isOutlier ? (hasSubmitted ? "red" : "red") : "green"; // Green if submitted, red otherwise
+    const badgeLabel = isOutlier
+      ? hasSubmitted
+        ? "You are an outlier, and we have received your input."
+        : "Click here! You are an outlier."
+      : "You are not an outlier.";
+  
+    const handleBadgeClick = () => {
+      if (isOutlier && !hasSubmitted) {
+        setCurrentReasonIndex(index); // Set the current criteria as the reason index
+        modalHandlers.open(); // Open the modal
+      }
+    };
+  
+    return (
+      <Center>
+        <Stack>
+          {timeRemaining > 0 && currentOptionIndex === index && (
+            <h4 style={{ textAlign: 'center' }}>Time Remaining: {timeRemaining}s</h4>
+          )}
+          <Flex>
+            <InfoButton message={infoM} />
             <RadioGroup
               value={votes[currentIdeaIndex][index].toString()}
               label={caption}
-              description={currentIdeaIndex > 0 && votes[currentIdeaIndex - 1][index] > 0 ?
-                `You voted ${votes[currentIdeaIndex - 1][index]} for ${ideas[currentIdeaIndex - 1][0]}` : ''}
+              description={
+                currentIdeaIndex > 0 && votes[currentIdeaIndex - 1][index] > 0
+                  ? `You voted ${votes[currentIdeaIndex - 1][index]} for ${ideas[currentIdeaIndex - 1][0]}`
+                  : ''
+              }
               className={timeRemaining > 0 && currentOptionIndex !== index ? 'Disabled' : ''}
               bg="rgba(0, 0, 0, .3)"
               required
             >
-            <Flex gap="md">
-              <Image alt="One finger" component={NextImage} src={oneF} h={35} />
-              <Radio value="1" onClick={() => radioClick(index, 1)} color="grape" />
-              <Radio value="2" onClick={() => radioClick(index, 2)} color="grape" />
-              <Radio value="3" onClick={() => radioClick(index, 3)} color="grape" />
-              <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
-              <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
-              <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
-              <Tooltip label={`Previous Vote: ${previousVotes[index] || 'None'}`} withArrow>
-              <Badge color="red" size="md" variant="filled"/>
-              </Tooltip>
-            </Flex>
-          </RadioGroup>
-        </Flex>
-      </Stack>
-    </Center>
-  );
+              <Flex gap="md">
+                <Image alt="One finger" component={NextImage} src={oneF} h={35} />
+                <Radio value="1" onClick={() => radioClick(index, 1)} color="grape" />
+                <Radio value="2" onClick={() => radioClick(index, 2)} color="grape" />
+                <Radio value="3" onClick={() => radioClick(index, 3)} color="grape" />
+                <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
+                <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
+                <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
+                <Tooltip label={badgeLabel} withArrow>
+                  <Badge
+                    color={badgeColor}
+                    size="md"
+                    variant="filled"
+                    onClick={handleBadgeClick}
+                    style={{
+                      cursor: isOutlier && !hasSubmitted ? "pointer" : "default",
+                      border: hasSubmitted ? "2px solid green" : undefined,
+                    }}
+                  />
+                </Tooltip>
+              </Flex>
+            </RadioGroup>
+          </Flex>
+        </Stack>
+      </Center>
+    );
+  };
+  
   //console.log("curVotes:", curVotes);
   //console.log("isVoted:", isVoted);
 
