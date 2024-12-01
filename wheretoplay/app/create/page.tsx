@@ -1,33 +1,53 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import axios, { AxiosError } from 'axios';
-import IdeaSubmissionForm from './ideaSubmissionFormNEW';
-import { HeaderSimple } from '@/components/Header/Header';
-
+import axios from 'axios';
+import IdeaSubmissionForm from './ideaSubmissionForm';
+import { showNotification } from '@mantine/notifications';
 
 function CreateWorkspace() {
   const router = useRouter();
-  const [submitted, setSubmitted] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!localStorage.getItem('accessToken')) {
-    router.push('/login');
-  }
+  useEffect(() => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      // Save notification details in localStorage
+      localStorage.setItem(
+        'redirectNotification',
+        JSON.stringify({
+          title: 'Unauthorized',
+          message: 'You need to log in to create a workspace.',
+          color: 'red',
+        })
+      );
+      router.push('/login');
+    } else {
+      setIsAuthorized(true);
+    }
+    setIsLoading(false);
+  }, [router]);
 
-  const handleFormSubmit = async (submittedIdeas: any, company: string, thresholdSensitivity: string) => {
+  const handleFormSubmit = async (
+    submittedIdeas: any[],
+    company: string,
+    guestCap: number | null,
+    madThreshold: number | null
+  ) => {
     const TOKEN = localStorage.getItem('accessToken');
-    const RefreshToken = localStorage.getItem('refreshToken'); //Get Refresh Token
-    let threshold = 2;
+    const RefreshToken = localStorage.getItem('refreshToken');
+    const threshold = madThreshold || 2; // Default threshold if not provided
 
-    if (thresholdSensitivity !== 'Standard') threshold = (thresholdSensitivity === 'Sensitive') ? 1 : 3;
-
-    //Try Using Access Token
     try {
       const workspaceResponse = await axios.post(
-        'http://localhost:8000/api/create_workspace/',
-        { name: company, outlier_threshold: threshold },
-
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/create_workspace/`,
+        {
+          name: company,
+          outlier_threshold: threshold,
+          guest_cap: guestCap || 0, // Default guest cap to 0 if null
+        },
         {
           headers: {
             Authorization: `Bearer ${TOKEN}`,
@@ -36,23 +56,22 @@ function CreateWorkspace() {
       );
 
       console.log('Workspace created:', workspaceResponse.data);
-
-      // Prepare ideas to be associated with the created workspace
-      const formattedIdeas = submittedIdeas.map((idea: any[]) => ({
-        workspace: workspaceResponse.data.workspace_id,
-        name: idea[0],
-        customer_segment: idea[1],
-        description: idea[2],
-        image: idea[3],
-      }));
-
-      // Get the sessionPin from workspaceResponse
+      const workspaceId = workspaceResponse.data.workspace_id;
       const sessionPin = workspaceResponse.data.code;
 
-      // Send each idea in a separate request
+      const formattedIdeas = submittedIdeas.map((idea: any) => ({
+        workspace: workspaceId,
+        name: idea.name,
+        customer_segment: idea.segment,
+        description: idea.description,
+        image: idea.media || null, // Optional image field
+      }));
+
+      console.log('Submitting opportunities:', formattedIdeas);
+
       for (const idea of formattedIdeas) {
         const opportunityResponse = await axios.post(
-          'http://localhost:8000/api/create_opportunity/',
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/create_opportunity/`,
           idea,
           {
             headers: {
@@ -60,24 +79,20 @@ function CreateWorkspace() {
             },
           }
         );
-        console.log('Opportunity created:', opportunityResponse.data);
+        console.log('Opportunity created:', idea);
       }
 
-      // Redirect to the invite page with the sessionPin
+      console.log('All opportunities submitted successfully.');
       router.push(`/invite/${sessionPin}`);
     } catch (error) {
-      // Check 401 unauthorized and RefreshToken existence
-      if (
-        axios.isAxiosError(error) &&
-        error.response &&
-        error.response.status === 401 &&
-        RefreshToken
-      ) {
+      console.error('Error during form submission:', error);
+
+
+      if (axios.isAxiosError(error) && error.response?.status === 401 && RefreshToken) {
         console.log('Access token expired. Attempting to refresh.');
 
-        //Refresh Token and Try again
         try {
-          const refreshResponse = await axios.post('http://localhost:8000/api/token/refresh/', {
+          const refreshResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`, {
             refresh: RefreshToken,
           });
 
@@ -86,7 +101,7 @@ function CreateWorkspace() {
           console.log('Access token refreshed successfully.');
 
           const retryResponse = await axios.post(
-            'http://localhost:8000/api/create_workspace/',
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/create_workspace/`,
             { name: company },
             {
               headers: {
@@ -112,7 +127,7 @@ function CreateWorkspace() {
           // Send each idea in a separate request
           for (const idea of formattedIdeas) {
             const opportunityResponse = await axios.post(
-              'http://localhost:8000/api/create_opportunity/',
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/create_opportunity/`,
               idea,
               {
                 headers: {
@@ -124,42 +139,32 @@ function CreateWorkspace() {
           }
           router.push(`/invite/${sessionPin}`);
         } catch (refreshError) {
-          if (axios.isAxiosError(refreshError)) {
-            console.error(
-              'Failed to refresh token:',
-              refreshError.response?.data || refreshError.message
-            );
-
-            if (refreshError.response && refreshError.response.status === 401) {
-              console.log('Refresh token expired. Redirecting to login.');
-              localStorage.removeItem('accessToken');
-              localStorage.removeItem('refreshToken');
-              router.push('/login');
-            }
-          } else {
-            console.error('An unexpected error occurred:', refreshError);
-          }
+          console.error('Token refresh failed:', refreshError);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          router.push('/login');
         }
       } else {
-        const axiosError = error as AxiosError;
-        console.error(
-          'Error creating opportunity, Refresh Token might be missing:',
-          axiosError.response?.data || axiosError.message
-        );
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        router.push('/login');
+        console.error('Unexpected error:', error);
+        showNotification({
+          title: 'Submission Failed',
+          message: 'Failed to submit ideas. Please check your input and try again.',
+          color: 'red',
+        });
       }
     }
   };
 
-  return (
+  // Prevent rendering the page until authorization is checked
+  if (isLoading) {
+    return null;
+  }
+
+  return isAuthorized ? (
     <div className="CreateWorkspace">
-      <HeaderSimple glowIndex={2}/>
-      {!submitted && <IdeaSubmissionForm onSubmit={handleFormSubmit} />}
-      {submitted && <h1>Thank you for your submission!</h1>}
+      <IdeaSubmissionForm onSubmit={handleFormSubmit} />
     </div>
-  );
+  ) : null;
 }
 
 export default CreateWorkspace;

@@ -15,7 +15,6 @@ import ScatterPlot from '@/components/ScatterPlot/ScatterPlot';
 import '../../Idea.css';
 import { ScrollArea, Center, Stack,Flex, Button, Modal, Table} from '@mantine/core';
 import axios from 'axios';
-import { HeaderSimple } from '@/components/Header/Header';
 import TriangleChart from '@/components/TriangleChart/TriangleChart';
 import {useDisclosure} from '@mantine/hooks';
 
@@ -98,7 +97,7 @@ const ResultsPage = ({ params }) => {
   const getSession = async () => {
        const TOKEN = localStorage.getItem('accessToken');
        const sesh = (await params).session;
-       const requestString = `http://localhost:8000/api/query/oppresults?code=${sesh}`;
+       const requestString = `${process.env.NEXT_PUBLIC_API_BASE_URL}/query/oppresults?code=${sesh}`;
        setSession(sesh);
        await axios
             .get(requestString, {
@@ -266,8 +265,6 @@ const ResultsPage = ({ params }) => {
           </tbody>
         </Table>
       </Modal>
-
-      <HeaderSimple glowIndex={-1} />
         <h2 style={{ textAlign: 'center' }}>
             Opportunity #{currentIdeaIndex + 1} Results: {`${idea[0]} (${idea[1]})`}
         </h2>

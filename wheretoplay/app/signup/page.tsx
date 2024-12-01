@@ -44,7 +44,7 @@ export default function Signup() {
         setError(null);
 
         try {
-            const response = await axios.post('http://localhost:8000/api/signup/', {
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/signup/`, {
                 email: values.email,
                 password: values.password,
                 password2: values.confirmPassword,
