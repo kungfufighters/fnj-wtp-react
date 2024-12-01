@@ -81,6 +81,7 @@ const Voting = ({ params }) => {
   const socketRef = useRef<WebSocket | null>(null);
   const TOKEN = localStorage.getItem('accessToken');
   const RefreshToken = localStorage.getItem('refreshToken');
+  const [submittedReasons, setSubmittedReasons] = useState<{ [key: number]: boolean }>({});
 
   // Check for access token on the client side
   useEffect(() => {
@@ -386,6 +387,10 @@ const Voting = ({ params }) => {
           AUTHORIZATION: `Bearer ${TOKEN}`,
         },
       });
+      setSubmittedReasons((prev) => ({
+        ...prev,
+        [currentReasonIndex]: true,
+      }));
     } catch (error) {
         if (
           axios.isAxiosError(error) &&
@@ -409,6 +414,10 @@ const Voting = ({ params }) => {
                   AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                 },
               });
+              setSubmittedReasons((prev) => ({
+                ...prev,
+                [currentReasonIndex]: true,
+              }));
           } catch (refreshError) {
                           if (refreshError.response && refreshError.response.status === 401) {
                             console.log('Refresh token expired. Redirecting to login.');
@@ -441,18 +450,21 @@ const Voting = ({ params }) => {
 
   const Selection: React.FC<VotingProps> = ({ caption, index, infoM }) => {
     const isOutlier = badgeState[index] || false; // Check the badgeState for the current index
-    const badgeColor = isOutlier ? "red" : "green"; // Red for outliers, green otherwise
+    const hasSubmitted = submittedReasons[index] || false; // Check if input has been submitted for this criterion
+    const badgeColor = isOutlier ? (hasSubmitted ? "red" : "red") : "green"; // Green if submitted, red otherwise
     const badgeLabel = isOutlier
-      ? "Click here! You are an outlier."
+      ? hasSubmitted
+        ? "You are an outlier, and we have received your input."
+        : "Click here! You are an outlier."
       : "You are not an outlier.";
-    
+  
     const handleBadgeClick = () => {
-        if (isOutlier) {
-          setCurrentReasonIndex(index); // Set the current criteria as the reason index
-          modalHandlers.open(); // Open the modal
-        }
+      if (isOutlier && !hasSubmitted) {
+        setCurrentReasonIndex(index); // Set the current criteria as the reason index
+        modalHandlers.open(); // Open the modal
+      }
     };
-    
+  
     return (
       <Center>
         <Stack>
@@ -482,12 +494,15 @@ const Voting = ({ params }) => {
                 <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
                 <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
                 <Tooltip label={badgeLabel} withArrow>
-                <Badge
-                  color={badgeColor}
-                  size="md"
-                  variant="filled"
-                  onClick={handleBadgeClick}
-                  style={{ cursor: isOutlier ? "pointer" : "default" }}
+                  <Badge
+                    color={badgeColor}
+                    size="md"
+                    variant="filled"
+                    onClick={handleBadgeClick}
+                    style={{
+                      cursor: isOutlier && !hasSubmitted ? "pointer" : "default",
+                      border: hasSubmitted ? "2px solid green" : undefined,
+                    }}
                   />
                 </Tooltip>
               </Flex>
@@ -497,6 +512,7 @@ const Voting = ({ params }) => {
       </Center>
     );
   };
+  
   //console.log("curVotes:", curVotes);
   //console.log("isVoted:", isVoted);
 
