@@ -144,7 +144,7 @@ export default function Login() {
     <Container
       size="xs"
       style={{
-        minHeight: '100vh',
+        minHeight: '90vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

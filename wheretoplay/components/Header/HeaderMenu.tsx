@@ -11,16 +11,18 @@ import {
   UnstyledButton,
   Drawer,
   Stack,
+  Divider,
 } from '@mantine/core';
-import { IconChevronDown } from '@tabler/icons-react';
+import { IconChevronDown, IconLogout, IconLogin } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import { useRouter, usePathname } from 'next/navigation';
 import axios from 'axios';
 import classes from './HeaderMenu.module.css';
 
 const links = [
-  { link: '/dashboard', label: 'Dashboard' },
+  { link: '/', label: 'Home' },
   { link: '/create', label: 'Create a Workspace' },
+  { link: '/dashboard/opportunities', label: 'Dashboard' },
 ];
 
 export function HeaderMenu() {
@@ -103,13 +105,13 @@ export function HeaderMenu() {
           <Group
             align="center"
             onClick={() => {
-              setActive('');
+              setActive('/');
               router.push('/');
             }}
             style={{ cursor: 'pointer' }}
           >
             <img
-              src={new URL('../../public/wtp.png', import.meta.url).href}
+              src={new URL('../../public/wtp-nobg.png', import.meta.url).href}
               alt="Logo"
               height={40}
               className={classes.logo}
@@ -127,7 +129,7 @@ export function HeaderMenu() {
 
             {/* User Menu */}
             <Menu
-              width={200}
+              width={150} // Set the width of the dropdown
               position="bottom-end"
               transitionProps={{ transition: 'pop-top-right' }}
               onClose={() => setUserMenuOpened(false)}
@@ -145,11 +147,36 @@ export function HeaderMenu() {
                   </Group>
                 </UnstyledButton>
               </Menu.Target>
-              <Menu.Dropdown>
+              <Menu.Dropdown style={{ padding: '8px', fontSize: '12px' }}>
                 {isLoggedIn ? (
-                  <Menu.Item onClick={handleLogout}>Logout</Menu.Item>
+                  <Menu.Item onClick={handleLogout} style={{ padding: '6px 10px', fontSize: '12px' }}>
+                    <Group>
+                      <IconLogout size={12} stroke={1.5} />
+                      <span>Logout</span>
+                    </Group>
+                  </Menu.Item>
                 ) : (
-                  <Menu.Item onClick={() => router.push('/login')}>Login</Menu.Item>
+                  <>
+                    <Menu.Item
+                      onClick={() => router.push('/login')}
+                      style={{ padding: '6px 10px', fontSize: '12px' }}
+                    >
+                      <Group>
+                        <IconLogin size={12} stroke={1.5} />
+                        <span>Login</span>
+                      </Group>
+                    </Menu.Item>
+                    <Divider my="xs" />
+                    <Menu.Item
+                      onClick={() => router.push('/signup')}
+                      style={{ padding: '6px 10px', fontSize: '12px' }}
+                    >
+                      <Group>
+                        <IconLogin size={12} stroke={1.5} />
+                        <span>Sign Up</span>
+                      </Group>
+                    </Menu.Item>
+                  </>
                 )}
               </Menu.Dropdown>
             </Menu>
