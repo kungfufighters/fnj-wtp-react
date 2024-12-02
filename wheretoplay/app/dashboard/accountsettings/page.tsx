@@ -14,9 +14,9 @@ import {
   Container,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import toast from "react-hot-toast";
-import axios from "axios";
 import { useRouter } from "next/navigation";
+import { showNotification } from "@mantine/notifications";
+import axios from "axios";
 
 export default function AccountSettingsPage() {
   const [email, setEmail] = useState<string>("Loading...");
@@ -114,7 +114,11 @@ export default function AccountSettingsPage() {
       if (response.status === 200) {
         setEmail(values.newEmail);
         emailForm.reset();
-        toast.success("Email updated successfully");
+        showNotification({
+          title: "Success",
+          message: "Email updated successfully",
+          color: "green",
+        });
       }
     } catch (error) {
       if (
@@ -141,7 +145,11 @@ export default function AccountSettingsPage() {
           );
           setEmail(values.newEmail);
           emailForm.reset();
-          toast.success("Email updated successfully");
+          showNotification({
+            title: "Success",
+            message: "Email updated successfully",
+            color: "green",
+          });
         } catch (refreshError) {
           console.error("Failed to refresh token:", refreshError);
         }
@@ -173,7 +181,11 @@ export default function AccountSettingsPage() {
 
       if (response.status === 200) {
         passwordForm.reset();
-        toast.success("Password updated successfully");
+        showNotification({
+          title: "Success",
+          message: "Password updated successfully",
+          color: "green",
+        });
       }
     } catch (error) {
       if (
@@ -203,7 +215,11 @@ export default function AccountSettingsPage() {
             }
           );
           passwordForm.reset();
-          toast.success("Password updated successfully");
+          showNotification({
+            title: "Success",
+            message: "Password updated successfully",
+            color: "green",
+          });
         } catch (refreshError) {
           console.error("Failed to refresh token:", refreshError);
         }

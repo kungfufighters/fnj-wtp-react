@@ -12,7 +12,7 @@ import {
 } from 'chart.js';
 import { Bar, Scatter} from 'react-chartjs-2';
 import ScatterPlot from '@/components/ScatterPlot/ScatterPlot';
-import '../../Idea.css';
+import './Idea.css';
 import { ScrollArea, Center, Stack,Flex} from '@mantine/core';
 import axios from 'axios';
 import TriangleChart from '@/components/TriangleChart/TriangleChart';

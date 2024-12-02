@@ -1,6 +1,10 @@
-import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
+import '@mantine/core/styles.css';
+import '@mantine/core/styles/UnstyledButton.css';
 import '@mantine/dropzone/styles.css';
+import '@mantine/core/styles/Button.css';
+import '@mantine/core/styles/VisuallyHidden.css';
+import '@mantine/core/styles/Notification.css';
 
 import React from 'react';
 import { ColorSchemeScript, MantineProvider } from '@mantine/core';
