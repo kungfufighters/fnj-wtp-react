@@ -310,21 +310,12 @@ const ResultsPage = ({ params }) => {
         </div>
 
         <div className="middle-text-areas" style={{ width: '20%' }}>
-        <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][0])}>Expand</Button></Center></Flex>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  } }> 
-            
-          <ScrollArea h={150} scrollbars="y"> {idea[4][0]}</ScrollArea>
-          </div>
-
-          <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][1])}>Expand</Button></Center></Flex>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
-          <ScrollArea h={150} scrollbars="y"> {idea[4][1]}</ScrollArea>
-          </div>
-
-          <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][2])}>Expand</Button></Center></Flex>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
-          <ScrollArea h={150} scrollbars="y"> {idea[4][2]}</ScrollArea>
-          </div>
+          <div style={{ height: '125px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][0])}>See Outliers</Button>
+          <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][1])}>See Outliers</Button>
+          <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][2])}>See Outliers</Button>
         </div>
 
         <div className="right-graphs" style={{ width: '20%' }}>
@@ -343,21 +334,15 @@ const ResultsPage = ({ params }) => {
             <Bar key={`chart-revenue-${currentIdeaIndex}`} data={graphData('Time to Revenue', idea[3][5])} options={chartOptions} />
           </div>
         </div>
+
         <div className="right-text-areas" style={{ width: '20%' }}>
-          <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][3])}>Expand</Button></Center></Flex>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  } }>
-          <ScrollArea h={150} scrollbars="y"> {idea[4][3]}</ScrollArea>
-          </div>
-
-          <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][4])}>Expand</Button></Center></Flex>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0 }}>
-          <ScrollArea h={150} scrollbars="y"> {idea[4][4]}</ScrollArea>
-          </div>
-
-          <Flex justify="space-between" ><h3>Justifications</h3> <Center><Button onClick={() => handleOpenModal(idea[4][5])}>Expand</Button></Center></Flex>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin:0,padding:0  }}>
-          <ScrollArea h={150} scrollbars="y"> {idea[4][5]}</ScrollArea>
-          </div>
+          <div className="middle-text-areas" style={{ width: '20%' }} />
+          <div style={{ height: '125px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][3])}>See Outliers</Button>
+          <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][4])}>See Outliers</Button>
+          <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][5])}>See Outliers</Button>
         </div>
       </div>
       

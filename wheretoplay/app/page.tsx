@@ -12,7 +12,7 @@ export default function HomePage() {
   // Function to check if user is authenticated
   const isAuthenticated = () => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('access_token') !== null;
+      return localStorage.getItem('accessToken') !== null;
     }
     return false;
   };

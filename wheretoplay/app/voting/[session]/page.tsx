@@ -102,8 +102,6 @@ const Voting = ({ params }) => {
       router.push('/guestjoin');
     }
   }, [router, params]);
-  
-
 
   // Fetch user ID if logged in
   useEffect(() => {
@@ -163,6 +161,7 @@ const Voting = ({ params }) => {
             });
       }
     };
+    getID();
   }, [isLoggedIn, userID]);
 
   // Manage the timer and lock state with a countdown and vote submission
