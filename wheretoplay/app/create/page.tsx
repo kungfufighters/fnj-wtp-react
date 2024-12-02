@@ -161,7 +161,7 @@ function CreateWorkspace() {
   }
 
   return isAuthorized ? (
-    <div className="CreateWorkspace">
+    <div className="CreateWorkspace" style={{ marginBottom: '4rem' }}>
       <IdeaSubmissionForm onSubmit={handleFormSubmit} />
     </div>
   ) : null;

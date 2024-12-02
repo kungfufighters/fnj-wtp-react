@@ -6,7 +6,7 @@ import {
   IconLockFilled, 
   IconLogout,
   IconHomeFilled
- } from '@tabler/icons-react';
+} from '@tabler/icons-react';
 import { Group, Image } from '@mantine/core';
 import classes from './DashboardNavbar.module.css';
 
@@ -20,8 +20,12 @@ export function DashboardNavbar({ activePath }: { activePath: string }) {
   const router = useRouter();
 
   const handleLogout = () => {
+    // Clear the local storage to remove user authentication data
     localStorage.clear();
-    router.push('/login');
+
+    // Navigate to the homepage
+    router.push('/');
+    // Optionally, reload the window to ensure the state is refreshed
     window.location.reload();
   };
 
@@ -45,14 +49,21 @@ export function DashboardNavbar({ activePath }: { activePath: string }) {
     <nav className={classes.navbar}>
       <div className={classes.navbarMain}>
         <Group className={classes.header} justify="center">
-          <Image src="/wtp.png" alt="WTP Logo" width={120} height={40} />
+          <Image src="/wtp-nobg.png" alt="WTP Logo" width={120} height={40} />
         </Group>
         {links}
       </div>
       <div className={classes.footer}>
-        <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
+        <a
+          href="#"
+          className={classes.link}
+          onClick={(event) => {
+            event.preventDefault();
+            handleLogout();
+          }}
+        >
           <IconLogout className={classes.linkIcon} stroke={1.5} />
-          <span onClick={handleLogout}>Logout</span>
+          <span>Logout</span>
         </a>
       </div>
     </nav>

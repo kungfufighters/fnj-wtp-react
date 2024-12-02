@@ -13,6 +13,7 @@ import {
   rem,
   Accordion,
   NumberInput,
+  Select,
 } from '@mantine/core';
 import { Dropzone, IMAGE_MIME_TYPE } from '@mantine/dropzone';
 import { IconUpload, IconPhoto, IconX } from '@tabler/icons-react';
@@ -217,13 +218,18 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({ onSubmit }) => 
                   No Maximum
                 </Text>
               )}
-              <NumberInput
+              <Select
                 label="MAD Threshold"
-                placeholder="Set MAD outlier threshold"
+                description="2 is the default MAD threshold"
+                placeholder="Select MAD threshold"
                 value={madThreshold}
                 onChange={setMadThreshold}
-                min={0}
-                step={0.1}
+                data={[
+                  { value: '1', label: '1' },
+                  { value: '1.5', label: '1.5' },
+                  { value: '2', label: '2 (Default)' },
+                  { value: '2.5', label: '2.5' },
+                ]}
               />
             </Accordion.Panel>
           </Accordion.Item>

@@ -56,8 +56,7 @@ export default function Dashboard() {
             );
             router.push('/login');
         }
-    }, [
-        router]);
+    }, [router]);
 
     const getOpportunities = async () => {
         const TOKEN = localStorage.getItem('accessToken');
@@ -256,6 +255,7 @@ export default function Dashboard() {
             <Accordion.Control>{label}</Accordion.Control>
             <Accordion.Panel>
                 <p>{segment}</p>
+                <p>{curStatus}</p>
                 <p>{parts} participant{parts === 1 ? '' : 's'}</p>
                 <p>Potential: {ratingP === 0 ? 'N/A' : `${ratingP}/5`}</p>
                 <p>Challenge: {ratingC === 0 ? 'N/A' : `${ratingC}/5`}</p>
