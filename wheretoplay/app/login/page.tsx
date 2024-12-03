@@ -78,8 +78,9 @@ export default function Login() {
     },
   });
 
+  
   // Login logic to handle API call to the Django backend
-  const handleSubmit = async (values: { email: string; password: string }) => {
+  const handleSubmit = async (values) => {
     setLoginLoading(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/login/`, {
@@ -89,30 +90,37 @@ export default function Login() {
         },
         body: JSON.stringify(values),
       });
-  
+
       const data = await response.json();
-  
-      if (response.ok) {
+      console.log('Response data:', data);
+
+      if (response.ok && data.tokens) {
+        const accessToken = data.tokens.access;
+        const refreshToken = data.tokens.refresh;
+
+        // Log the tokens to the console
+        console.log('Access Token:', accessToken);
+        console.log('Refresh Token:', refreshToken);
+
         // Store tokens in localStorage
-        localStorage.setItem('accessToken', data.tokens.access);
-        localStorage.setItem('refreshToken', data.tokens.refresh);
-  
-        // Navigate to the base URL first, then refresh the page
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+
+        // Navigate to the base URL and reload
         router.push('/');
-        setTimeout(() => {
-          window.location.reload();
-        }, 100); // Slight delay to ensure navigation happens before reload
+        setTimeout(() => window.location.reload(), 100);
       } else {
-        console.error('Login failed:', data.error);
-        setError('Login failed: Invalid email or password');
+        setError(data.error || 'Login failed: Invalid email or password');
+        console.error('Login failed with response:', response);
       }
     } catch (err) {
       console.error('Error during login:', err);
+      setError('An error occurred during login. Please try again.');
     } finally {
       setLoginLoading(false);
     }
   };
-  
+
 
   const handleSignupRedirect = () => {
     router.push('/signup');

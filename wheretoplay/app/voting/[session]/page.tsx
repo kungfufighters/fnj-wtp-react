@@ -90,9 +90,6 @@ const Voting = ({ params }) => {
     if (token || guestId) {
       // Either logged in or guest, no redirection
       setIsLoggedIn(Boolean(token)); // Logged-in user if token is present
-      if (guestId) {
-        setUserID(parseInt(guestId, 10)); // Set guest user ID
-      }
     } else {
       // Save session pin to local storage
       if (typeof window !== 'undefined') {
@@ -183,84 +180,107 @@ const Voting = ({ params }) => {
   }, [timeRemaining]);
 
   const getSession = async () => {
-    const guestId = localStorage.getItem('guest_id');
-    const sesh = params.session || localStorage.getItem('sessionPin');
+    const TOKEN = localStorage.getItem('accessToken'); // User token for authentication
+    const RefreshToken = localStorage.getItem('refreshToken'); // Refresh token for re-authentication
+    const guestId = localStorage.getItem('guest_id'); // Guest ID if the user is a guest
+    const sesh = params.session || localStorage.getItem('sessionPin'); // Session PIN from params or localStorage
     const requestString = `${process.env.NEXT_PUBLIC_API_BASE_URL}/query/oppvoting?code=${sesh}`;
-    setSession(sesh);
 
-    const successlogic = res => {
-      const newIdeas: React.SetStateAction<any[]> = [];
-      const newVotes: React.SetStateAction<any[]> = [];
-      const newAllVotes: React.SetStateAction<any[]> = [];
-      const opportunities = res.data;
-      opportunities.forEach((
-        opp: {
-          name: any;
-          customer_segment: any;
-          description: any;
-          opportunity_id: any;
-          reasons: any;
-          imgurl: string }) => {
+    try {
+      // Define headers based on whether the user is authenticated or a guest
+      const headers = guestId
+        ? {} // Guests don't use Authorization headers
+        : { AUTHORIZATION: `Bearer ${TOKEN}` }; // Add Authorization header for authenticated users
+
+      // Send request to fetch session data
+      const response = await axios.get(requestString, { headers });
+
+      // Handle success logic (populate session data)
+      const newIdeas = [];
+      const newVotes = [];
+      const newAllVotes = [];
+      const opportunities = response.data;
+
+      opportunities.forEach((opp) => {
         newIdeas.push([
           opp.name,
           opp.customer_segment,
           opp.description,
           opp.opportunity_id,
           opp.reasons,
-          opp.imgurl]);
+          opp.imgurl,
+        ]);
         newVotes.push([0, 0, 0, 0, 0, 0]);
         newAllVotes.push(Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0)));
       });
-      console.log(newIdeas);
+
       setIdeas(newIdeas);
       setVotes(newVotes);
       setCurVotes(newAllVotes);
       setIdea(newIdeas[currentIdeaIndex]);
-      console.log(newIdeas[currentIdeaIndex]);
-  };
+      setSession(sesh);
 
-    setSession(sesh);
-    await axios
-         .get(requestString, {
-           headers: {
-             AUTHORIZATION: `Bearer ${TOKEN}`,
-           },
-         })
-         .then(successlogic)
-         .catch(async error => {
-          console.log(error);
-          if (
-            axios.isAxiosError(error) &&
-            error.response &&
-            error.response.status === 401 &&
-            RefreshToken
-          ) {
-            try {
-                const refreshResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`, {
-                    refresh: RefreshToken,
-                });
+    } catch (error) {
+      // Error handling
+      console.error('Error fetching session data:', error);
 
-                localStorage.setItem('accessToken', refreshResponse.data.access);
+      if (axios.isAxiosError(error) && error.response && error.response.status === 401 && RefreshToken) {
+        try {
+          // Attempt to refresh the token
+          const refreshResponse = await axios.post(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`,
+            { refresh: RefreshToken }
+          );
 
-                await axios
-                    .get(requestString, {
-                    headers: {
-                        AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
-                    },
-                    })
-                    .then(successlogic);
-            } catch (refreshError) {
-                            if (refreshError.response && refreshError.response.status === 401) {
-                              console.log('Refresh token expired. Redirecting to login.');
-                              localStorage.removeItem('accessToken');
-                              localStorage.removeItem('refreshToken');
-                              router.push('/login');
-                            } else {
-                            console.error('An unexpected error occurred:', refreshError);
-                          }
-                    }
-                }
-            });
+          // Save the new access token
+          localStorage.setItem('accessToken', refreshResponse.data.access);
+
+          // Retry the request with the refreshed token
+          const response = await axios.get(requestString, {
+            headers: { AUTHORIZATION: `Bearer ${refreshResponse.data.access}` },
+          });
+
+          // Handle success logic again (populate session data)
+          const newIdeas = [];
+          const newVotes = [];
+          const newAllVotes = [];
+          const opportunities = response.data;
+
+          opportunities.forEach((opp) => {
+            newIdeas.push([
+              opp.name,
+              opp.customer_segment,
+              opp.description,
+              opp.opportunity_id,
+              opp.reasons,
+              opp.imgurl,
+            ]);
+            newVotes.push([0, 0, 0, 0, 0, 0]);
+            newAllVotes.push(Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0)));
+          });
+
+          setIdeas(newIdeas);
+          setVotes(newVotes);
+          setCurVotes(newAllVotes);
+          setIdea(newIdeas[currentIdeaIndex]);
+          setSession(sesh);
+
+        } catch (refreshError) {
+          // If refresh token is invalid or expired, redirect to login
+          if (refreshError.response && refreshError.response.status === 401) {
+            console.log('Refresh token expired. Redirecting to login.');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            router.push('/login');
+          } else {
+            console.error('Unexpected error while refreshing token:', refreshError);
+          }
+        }
+      } else {
+        // If not a 401 or refresh token isn't available, handle other errors
+        alert('Failed to fetch session data. Please try again.');
+      }
+    }
   };
 
   if (!queryFetched && typeof window !== 'undefined') {
