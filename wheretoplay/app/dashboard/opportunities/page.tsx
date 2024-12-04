@@ -166,8 +166,8 @@ export default function OpportunitiesPage() {
                             <Accordion.Panel>
                               <Text size="sm">Segment: {opp.customer_segment}</Text>
                               <Text size="sm">Participants: {opp.participants}</Text>
-                              <Text size="sm">Potential: {opp.scoreP === 0 ? 'N/A' : Math.floor(opp.scoreP * 10) / 10}/5</Text>
-                              <Text size="sm">Challenge: {opp.scoreC === 0 ? 'N/A' : Math.floor(opp.scoreC * 10) / 10}/5</Text>
+                              <Text size="sm">Potential: {opp.scoreP === 0 ? 'TBD' : `${Math.floor(opp.scoreP * 10) / 10}/5`}</Text>
+                              <Text size="sm">Challenge: {opp.scoreC === 0 ? 'TBD' : `${Math.floor(opp.scoreC * 10) / 10}/5`}</Text>
                             </Accordion.Panel>
                           </Accordion.Item>
                         ))}
