@@ -3,8 +3,16 @@
 import '@mantine/core/styles.css';
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Container, TextInput, Button } from '@mantine/core';
-import { HeaderSimple } from '@/components/Header/Header';
+import {
+  TextInput,
+  Button,
+  Container,
+  Paper,
+  Group,
+  Title,
+  Divider,
+  Text,
+} from '@mantine/core';
 
 export default function GuestInfoPage() {
   return (
@@ -17,7 +25,13 @@ export default function GuestInfoPage() {
 function GuestInfoPagePart() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sessionPin = searchParams.get('sessionPin');
+  const sessionPinFromParams = searchParams.get('sessionPin');
+  const [sessionPin, setSessionPin] = useState('');
+
+  useEffect(() => {
+    const pin = sessionPinFromParams || localStorage.getItem('sessionPin');
+    setSessionPin(pin);
+  }, [sessionPinFromParams]);
 
   const [guestInfo, setGuestInfo] = useState({
     first_name: '',
@@ -25,81 +39,109 @@ function GuestInfoPagePart() {
     email: '',
   });
 
-  // Check if user is logged in or sessionPin is missing
-  useEffect(() => {
-    const isAuthenticated = () => {
-      if (typeof window !== 'undefined') {
-        return localStorage.getItem('accessToken') !== null;
-      }
-      return false;
-    };
-
-    if (isAuthenticated()) {
-      // Redirect logged-in users
-      router.push('/');
-    } else if (!sessionPin) {
-      // Redirect if sessionPin is missing
-      router.push('/');
-    }
-  }, [router, sessionPin]);
-
-  const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setGuestInfo({ ...guestInfo, [field]: event.currentTarget.value });
+  const handleInputChange = (field) => (event) => {
+    setGuestInfo({ ...guestInfo, [field]: event.target.value });
   };
 
-  const handleSubmit = async () => {
-    // Send guest info to the backend
+  const handleGuestSubmit = async () => {
     try {
-      const response = await fetch('/api/guests/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/guests/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(guestInfo),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...guestInfo, sessionPin }),
       });
+
       const data = await response.json();
       if (response.ok) {
-        // Store guest identifier (e.g., guest ID) in localStorage
         localStorage.setItem('guest_id', data.guest_id);
-        // Navigate to voting session
         router.push(`/voting/${sessionPin}`);
       } else {
-        console.error('Error submitting guest info:', data);
+        alert(data.error || 'Failed to join the session. Please try again.');
       }
     } catch (error) {
       console.error('Error:', error);
+      alert('An unexpected error occurred. Please try again.');
     }
   };
 
+  const redirectToLogin = () => {
+    localStorage.setItem(
+      'redirectNotification',
+      JSON.stringify({
+        title: 'Redirected to Login',
+        message: 'Log in to access the voting session.',
+        color: 'blue',
+      })
+    );
+    router.push(`/login?redirect=/voting/${sessionPin}`);
+  };
+
+  const redirectToSignup = () => {
+    localStorage.setItem(
+      'redirectNotification',
+      JSON.stringify({
+        title: 'Redirected to Sign Up',
+        message: 'Create an account to access the voting session.',
+        color: 'blue',
+      })
+    );
+    router.push(`/signup?redirect=/voting/${sessionPin}`);
+  };
+
   return (
-    <div>
-      <HeaderSimple glowIndex={0} />
-      <Container size="sm" style={{ marginTop: '2rem' }}>
-        <TextInput
-          label="First Name"
-          placeholder="Enter your first name"
-          value={guestInfo.first_name}
-          onChange={handleInputChange('first_name')}
-          required
-        />
-        <TextInput
-          label="Last Name"
-          placeholder="Enter your last name"
-          value={guestInfo.last_name}
-          onChange={handleInputChange('last_name')}
-          required
-          style={{ marginTop: '1rem' }}
-        />
-        <TextInput
-          label="Email"
-          placeholder="Enter your email"
-          value={guestInfo.email}
-          onChange={handleInputChange('email')}
-          required
-          style={{ marginTop: '1rem' }}
-        />
-        <Button onClick={handleSubmit} fullWidth style={{ marginTop: '1.5rem' }}>
-          Continue to Voting Session
-        </Button>
-      </Container>
-    </div>
+    <Container size="sm" style={{ marginTop: '2rem' }}>
+      <Paper withBorder shadow="md" p="xl" radius="md">
+        <Title align="center" order={2} mb="lg">
+          Join Voting Session
+        </Title>
+        <Text align="center" size="sm" color="dimmed" mb="xl">
+          Enter your details to continue as a guest or log in if you already
+          have an account.
+        </Text>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <TextInput
+            label="First Name"
+            placeholder="Enter your first name"
+            value={guestInfo.first_name}
+            onChange={handleInputChange('first_name')}
+            required
+          />
+          <TextInput
+            label="Last Name"
+            placeholder="Enter your last name"
+            value={guestInfo.last_name}
+            onChange={handleInputChange('last_name')}
+            required
+            mt="md"
+          />
+          <TextInput
+            label="Email"
+            placeholder="Enter your email"
+            value={guestInfo.email}
+            onChange={handleInputChange('email')}
+            required
+            mt="md"
+          />
+          <Button
+            onClick={handleGuestSubmit}
+            fullWidth
+            mt="xl"
+            variant="gradient"
+            gradient={{ from: 'teal', to: 'blue', deg: 60 }}
+          >
+            Continue as Guest
+          </Button>
+        </form>
+        <Divider my="lg" label="OR" labelPosition="center" />
+        <Group grow>
+          <Button variant="default" onClick={redirectToLogin}>
+            Log In
+          </Button>
+          <Button onClick={redirectToSignup}>Sign Up</Button>
+        </Group>
+      </Paper>
+    </Container>
   );
 }

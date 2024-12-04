@@ -12,11 +12,10 @@ import {
   PointElement,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import '../../Idea.css';
-import { ScrollArea, Center, Flex } from '@mantine/core';
+import './Idea.css';
+import { Center, Flex, Button, Modal, Table } from '@mantine/core';
 import axios from 'axios';
 import ScatterPlot from '@/components/ScatterPlot/ScatterPlot';
-import { HeaderSimple } from '@/components/Header/Header';
 import TriangleChart from '@/components/TriangleChart/TriangleChart';
 
 ChartJS.register(
@@ -44,6 +43,8 @@ const ResultsPage = ({ params } : any) => {
   const [idea, setIdea] = useState(null);
   const [session, setSession] = useState(0);
   const [queryFetched, setQueryFetched] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [tableData, setTableData] = useState<any[]>([]);
 
   const getScatterValues = () => {
     const points: { x: number; y: number; label: string }[] = [];
@@ -95,7 +96,7 @@ const ResultsPage = ({ params } : any) => {
        if (typeof window === 'undefined') return;
        const TOKEN = localStorage.getItem('accessToken');
        const sesh = (await params).session;
-       const requestString = `https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/oppresults?code=${sesh}`;
+       const requestString = `${process.env.NEXT_PUBLIC_API_BASE_URL}/query/oppresults?code=${sesh}`;
        setSession(sesh);
        await axios
             .get(requestString, {
@@ -212,9 +213,60 @@ const ResultsPage = ({ params } : any) => {
     );
   }
 
+  const handleOpenModal = (inputStr: String) => {
+    const parsedData = parseReasons(inputStr); // Parse the input string
+    setTableData(parsedData); // Store the parsed data
+    setModalOpen(true); // Open the modal
+  };
+
+  const parseReasons = (inputStr) => {
+    inputStr = String(inputStr);
+    if (inputStr === "No outliers") {
+      return [];
+    }
+    const rows = inputStr.split(";").map(row => row.trim()).filter(row => row !== "");
+  
+    return rows.map(row => {
+      const emailStart = 0;
+      const emailEnd = row.indexOf(" voted ");
+      const voteStart = emailEnd + " voted ".length;
+      const voteEnd = row.indexOf(": ");
+      const reasonStart = voteEnd + ": ".length;
+  
+      return {
+        email: row.substring(emailStart, emailEnd).trim(),
+        vote: row.substring(voteStart, voteEnd).trim(),
+        reason: row.substring(reasonStart).trim(),
+      };
+    });
+  };
+  
   return (
     <div>
-      <HeaderSimple glowIndex={-1} />
+      <Modal
+        opened={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="Justifications"
+      >
+                <Table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Vote</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody >
+            {tableData.map((row, index) => (
+              <tr key={index}>
+                <td>{row.email}</td>
+                <td style = {{textAlign:'center'}}>{row.vote}</td>
+                <td>{row.reason}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </Modal>
         <h2 style={{ textAlign: 'center' }}>
             Opportunity #{currentIdeaIndex + 1} Results: {`${idea[0]} (${idea[1]})`}
         </h2>
@@ -260,20 +312,12 @@ const ResultsPage = ({ params } : any) => {
         </div>
 
         <div className="middle-text-areas" style={{ width: '20%' }}>
-          <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
-          <ScrollArea h={150} scrollbars="y"> {idea[4][0]}</ScrollArea>
-          </div>
-
-          <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
-          <ScrollArea h={150} scrollbars="y"> {idea[4][1]}</ScrollArea>
-          </div>
-
-          <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
-          <ScrollArea h={150} scrollbars="y"> {idea[4][2]}</ScrollArea>
-          </div>
+          <div style={{ height: '125px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][0])}>See Outliers</Button>
+          <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][1])}>See Outliers</Button>
+          <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][2])}>See Outliers</Button>
         </div>
 
         <div className="right-graphs" style={{ width: '20%' }}>
@@ -292,21 +336,15 @@ const ResultsPage = ({ params } : any) => {
             <Bar key={`chart-revenue-${currentIdeaIndex}`} data={graphData('Time to Revenue', idea[3][5])} {...optionProps} />
           </div>
         </div>
+
         <div className="right-text-areas" style={{ width: '20%' }}>
-          <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
-          <ScrollArea h={150} scrollbars="y"> {idea[4][3]}</ScrollArea>
-          </div>
-
-          <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
-          <ScrollArea h={150} scrollbars="y"> {idea[4][4]}</ScrollArea>
-          </div>
-
-          <h3>Justifications</h3>
-          <div style={{ height: '150px', whiteSpace: 'pre-wrap', margin: 0, padding: 0 }}>
-          <ScrollArea h={150} scrollbars="y"> {idea[4][5]}</ScrollArea>
-          </div>
+          <div className="middle-text-areas" style={{ width: '20%' }} />
+          <div style={{ height: '125px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][3])}>See Outliers</Button>
+          <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][4])}>See Outliers</Button>
+          <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
+          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][5])}>See Outliers</Button>
         </div>
       </div>
     <div style={{

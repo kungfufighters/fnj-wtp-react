@@ -2,15 +2,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from '@mantine/form';
-import './Idea.css';
-import './Voting.css';
+
 import NextImage from 'next/image';
 import { RadioGroup, Radio, Flex, Button, Stack, Center, Image, Modal, Textarea, Tooltip, Badge } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Graph } from '../../../components/Graph/Graph';
-import { HeaderSimple } from '@/components/Header/Header';
 import oneF from '../../../public/OneFinger.png';
 import fiveF from '../../../public/FiveFingers.png';
 
@@ -28,8 +26,12 @@ interface InfoProps {
 // result is 1D array with the new votes
 // outlier is a number corresponding to the vote category for which they have become an outlier
 interface WebSocketMessage {
-  result: number[];
-  outlier: number;
+  notification: string;
+  user_ids?: number[];
+  lower?: number;
+  upper?: number;
+  result?: number[];
+  outlier?: number;
   criteria_id: number;
   user_id: number;
   median: number;
@@ -70,52 +72,70 @@ const Voting = ({ params } : any) => {
   const [idea, setIdea] = useState(null);
   const [session, setSession] = useState(0);
   const [queryFetched, setQueryFetched] = useState(false);
+  const [badgeState, setBadgeState] = useState<{ [key: number]: boolean }>({});
 
   // Check for mobile device
   const isMobile = useMediaQuery('(max-width: 50em)') ?? false;
   const socketRef = useRef<WebSocket | null>(null);
   const TOKEN = localStorage.getItem('accessToken');
   const RefreshToken = localStorage.getItem('refreshToken');
+  const [submittedReasons, setSubmittedReasons] = useState<{ [key: number]: boolean }>({});
 
-  // Check for access token on the client side
+
+  // Check for access token or guest ID
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-    if (token) {
-      setIsLoggedIn(true);
+    const guestId = typeof window !== 'undefined' ? localStorage.getItem('guest_id') : null;
+  
+    if (token || guestId) {
+      // Either logged in or guest, no redirection
+      setIsLoggedIn(Boolean(token)); // Logged-in user if token is present
     } else {
-      router.push('/login'); // Redirect if not logged in
+      // Save session pin to local storage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sessionPin', params.session);
+      }
+      router.push('/guestjoin');
     }
-  }, [router]);
+  }, [router, params]);
 
   // Fetch user ID if logged in
   useEffect(() => {
     const getID = async () => {
-      await axios
-        .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/id/', {
-          headers: {
-            AUTHORIZATION: `Bearer ${TOKEN}`,
-          },
-        })
-        .then((res) => {
-          setUserID(res.data.id);
-        })
-        .catch(async error => {
-          console.log(error);
-          if (
+      const guestId = localStorage.getItem('guest_id');
+
+      if (guestId) {
+        setUserID(parseInt(guestId, 10)); // Use guest ID directly
+        return;
+      }
+
+      if (TOKEN) {
+        await axios
+          .get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/query/id/`, {
+            headers: {
+              AUTHORIZATION: `Bearer ${TOKEN}`,
+            },
+          })
+          .then((res) => {
+            setUserID(res.data.id);
+          })
+          .catch(async error => {
+            console.log(error);
+            if (
             axios.isAxiosError(error) &&
             error.response &&
             error.response.status === 401 &&
             RefreshToken
           ) {
             try {
-                const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
+                const refreshResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`, {
                     refresh: RefreshToken,
                 });
 
                 localStorage.setItem('accessToken', refreshResponse.data.access);
 
                 await axios
-                .get('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/id/', {
+                .get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/query/id/`, {
                   headers: {
                     AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                   },
@@ -135,11 +155,9 @@ const Voting = ({ params } : any) => {
                     }
                 }
             });
+      }
     };
-
-    if (isLoggedIn && userID === -1) {
-      getID();
-    }
+    getID();
   }, [isLoggedIn, userID]);
 
   // Manage the timer and lock state with a countdown and vote submission
@@ -162,82 +180,107 @@ const Voting = ({ params } : any) => {
   }, [timeRemaining]);
 
   const getSession = async () => {
-    const sesh = (await params).session;
-    const requestString = `https://wheretoplay-6af95d3b28f7.herokuapp.com/api/query/oppvoting?code=${sesh}`;
+    const TOKEN = localStorage.getItem('accessToken'); // User token for authentication
+    const RefreshToken = localStorage.getItem('refreshToken'); // Refresh token for re-authentication
+    const guestId = localStorage.getItem('guest_id'); // Guest ID if the user is a guest
+    const sesh = params.session || localStorage.getItem('sessionPin'); // Session PIN from params or localStorage
+    const requestString = `${process.env.NEXT_PUBLIC_API_BASE_URL}/query/oppvoting?code=${sesh}`;
 
-    const successlogic = (res : any) => {
-      const newIdeas: React.SetStateAction<any[]> = [];
-      const newVotes: React.SetStateAction<any[]> = [];
-      const newAllVotes: React.SetStateAction<any[]> = [];
-      const opportunities = res.data;
-      opportunities.forEach((
-        opp: {
-          name: any;
-          customer_segment: any;
-          description: any;
-          opportunity_id: any;
-          reasons: any;
-          imgurl: string }) => {
+    try {
+      // Define headers based on whether the user is authenticated or a guest
+      const headers = guestId
+        ? {} // Guests don't use Authorization headers
+        : { AUTHORIZATION: `Bearer ${TOKEN}` }; // Add Authorization header for authenticated users
+
+      // Send request to fetch session data
+      const response = await axios.get(requestString, { headers });
+
+      // Handle success logic (populate session data)
+      const newIdeas = [];
+      const newVotes = [];
+      const newAllVotes = [];
+      const opportunities = response.data;
+
+      opportunities.forEach((opp) => {
         newIdeas.push([
           opp.name,
           opp.customer_segment,
           opp.description,
           opp.opportunity_id,
           opp.reasons,
-          opp.imgurl]);
+          opp.imgurl,
+        ]);
         newVotes.push([0, 0, 0, 0, 0, 0]);
         newAllVotes.push(Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0)));
       });
-      console.log(newIdeas);
+
       setIdeas(newIdeas);
       setVotes(newVotes);
       setCurVotes(newAllVotes);
       setIdea(newIdeas[currentIdeaIndex]);
-      console.log(newIdeas[currentIdeaIndex]);
-  };
+      setSession(sesh);
 
-    setSession(sesh);
-    await axios
-         .get(requestString, {
-           headers: {
-             AUTHORIZATION: `Bearer ${TOKEN}`,
-           },
-         })
-         .then(successlogic)
-         .catch(async error => {
-          console.log(error);
-          if (
-            axios.isAxiosError(error) &&
-            error.response &&
-            error.response.status === 401 &&
-            RefreshToken
-          ) {
-            try {
-                const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
-                    refresh: RefreshToken,
-                });
+    } catch (error) {
+      // Error handling
+      console.error('Error fetching session data:', error);
 
-                localStorage.setItem('accessToken', refreshResponse.data.access);
+      if (axios.isAxiosError(error) && error.response && error.response.status === 401 && RefreshToken) {
+        try {
+          // Attempt to refresh the token
+          const refreshResponse = await axios.post(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`,
+            { refresh: RefreshToken }
+          );
 
-                await axios
-                    .get(requestString, {
-                    headers: {
-                        AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
-                    },
-                    })
-                    .then(successlogic);
-            } catch (refreshError : any) {
-                            if (refreshError.response && refreshError.response.status === 401) {
-                              console.log('Refresh token expired. Redirecting to login.');
-                              localStorage.removeItem('accessToken');
-                              localStorage.removeItem('refreshToken');
-                              router.push('/login');
-                            } else {
-                            console.error('An unexpected error occurred:', refreshError);
-                          }
-                    }
-                }
-            });
+          // Save the new access token
+          localStorage.setItem('accessToken', refreshResponse.data.access);
+
+          // Retry the request with the refreshed token
+          const response = await axios.get(requestString, {
+            headers: { AUTHORIZATION: `Bearer ${refreshResponse.data.access}` },
+          });
+
+          // Handle success logic again (populate session data)
+          const newIdeas = [];
+          const newVotes = [];
+          const newAllVotes = [];
+          const opportunities = response.data;
+
+          opportunities.forEach((opp) => {
+            newIdeas.push([
+              opp.name,
+              opp.customer_segment,
+              opp.description,
+              opp.opportunity_id,
+              opp.reasons,
+              opp.imgurl,
+            ]);
+            newVotes.push([0, 0, 0, 0, 0, 0]);
+            newAllVotes.push(Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0)));
+          });
+
+          setIdeas(newIdeas);
+          setVotes(newVotes);
+          setCurVotes(newAllVotes);
+          setIdea(newIdeas[currentIdeaIndex]);
+          setSession(sesh);
+
+        } catch (refreshError) {
+          // If refresh token is invalid or expired, redirect to login
+          if (refreshError.response && refreshError.response.status === 401) {
+            console.log('Refresh token expired. Redirecting to login.');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            router.push('/login');
+          } else {
+            console.error('Unexpected error while refreshing token:', refreshError);
+          }
+        }
+      } else {
+        // If not a 401 or refresh token isn't available, handle other errors
+        alert('Failed to fetch session data. Please try again.');
+      }
+    }
   };
 
   if (!queryFetched && typeof window !== 'undefined') {
@@ -251,11 +294,14 @@ const Voting = ({ params } : any) => {
     newVotesOpp[criteria_id - 1] = vote_score;
     newVotesAll[currentIdeaIndex] = newVotesOpp;
     setVotes(newVotesAll);
+
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       const payload = {
         opportunity_id: idea[3],
         session_id: session,
-        user_id: userID,
+        ...(localStorage.getItem('guest_id')
+          ? { guest_id: parseInt(localStorage.getItem('guest_id')!, 10) }
+          : { user_id: userID }),
         votes: [{ criteria_id, vote_score }],
       };
       socketRef.current.send(JSON.stringify(payload));
@@ -298,9 +344,12 @@ const Voting = ({ params } : any) => {
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
       console.log('Response from server:', data);
-      if (data.outlier) {
-        setMedian(data.median);
-        modalHandlers.open(); // Open the modal if it's an outlier and matches the current user
+      if (data.notification === 'Outliers by user ID' && data.user_ids && data.criteria_id !== undefined) {
+        const isOutlier = data.user_ids.includes(userID); // Check if current user is an outlier
+        setBadgeState((prevState) => ({
+          ...prevState,
+          [data.criteria_id - 1]: isOutlier, // Update badgeState for the current category (0-based index)
+        }));
       } else if (data.result) {
         setCurVotes((prevVotes) => {
           const allVotes = [...prevVotes];
@@ -366,7 +415,7 @@ const Voting = ({ params } : any) => {
     const newReasons = [...reasons];
     newReasons[currentReasonIndex] = reasonInput;
     try {
-      await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/add/reason/', {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/add/reason/`, {
         opportunity_id: idea[3],
         reason: reasonInput,
         criteria_id: currentReasonIndex + 1,
@@ -375,6 +424,10 @@ const Voting = ({ params } : any) => {
           AUTHORIZATION: `Bearer ${TOKEN}`,
         },
       });
+      setSubmittedReasons((prev) => ({
+        ...prev,
+        [currentReasonIndex]: true,
+      }));
     } catch (error) {
         if (
           axios.isAxiosError(error) &&
@@ -383,13 +436,13 @@ const Voting = ({ params } : any) => {
           RefreshToken
         ) {
           try {
-              const refreshResponse = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/token/refresh/', {
+              const refreshResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`, {
                   refresh: RefreshToken,
               });
 
               localStorage.setItem('accessToken', refreshResponse.data.access);
 
-              await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/add/reason/', {
+              const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/add/reason/`, {
                 opportunity_id: idea[3],
                 reason: reasonInput,
                 criteria_id: currentReasonIndex + 1,
@@ -398,7 +451,11 @@ const Voting = ({ params } : any) => {
                   AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                 },
               });
-          } catch (refreshError : any) {
+              setSubmittedReasons((prev) => ({
+                ...prev,
+                [currentReasonIndex]: true,
+              }));
+          } catch (refreshError) {
                           if (refreshError.response && refreshError.response.status === 401) {
                             console.log('Refresh token expired. Redirecting to login.');
                             localStorage.removeItem('accessToken');
@@ -428,40 +485,71 @@ const Voting = ({ params } : any) => {
     );
   };
 
-  const Selection: React.FC<VotingProps> = ({ caption, index, infoM }) => (
-    <Center>
-      <Stack>
-        {timeRemaining > 0 && currentOptionIndex === index && (
-          <h4 style={{ textAlign: 'center' }}>Time Remaining: {timeRemaining}s</h4>
-        )}
-        <Flex>
-          <InfoButton message={infoM} />
+  const Selection: React.FC<VotingProps> = ({ caption, index, infoM }) => {
+    const isOutlier = badgeState[index] || false; // Check the badgeState for the current index
+    const hasSubmitted = submittedReasons[index] || false; // Check if input has been submitted for this criterion
+    const badgeColor = isOutlier ? (hasSubmitted ? "red" : "red") : "green"; // Green if submitted, red otherwise
+    const badgeLabel = isOutlier
+      ? hasSubmitted
+        ? "You are an outlier, and we have received your input."
+        : "Click here! You are an outlier."
+      : "You are not an outlier.";
+  
+    const handleBadgeClick = () => {
+      if (isOutlier && !hasSubmitted) {
+        setCurrentReasonIndex(index); // Set the current criteria as the reason index
+        modalHandlers.open(); // Open the modal
+      }
+    };
+  
+    return (
+      <Center>
+        <Stack>
+          {timeRemaining > 0 && currentOptionIndex === index && (
+            <h4 style={{ textAlign: 'center' }}>Time Remaining: {timeRemaining}s</h4>
+          )}
+          <Flex>
+            <InfoButton message={infoM} />
             <RadioGroup
               value={votes[currentIdeaIndex][index].toString()}
               label={caption}
-              description={currentIdeaIndex > 0 && votes[currentIdeaIndex - 1][index] > 0 ?
-                `You voted ${votes[currentIdeaIndex - 1][index]} for ${ideas[currentIdeaIndex - 1][0]}` : ''}
+              description={
+                currentIdeaIndex > 0 && votes[currentIdeaIndex - 1][index] > 0
+                  ? `You voted ${votes[currentIdeaIndex - 1][index]} for ${ideas[currentIdeaIndex - 1][0]}`
+                  : ''
+              }
               className={timeRemaining > 0 && currentOptionIndex !== index ? 'Disabled' : ''}
               bg="rgba(0, 0, 0, .3)"
               required
             >
-            <Flex gap="md">
-              <Image alt="One finger" component={NextImage} src={oneF} h={35} />
-              <Radio value="1" onClick={() => radioClick(index, 1)} color="grape" />
-              <Radio value="2" onClick={() => radioClick(index, 2)} color="grape" />
-              <Radio value="3" onClick={() => radioClick(index, 3)} color="grape" />
-              <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
-              <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
-              <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
-              <Tooltip label={`Previous Vote: ${previousVotes[index] || 'None'}`} withArrow>
-              <Badge color="red" size="md" variant="filled" />
-              </Tooltip>
-            </Flex>
+              <Flex gap="md">
+                <Image alt="One finger" component={NextImage} src={oneF} h={35} />
+                <Radio value="1" onClick={() => radioClick(index, 1)} color="grape" />
+                <Radio value="2" onClick={() => radioClick(index, 2)} color="grape" />
+                <Radio value="3" onClick={() => radioClick(index, 3)} color="grape" />
+                <Radio value="4" onClick={() => radioClick(index, 4)} color="grape" />
+                <Radio value="5" onClick={() => radioClick(index, 5)} color="grape" />
+                <Image alt="Five fingers" component={NextImage} src={fiveF} h={35} />
+                <Tooltip label={badgeLabel} withArrow>
+                  <Badge
+                    color={badgeColor}
+                    size="md"
+                    variant="filled"
+                    onClick={handleBadgeClick}
+                    style={{
+                      cursor: isOutlier && !hasSubmitted ? "pointer" : "default",
+                      border: hasSubmitted ? "2px solid green" : undefined,
+                    }}
+                  />
+                </Tooltip>
+              </Flex>
             </RadioGroup>
-        </Flex>
-      </Stack>
-    </Center>
-  );
+          </Flex>
+        </Stack>
+      </Center>
+    );
+  };
+  
   //console.log("curVotes:", curVotes);
   //console.log("isVoted:", isVoted);
 
@@ -482,7 +570,6 @@ const Voting = ({ params } : any) => {
 
   return (
   <>
-  <HeaderSimple glowIndex={-1} />
     <h2 style={{ textAlign: 'center' }}>
       Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
     </h2>

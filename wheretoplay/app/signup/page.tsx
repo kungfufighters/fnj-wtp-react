@@ -22,6 +22,8 @@ export default function Signup() {
 
     const form = useForm({
         initialValues: {
+            firstName: '',
+            lastName: '',
             email: '',
             password: '',
             confirmPassword: '',
@@ -36,23 +38,14 @@ export default function Signup() {
         },
     });
 
-    // Redirect if the user is already logged in
-    useEffect(() => {
-        const accessToken = localStorage.getItem('accessToken');
-        if (accessToken) {
-            setIsAlreadyLoggedIn(true); // Show redirecting message
-            setTimeout(() => {
-                router.push('/dashboard');
-            }, 1000); // 1-second delay before redirecting
-        }
-    }, [router]);
-
     const handleSubmit = async (values: typeof form.values) => {
         setLoading(true);
         setError(null);
 
         try {
-            const response = await axios.post('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/signup/', {
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/signup/`, {
+                first_name: values.firstName || null,
+                last_name: values.lastName || null,
                 email: values.email,
                 password: values.password,
                 password2: values.confirmPassword,
@@ -66,7 +59,16 @@ export default function Signup() {
                 localStorage.setItem('refreshToken', refresh);
 
                 // Redirect to dashboard
-                router.push('/');
+                if (response.status === 201) {
+                    const { access, refresh } = response.data.tokens;
+                    localStorage.setItem('accessToken', access);
+                    localStorage.setItem('refreshToken', refresh);
+                
+                    router.push('/dashboard/opportunities'); 
+                    setTimeout(() => {
+                        window.location.reload(); 
+                    }, 100);
+                }
             }
         } catch (error2) {
             console.error(error2);
@@ -79,6 +81,17 @@ export default function Signup() {
             setLoading(false);
         }
     };
+
+        // Redirect if the user is already logged in
+        useEffect(() => {
+            const accessToken = localStorage.getItem('accessToken');
+            if (accessToken) {
+                setIsAlreadyLoggedIn(true); // Show redirecting message
+                setTimeout(() => {
+                    router.push('/dashboard/opportunities');
+                }, 1000); // 1-second delay before redirecting
+            }
+        }, [router]);
 
     // Display a "redirecting" message if already logged in
     if (isAlreadyLoggedIn) {
@@ -99,21 +112,35 @@ export default function Signup() {
 
     return (
         <Container
-          size="xs"
-          style={{
-              minHeight: '100vh',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+            size="xs"
+            style={{
+                minHeight: '90vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
             }}
         >
-            <Paper withBorder shadow="md" p={30} radius="md" style={{ width: '100%', maxWidth: 400 }}>
-                <Title {...alignprops} order={2}>
+            <Paper withBorder shadow="md" p={30} radius="md" style={{ width: '100%', maxWidth: 600 }}>
+                <Title align="center" order={2}>
                     Sign Up
                 </Title>
 
                 <form onSubmit={form.onSubmit((values) => handleSubmit(values))}>
                     <Stack {...spaceprops}>
+                        <Group grow>
+                            <TextInput
+                                label="First Name"
+                                placeholder="John"
+                                {...form.getInputProps('firstName')}
+                            />
+
+                            <TextInput
+                                label="Last Name"
+                                placeholder="Doe"
+                                {...form.getInputProps('lastName')}
+                            />
+                        </Group>
+
                         <TextInput
                           label="Email"
                           placeholder="you@example.com"

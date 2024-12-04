@@ -1,0 +1,36 @@
+.header {
+  height: 80px;
+  background-color: var(--mantine-color-gray-0); /* Light gray for a clean background */
+  border-bottom: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+}
+
+.inner {
+  height: 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.link {
+  text-decoration: none;
+  color: var(--mantine-color-gray-7); /* Neutral gray for default link text */
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 5px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.link:hover {
+  background-color: var(--mantine-color-brandOrange-1); /* Light orange background on hover */
+  color: var(--mantine-color-brandGreen-7); /* Green text on hover */
+}
+
+.link.active {
+  background-color: var(--mantine-color-gray-2); /* Subtle gray for active state by default */
+  color: var(--mantine-color-brandGreen-7); /* Green text for active state */
+}
+
+.link.active:hover {
+  background-color: var(--mantine-color-brandGreen-7); /* Green background on hover in active state */
+  color: white; /* White text for contrast on active hover */
+}

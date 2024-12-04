@@ -12,26 +12,59 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
+import { showNotification } from '@mantine/notifications';
 import { useForm } from '@mantine/form';
 
 export default function Login() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true); // Used to block initial render
   const [loginLoading, setLoginLoading] = useState(false);
-  const [isAlreadyLoggedIn, setIsAlreadyLoggedIn] = useState(false); // New state to handle message display
-  const [error, setError] = useState<string | null>(null); //Error state
+  const [isAlreadyLoggedIn, setIsAlreadyLoggedIn] = useState(false); // Handle message display if logged in
+  const [error, setError] = useState<string | null>(null); // Error state
+
+  const isValidToken = async (token: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/custom/token/verify/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  };
+
+  // Check for notification messages from previous redirects
+  useEffect(() => {
+    const notificationData = localStorage.getItem('redirectNotification');
+    if (notificationData) {
+      const { title, message, color } = JSON.parse(notificationData);
+      showNotification({ title, message, color });
+      localStorage.removeItem('redirectNotification'); // Clear notification data
+    }
+  }, []);
 
   // Redirect if the user is already logged in
   useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (accessToken) {
-      setIsAlreadyLoggedIn(true); // Show redirecting message
-      setTimeout(() => {
-        router.push('/');
-      }, 500);
-    } else {
-      setIsLoading(false); // Allow rendering of the login form if not logged in
-    }
+    const checkLoginStatus = async () => {
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken) {
+        const valid = await isValidToken(accessToken);
+        if (valid) {
+          setIsAlreadyLoggedIn(true);
+          setTimeout(() => router.push('/'), 500);
+        } else {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          setIsLoading(false);
+        }
+      } else {
+        setIsLoading(false);
+      }
+    };
+
+    checkLoginStatus();
   }, [router]);
 
   const form = useForm({
@@ -46,10 +79,10 @@ export default function Login() {
   });
 
   // Login logic to handle API call to the Django backend
-  const handleSubmit = async (values: { email: string; password: string }) => {
+  const handleSubmit = async (values) => {
     setLoginLoading(true);
     try {
-      const response = await fetch('https://wheretoplay-6af95d3b28f7.herokuapp.com/api/login/', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/login/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,20 +91,30 @@ export default function Login() {
       });
 
       const data = await response.json();
+      console.log('Response data:', data);
 
-      if (response.ok) {
+      if (response.ok && data.tokens) {
+        const accessToken = data.tokens.access;
+        const refreshToken = data.tokens.refresh;
+
+        // Log the tokens to the console
+        console.log('Access Token:', accessToken);
+        console.log('Refresh Token:', refreshToken);
+
         // Store tokens in localStorage
-        localStorage.setItem('accessToken', data.tokens.access);
-        localStorage.setItem('refreshToken', data.tokens.refresh);
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
 
-        // Redirect to the dashboard
+        // Navigate to the base URL and reload
         router.push('/');
+        setTimeout(() => window.location.reload(), 100);
       } else {
-        console.error('Login failed:', data.error);
-        setError('Login failed: Invalid email or password');
+        setError(data.error || 'Login failed: Invalid email or password');
+        console.error('Login failed with response:', response);
       }
     } catch (err) {
       console.error('Error during login:', err);
+      setError('An error occurred during login. Please try again.');
     } finally {
       setLoginLoading(false);
     }
@@ -107,7 +150,7 @@ export default function Login() {
     <Container
       size="xs"
       style={{
-        minHeight: '100vh',
+        minHeight: '90vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -129,9 +172,9 @@ export default function Login() {
             required
             mt="md"
           />
-            <Button type="submit" loading={loginLoading} mt="md">
-              {loginLoading ? 'Logging in...' : 'Log in'}
-            </Button>
+          <Button type="submit" loading={loginLoading} mt="md">
+            {loginLoading ? 'Logging in...' : 'Log in'}
+          </Button>
           <Group justify="space-between" mt="md">
             <Button variant="subtle" onClick={handleSignupRedirect}>
               Don&apos;t have an account?
@@ -141,10 +184,10 @@ export default function Login() {
             </Button>
           </Group>
           {error && (
-        <Text color="red" mt="sm">
-          {error}
-        </Text>
-      )}
+            <Text color="red" mt="sm">
+              {error}
+            </Text>
+          )}
         </form>
       </Paper>
     </Container>
