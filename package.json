@@ -19,6 +19,7 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@mantine/core": "^7.13.2",
+    "@mantine/dropzone": "^7.14.3",
     "@mantine/emotion": "^7.13.2",
     "@mantine/form": "^7.13.2",
     "@mantine/hooks": "^7.13.2",
