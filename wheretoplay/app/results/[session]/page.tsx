@@ -214,6 +214,7 @@ const ResultsPage = ({ params } : any) => {
   }
 
   const handleOpenModal = (inputStr: String) => {
+    console.log(inputStr);
     const parsedData = parseReasons(inputStr); // Parse the input string
     setTableData(parsedData); // Store the parsed data
     setModalOpen(true); // Open the modal
@@ -234,7 +235,7 @@ const ResultsPage = ({ params } : any) => {
       const reasonStart = voteEnd + ": ".length;
   
       return {
-        email: row.substring(emailStart, emailEnd).trim(),
+        name: row.substring(emailStart, emailEnd).trim(),
         vote: row.substring(voteStart, voteEnd).trim(),
         reason: row.substring(reasonStart).trim(),
       };
@@ -251,7 +252,7 @@ const ResultsPage = ({ params } : any) => {
                 <Table>
           <thead>
             <tr>
-              <th>Email</th>
+              <th>Name</th>
               <th>Vote</th>
               <th>Reason</th>
             </tr>
@@ -259,7 +260,7 @@ const ResultsPage = ({ params } : any) => {
           <tbody >
             {tableData.map((row, index) => (
               <tr key={index}>
-                <td>{row.email}</td>
+                <td>{row.name}</td>
                 <td style = {{textAlign:'center'}}>{row.vote}</td>
                 <td>{row.reason}</td>
               </tr>
@@ -313,11 +314,23 @@ const ResultsPage = ({ params } : any) => {
 
         <div className="middle-text-areas" style={{ width: '20%' }}>
           <div style={{ height: '125px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
-          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][0])}>See Outliers</Button>
+          {idea[4][0] === 'No outliers' ? (
+            <Button style={{ backgroundColor: 'red', opacity: 0.5 }}>No Outliers</Button>
+          ) : (
+            <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][0])}>See Outliers</Button>
+          )}
           <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
-          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][1])}>See Outliers</Button>
+          {idea[4][1] === 'No outliers' ? (
+            <Button style={{ backgroundColor: 'red', opacity: 0.5 }}>No Outliers</Button>
+          ) : (
+            <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][1])}>See Outliers</Button>
+          )}
           <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
-          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][2])}>See Outliers</Button>
+          {idea[4][2] === 'No outliers' ? (
+            <Button style={{ backgroundColor: 'red', opacity: 0.5 }}>No Outliers</Button>
+          ) : (
+            <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][2])}>See Outliers</Button>
+          )}
         </div>
 
         <div className="right-graphs" style={{ width: '20%' }}>
@@ -340,11 +353,23 @@ const ResultsPage = ({ params } : any) => {
         <div className="right-text-areas" style={{ width: '20%' }}>
           <div className="middle-text-areas" style={{ width: '20%' }} />
           <div style={{ height: '125px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
-          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][3])}>See Outliers</Button>
+          {idea[4][3] === 'No outliers' ? (
+            <Button style={{ backgroundColor: 'red', opacity: 0.5 }}>No Outliers</Button>
+          ) : (
+            <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][3])}>See Outliers</Button>
+          )}
           <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
-          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][4])}>See Outliers</Button>
+          {idea[4][4] === 'No outliers' ? (
+            <Button style={{ backgroundColor: 'red', opacity: 0.5 }}>No Outliers</Button>
+          ) : (
+            <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][4])}>See Outliers</Button>
+          )}
           <div style={{ height: '175px', whiteSpace: 'pre-wrap', margin:0,padding:0  } } /> 
-          <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][5])}>See Outliers</Button>
+          {idea[4][5] === 'No outliers' ? (
+            <Button style={{ backgroundColor: 'red', opacity: 0.5 }}>No Outliers</Button>
+          ) : (
+            <Button style={{ backgroundColor: 'red' }} onClick={() => handleOpenModal(idea[4][5])}>See Outliers</Button>
+          )}
         </div>
       </div>
     <div style={{

@@ -153,20 +153,21 @@ export default function OpportunitiesPage() {
                             <Accordion.Control>
                               <Group position="apart">
                                 <Text>{opp.name}</Text>
+                                {/* No need for badge until status is stored in DB
                                 <Badge
                                   color={
                                     opp.label === "Keep Open" ? "blue" : "green"
                                   }
                                 >
                                   {opp.label}
-                                </Badge>
+                                </Badge> */}
                               </Group>
                             </Accordion.Control>
                             <Accordion.Panel>
                               <Text size="sm">Segment: {opp.customer_segment}</Text>
                               <Text size="sm">Participants: {opp.participants}</Text>
-                              <Text size="sm">Potential: {opp.scoreP}/5</Text>
-                              <Text size="sm">Challenge: {opp.scoreC}/5</Text>
+                              <Text size="sm">Potential: {opp.scoreP === 0 ? 'N/A' : Math.floor(opp.scoreP * 10) / 10}/5</Text>
+                              <Text size="sm">Challenge: {opp.scoreC === 0 ? 'N/A' : Math.floor(opp.scoreC * 10) / 10}/5</Text>
                             </Accordion.Panel>
                           </Accordion.Item>
                         ))}

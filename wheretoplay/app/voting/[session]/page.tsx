@@ -27,14 +27,14 @@ interface InfoProps {
 // outlier is a number corresponding to the vote category for which they have become an outlier
 interface WebSocketMessage {
   notification: string;
+  user_id?: number;
   user_ids?: number[];
+  guest_id?: number;
+  guest_ids?: number[];
+  result?: number[];
+  criteria_id: number;
   lower?: number;
   upper?: number;
-  result?: number[];
-  outlier?: number;
-  criteria_id: number;
-  user_id: number;
-  median: number;
 }
 
 type Opp = {
@@ -61,7 +61,6 @@ const Voting = ({ params } : any) => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [modalOpened, modalHandlers] = useDisclosure(false);
   const [currentReasonIndex, setCurrentReasonIndex] = useState(-1);
-  const [median, setMedian] = useState<number>(0);
   const [reasonInput, setReasonInput] = useState('');
   const [previousVotes, setPreviousVotes] = useState(Array.from({ length: NUMCATS }, () => null)); // Store previous votes
   const [curVotes, setCurVotes] = useState<number[][][]>(
@@ -341,15 +340,28 @@ const Voting = ({ params } : any) => {
 
   const connectWebSocket = () => {
     socketRef.current = new WebSocket(`wss://wheretoplay-6af95d3b28f7.herokuapp.com/ws/vote/${session}/`);
+    // socketRef.current = new WebSocket(`ws://localhost:8000/ws/vote/${session}/`);
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
       console.log('Response from server:', data);
-      if (data.notification === 'Outliers by user ID' && data.user_ids && data.criteria_id !== undefined) {
-        const isOutlier = data.user_ids.includes(userID); // Check if current user is an outlier
+      if (data.notification === 'Outliers by user ID' && data.criteria_id !== undefined) {
+        const isOutlier = localStorage.getItem('guest_id') ? data.guest_ids && data.guest_ids.includes(userID) : data.user_ids && data.user_ids.includes(userID); // Check if current user/guest is an outlier
         setBadgeState((prevState) => ({
           ...prevState,
           [data.criteria_id - 1]: isOutlier, // Update badgeState for the current category (0-based index)
         }));
+        // Reset is submitted status if the user has become an outlier
+        if (isOutlier) {
+          // Open instantly after if an outlier
+          if (data.user_id === userID || data.guest_id === userID) {
+            setCurrentReasonIndex(data.criteria_id - 1);
+            modalHandlers.open(); // Open the modal if it's an outlier and matches the current user
+          }
+          setSubmittedReasons((prevState) => ({
+            ...prevState,
+            [data.criteria_id - 1]: false,
+          }));
+        }
       } else if (data.result) {
         setCurVotes((prevVotes) => {
           const allVotes = [...prevVotes];
@@ -412,6 +424,10 @@ const Voting = ({ params } : any) => {
   };
 
   const handleReasonSubmit = async () => {
+    const headers = localStorage.getItem('guest_id')
+        ? {} // Guests don't use Authorization headers
+        : { AUTHORIZATION: `Bearer ${TOKEN}` }; // Add Authorization header for authenticated users
+
     const newReasons = [...reasons];
     newReasons[currentReasonIndex] = reasonInput;
     try {
@@ -419,10 +435,9 @@ const Voting = ({ params } : any) => {
         opportunity_id: idea[3],
         reason: reasonInput,
         criteria_id: currentReasonIndex + 1,
+        user_id: userID,
       }, {
-        headers: {
-          AUTHORIZATION: `Bearer ${TOKEN}`,
-        },
+        headers,
       });
       setSubmittedReasons((prev) => ({
         ...prev,
@@ -571,7 +586,7 @@ const Voting = ({ params } : any) => {
   return (
   <>
     <h2 style={{ textAlign: 'center' }}>
-      Idea #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
+      Opportunity #{currentIdeaIndex + 1}: {`${idea[0]} (${idea[1]})`}
     </h2>
 
     <p style={{ textAlign: 'center', width: '50%', margin: 'auto' }}>
@@ -615,7 +630,7 @@ const Voting = ({ params } : any) => {
     <Modal
       opened={modalOpened}
       onClose={modalHandlers.close}
-      title={`You are an outlier. Your vote: ${votes[currentIdeaIndex][currentReasonIndex]}. Median: ${Math.floor((median * 10)) / 10}.`}
+      title={`You are an outlier. Your vote: ${votes[currentIdeaIndex][currentReasonIndex]}.`}
       centered
       fullScreen={isMobile}
       transitionProps={{ transition: 'fade', duration: 200 }}
