@@ -398,7 +398,7 @@ const Voting = ({ params } : any) => {
       setIdea(ideas[currentIdeaIndex + 1]);
       setCurrentIdeaIndex(currentIdeaIndex + 1);
     }
-    else router.push('/dashboard');
+    else router.push('/dashboard/opportunities');
     setCurrentOptionIndex(-1);
     setIsVoted(Array.from({ length: NUMCATS }, () => false));
     setReasons(Array.from({ length: NUMCATS }, () => ''));

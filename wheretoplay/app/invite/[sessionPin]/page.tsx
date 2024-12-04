@@ -21,6 +21,7 @@ import toast, { Toaster } from "react-hot-toast";
 type WorkspaceData = {
   name: string;
   url_link: string;
+  workspace_id: number;
 };
 
 const expirationOptions = [
@@ -36,7 +37,7 @@ const expirationOptions = [
 export default function InvitePage() {
   const pathname = usePathname();
   const sessionPin = pathname.split("/").pop(); // Extract sessionPin from the URL path
-  const [workspaceData, setWorkspaceData] = useState<WorkspaceData>({ name: "", url_link: "" });
+  const [workspaceData, setWorkspaceData] = useState<WorkspaceData>({ name: "", url_link: "", workspace_id: -1 });
   const [email, setEmail] = useState("");
   const [expiration, setExpiration] = useState<string>("no_expiration");
   const [loading, setLoading] = useState(false);
@@ -121,6 +122,7 @@ export default function InvitePage() {
           email,
           session_pin: sessionPin,
           expiration,
+          workspace_id: workspaceData.workspace_id,
         }),
       });
       const data = await response.json();
