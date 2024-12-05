@@ -35,6 +35,7 @@ interface WebSocketMessage {
   criteria_id: number;
   lower?: number;
   upper?: number;
+  new_cur_votes?: number[][][];
 }
 
 type Opp = {
@@ -289,9 +290,22 @@ const Voting = ({ params } : any) => {
   const sendVoteData = (criteria_id: number, vote_score: number) => {
     const newVotesAll = [...votes];
     const newVotesOpp = [...votes[currentIdeaIndex]];
+    const oldVote = newVotesOpp[criteria_id - 1];
     newVotesOpp[criteria_id - 1] = vote_score;
     newVotesAll[currentIdeaIndex] = newVotesOpp;
     setVotes(newVotesAll);
+
+    const newCurVotes = [...curVotes];
+    const newCurVotesOpp = [...curVotes[currentIdeaIndex]];
+    const newCurVotesCrit = [...curVotes[currentIdeaIndex][criteria_id - 1]];
+    // Remove old vote if neccessary
+    if (oldVote !== 0) newCurVotesCrit[oldVote - 1] -= 1;
+
+    // Add new vote regardless
+    newCurVotesCrit[vote_score - 1] += 1;
+    newCurVotesOpp[criteria_id - 1] = newCurVotesCrit;
+    newCurVotes[currentIdeaIndex] = newCurVotesOpp;
+
 
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       const payload = {
@@ -301,6 +315,7 @@ const Voting = ({ params } : any) => {
           ? { guest_id: parseInt(localStorage.getItem('guest_id')!, 10) }
           : { user_id: userID }),
         votes: [{ criteria_id, vote_score }],
+        curVotes: newCurVotes,
       };
       socketRef.current.send(JSON.stringify(payload));
     }
@@ -361,15 +376,8 @@ const Voting = ({ params } : any) => {
             [data.criteria_id - 1]: false,
           }));
         }
-      } else if (data.result) {
-        setCurVotes((prevVotes) => {
-          const allVotes = [...prevVotes];
-          const newVotes = [...allVotes[currentIdeaIndex]];
-          const criteriaIndex = data.criteria_id - 1; // Adjust criteria_id to 0-based index
-          newVotes[criteriaIndex] = data.result;
-          allVotes[currentIdeaIndex] = newVotes;
-          return allVotes;
-        });
+      } else if (data.new_cur_votes) {
+        setCurVotes(data.new_cur_votes);
     }
     };
     socketRef.current.onerror = (error: Event) => {
