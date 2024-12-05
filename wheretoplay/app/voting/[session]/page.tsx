@@ -170,7 +170,6 @@ const Voting = ({ params } : any) => {
         const newIsVoted = [...isVoted];
         newIsVoted[currentOptionIndex] = true;
         setIsVoted(newIsVoted);
-
         sendVoteData(currentOptionIndex + 1, votes[currentIdeaIndex][currentOptionIndex]);
       }
     }, 1000);
@@ -402,6 +401,8 @@ const Voting = ({ params } : any) => {
     setCurrentOptionIndex(-1);
     setIsVoted(Array.from({ length: NUMCATS }, () => false));
     setReasons(Array.from({ length: NUMCATS }, () => ''));
+    setBadgeState({});
+    setSubmittedReasons({});
     setTimeRemaining(0);
   };
 
@@ -413,6 +414,8 @@ const Voting = ({ params } : any) => {
     setCurrentOptionIndex(-1);
     setIsVoted(Array.from({ length: NUMCATS }, () => false));
     setReasons(Array.from({ length: NUMCATS }, () => ''));
+    setBadgeState({});
+    setSubmittedReasons({});
     setTimeRemaining(0);
   };
 
@@ -564,9 +567,6 @@ const Voting = ({ params } : any) => {
       </Center>
     );
   };
-  
-  //console.log("curVotes:", curVotes);
-  //console.log("isVoted:", isVoted);
 
   const categories = [
     { caption: 'Reason to Buy', infoM: 'Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]' },
@@ -607,7 +607,8 @@ const Voting = ({ params } : any) => {
             <React.Fragment key={index}>
               <Selection caption={category.caption} index={index} infoM={category.infoM} />
               {votes[currentIdeaIndex][index] > 0 &&
-              !isEmpty(curVotes[currentIdeaIndex][index]) && (
+              !isEmpty(curVotes[currentIdeaIndex][index]) &&
+              (timeRemaining === 0 || currentOptionIndex !== index) && (
                 <Graph
                   key={index}
                   graphTitle=""
