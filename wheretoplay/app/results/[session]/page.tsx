@@ -12,7 +12,6 @@ import {
   PointElement,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import './Idea.css';
 import { Center, Flex, Button, Modal, Table } from '@mantine/core';
 import axios from 'axios';
 import ScatterPlot from '@/components/ScatterPlot/ScatterPlot';
@@ -204,8 +203,6 @@ const ResultsPage = ({ params } : any) => {
   const optionProps = {
     options: chartOptions,
   };
-
-  //const outlierSampleText = "Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem\n Participant #: \n Reason:Lorem";
 
   if (!queryFetched || !idea) {
     return (
@@ -404,11 +401,11 @@ const ResultsPage = ({ params } : any) => {
 
       <div className="navigation-buttons" style={{ marginTop: '20px', textAlign: 'center' }}>
         {currentIdeaIndex > 0 &&
-        <button className="Idea-button" onClick={goToPreviousIdea} disabled={currentIdeaIndex === 0} type="button">
+        <Button className="Idea-button" onClick={goToPreviousIdea} disabled={currentIdeaIndex === 0} type="button">
           Previous Opportunity
-        </button>}
+        </Button>}
         {currentIdeaIndex < ideas.length - 1 &&
-        <button
+        <Button
           className="Idea-button"
           onClick={goToNextIdea}
           disabled={currentIdeaIndex === ideas.length - 1}
@@ -416,7 +413,7 @@ const ResultsPage = ({ params } : any) => {
           type="button"
         >
           Next Opportunity
-        </button>}
+        </Button>}
       </div>
       <br />
       <br />

@@ -8,6 +8,7 @@ import { RadioGroup, Radio, Flex, Button, Stack, Center, Image, Modal, Textarea,
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { showNotification } from '@mantine/notifications';
 import { Graph } from '../../../components/Graph/Graph';
 import oneF from '../../../public/OneFinger.png';
 import fiveF from '../../../public/FiveFingers.png';
@@ -26,15 +27,13 @@ interface InfoProps {
 // result is 1D array with the new votes
 // outlier is a number corresponding to the vote category for which they have become an outlier
 interface WebSocketMessage {
-  notification: string;
-  user_id?: number;
-  user_ids?: number[];
-  guest_id?: number;
-  guest_ids?: number[];
-  result?: number[];
   criteria_id: number;
-  lower?: number;
-  upper?: number;
+  idea_index: number;
+  user_id: number;
+  user_ids: number[];
+  guest_id: number;
+  guest_ids: number[];
+  result: number[];
 }
 
 type Opp = {
@@ -46,17 +45,39 @@ type Opp = {
   imgurl: string;
 };
 
+type Vote = {
+  score: number;
+  isOutlier: boolean;
+  hasSubmitted: boolean;
+};
+
 const Voting = ({ params } : any) => {
   const NUMCATS = 6;
   const TIMERLENGTH = 3;
   const VOTEOPTIONS = 5;
+  const CATEGORIES = [
+    { caption: 'Reason to Buy', infoM: 'Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]' },
+    { caption: 'Market Volume', infoM: 'Based on: Current market size and Expected growth. [HIGH is GOOD]' },
+    { caption: 'Economic Viability', infoM: 'Based on: Margins (value vs. cost), Customers ability to pay, and Customer stickiness? [HIGH is GOOD]' },
+    { caption: 'Obstacles to Implementation', infoM: 'Based on: Product development difficulties and Funding challenges [WANT LOW]' },
+    { caption: 'Time To Revenue', infoM: 'Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]' },
+    { caption: 'Economic Risks', infoM: 'Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]' },
+  ];
   const form = useForm({ mode: 'uncontrolled' });
   const [userID, setUserID] = useState(-1);
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Track if the user is logged in
   const [currentIdeaIndex, setCurrentIdeaIndex] = useState(0);
   const [currentOptionIndex, setCurrentOptionIndex] = useState(-1);
   const [isVoted, setIsVoted] = useState(Array.from({ length: NUMCATS }, () => false));
-  const [votes, setVotes] = useState<number[][]>([[0, 0, 0, 0, 0, 0]]);
+  const [votes, setVotes] = useState<Vote[][]>(
+    [[
+      { score: 0, isOutlier: false, hasSubmitted: false },
+      { score: 0, isOutlier: false, hasSubmitted: false },
+      { score: 0, isOutlier: false, hasSubmitted: false },
+      { score: 0, isOutlier: false, hasSubmitted: false },
+      { score: 0, isOutlier: false, hasSubmitted: false },
+      { score: 0, isOutlier: false, hasSubmitted: false },
+    ]]);
   const [reasons, setReasons] = useState(Array.from({ length: NUMCATS }, () => ''));
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [modalOpened, modalHandlers] = useDisclosure(false);
@@ -71,15 +92,12 @@ const Voting = ({ params } : any) => {
   const [idea, setIdea] = useState(null);
   const [session, setSession] = useState(0);
   const [queryFetched, setQueryFetched] = useState(false);
-  const [badgeState, setBadgeState] = useState<{ [key: number]: boolean }>({});
 
   // Check for mobile device
   const isMobile = useMediaQuery('(max-width: 50em)') ?? false;
   const socketRef = useRef<WebSocket | null>(null);
   const TOKEN = localStorage.getItem('accessToken');
   const RefreshToken = localStorage.getItem('refreshToken');
-  const [submittedReasons, setSubmittedReasons] = useState<{ [key: number]: boolean }>({});
-
 
   // Check for access token or guest ID
   useEffect(() => {
@@ -170,7 +188,7 @@ const Voting = ({ params } : any) => {
         const newIsVoted = [...isVoted];
         newIsVoted[currentOptionIndex] = true;
         setIsVoted(newIsVoted);
-        sendVoteData(currentOptionIndex + 1, votes[currentIdeaIndex][currentOptionIndex]);
+        sendVoteData(currentOptionIndex + 1, votes[currentIdeaIndex][currentOptionIndex].score);
       }
     }, 1000);
 
@@ -208,7 +226,14 @@ const Voting = ({ params } : any) => {
           opp.reasons,
           opp.imgurl,
         ]);
-        newVotes.push([0, 0, 0, 0, 0, 0]);
+        newVotes.push([
+          { score: 0, isOutlier: false, hasSubmitted: false },
+          { score: 0, isOutlier: false, hasSubmitted: false },
+          { score: 0, isOutlier: false, hasSubmitted: false },
+          { score: 0, isOutlier: false, hasSubmitted: false },
+          { score: 0, isOutlier: false, hasSubmitted: false },
+          { score: 0, isOutlier: false, hasSubmitted: false },
+        ]);
         newAllVotes.push(Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0)));
       });
 
@@ -253,7 +278,14 @@ const Voting = ({ params } : any) => {
               opp.reasons,
               opp.imgurl,
             ]);
-            newVotes.push([0, 0, 0, 0, 0, 0]);
+            newVotes.push([
+              { score: 0, isOutlier: false, hasSubmitted: false },
+              { score: 0, isOutlier: false, hasSubmitted: false },
+              { score: 0, isOutlier: false, hasSubmitted: false },
+              { score: 0, isOutlier: false, hasSubmitted: false },
+              { score: 0, isOutlier: false, hasSubmitted: false },
+              { score: 0, isOutlier: false, hasSubmitted: false },
+            ]);
             newAllVotes.push(Array.from({ length: NUMCATS }, () => Array(VOTEOPTIONS).fill(0)));
           });
 
@@ -262,7 +294,6 @@ const Voting = ({ params } : any) => {
           setCurVotes(newAllVotes);
           setIdea(newIdeas[currentIdeaIndex]);
           setSession(sesh);
-
         } catch (refreshError) {
           // If refresh token is invalid or expired, redirect to login
           if (refreshError.response && refreshError.response.status === 401) {
@@ -289,13 +320,14 @@ const Voting = ({ params } : any) => {
   const sendVoteData = (criteria_id: number, vote_score: number) => {
     const newVotesAll = [...votes];
     const newVotesOpp = [...votes[currentIdeaIndex]];
-    newVotesOpp[criteria_id - 1] = vote_score;
+    newVotesOpp[criteria_id - 1].score = vote_score;
     newVotesAll[currentIdeaIndex] = newVotesOpp;
     setVotes(newVotesAll);
 
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       const payload = {
         opportunity_id: idea[3],
+        idea_index: currentIdeaIndex,
         session_id: session,
         ...(localStorage.getItem('guest_id')
           ? { guest_id: parseInt(localStorage.getItem('guest_id')!, 10) }
@@ -313,9 +345,6 @@ const Voting = ({ params } : any) => {
   };
 
   const updateVotes = (index: number, val: number) => {
-    const newVotes = [...votes];
-    newVotes[index] = val;
-    setVotes(newVotes);
     if (isVoted[index]) {
       const newPreviousVotes = [...previousVotes];
       newPreviousVotes[index] = votes[currentIdeaIndex][index];
@@ -326,7 +355,7 @@ const Voting = ({ params } : any) => {
     setIsVoted(newIsVoted);
     const newVotesAll = [...votes];
     const newVotesOpp = [...votes[currentIdeaIndex]];
-    newVotesOpp[index] = val;
+    newVotesOpp[index].score = val;
     newVotesAll[currentIdeaIndex] = newVotesOpp;
     setVotes(newVotesAll);
     setCurrentReasonIndex(index);
@@ -338,40 +367,53 @@ const Voting = ({ params } : any) => {
   };
 
   const connectWebSocket = () => {
+    // USE WSS in prod and WS in DEV
     socketRef.current = new WebSocket(`wss://wheretoplay-6af95d3b28f7.herokuapp.com/ws/vote/${session}/`);
     // socketRef.current = new WebSocket(`ws://localhost:8000/ws/vote/${session}/`);
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
-      console.log('Response from server:', data);
-      if (data.notification === 'Outliers by user ID' && data.criteria_id !== undefined) {
-        const isOutlier = localStorage.getItem('guest_id') ? data.guest_ids && data.guest_ids.includes(userID) : data.user_ids && data.user_ids.includes(userID); // Check if current user/guest is an outlier
-        setBadgeState((prevState) => ({
-          ...prevState,
-          [data.criteria_id - 1]: isOutlier, // Update badgeState for the current category (0-based index)
-        }));
-        // Reset is submitted status if the user has become an outlier
-        if (isOutlier) {
-          // Open instantly after if an outlier
-          if (data.user_id === userID || data.guest_id === userID) {
-            setCurrentReasonIndex(data.criteria_id - 1);
-            modalHandlers.open(); // Open the modal if it's an outlier and matches the current user
-          }
-          setSubmittedReasons((prevState) => ({
-            ...prevState,
-            [data.criteria_id - 1]: false,
-          }));
+      // console.log('Response from server:', data);
+      const isOutlier = localStorage.getItem('guest_id') ? data.guest_ids && data.guest_ids.includes(userID) : data.user_ids && data.user_ids.includes(userID); // Check if current user/guest is an outlier
+      const newVotesAll = [...votes];
+      const newVotesOpp = [...votes[data.idea_index]];
+      newVotesOpp[data.criteria_id - 1].isOutlier = isOutlier;
+      if (isOutlier) {
+        let forceOpen = false;
+        // Open instantly after vote if this user was the outlier
+        if (data.user_id === userID || data.guest_id === userID) {
+          setCurrentReasonIndex(data.criteria_id - 1);
+          modalHandlers.open(); // Open the modal if it's an outlier and matches the current user
+          forceOpen = true;
         }
-      } else if (data.result) {
-        setCurVotes((prevVotes) => {
-          const allVotes = [...prevVotes];
-          const newVotes = [...allVotes[currentIdeaIndex]];
-          const criteriaIndex = data.criteria_id - 1; // Adjust criteria_id to 0-based index
-          newVotes[criteriaIndex] = data.result;
-          allVotes[currentIdeaIndex] = newVotes;
-          return allVotes;
-        });
-    }
+        // Show a notification if there is an outlier on a different opportunity than the one being viewed
+        if (data.idea_index !== currentIdeaIndex) {
+          showNotification({
+            title: 'You are now an outlier',
+            message: `Add a justification for ${CATEGORIES[data.criteria_id - 1].caption} on ${ideas[data.idea_index][0]}`,
+            color: 'red',
+          });
+        } else if (!forceOpen) {
+          showNotification({
+            title: 'You are now an outlier',
+            message: `Add a justification for ${CATEGORIES[data.criteria_id - 1].caption} by clicking the red button`,
+            color: 'red',
+          });
+        }
+
+        newVotesOpp[data.criteria_id - 1].hasSubmitted = false;
+        newVotesAll[data.idea_index] = newVotesOpp;
+        setVotes(newVotesAll);
+      }
+      setCurVotes((prevVotes) => {
+        const allVotes = [...prevVotes];
+        const newVotes = [...allVotes[data.idea_index]];
+        const criteriaIndex = data.criteria_id - 1; // Adjust criteria_id to 0-based index
+        newVotes[criteriaIndex] = data.result;
+        allVotes[data.idea_index] = newVotes;
+        return allVotes;
+      });
     };
+
     socketRef.current.onerror = (error: Event) => {
       console.error('WebSocket error:', error);
     };
@@ -393,6 +435,7 @@ const Voting = ({ params } : any) => {
   };
 
   const goToNextIdea = () => {
+    if (timeRemaining > 0) return;
     if (currentIdeaIndex < ideas.length - 1) {
       setIdea(ideas[currentIdeaIndex + 1]);
       setCurrentIdeaIndex(currentIdeaIndex + 1);
@@ -401,12 +444,11 @@ const Voting = ({ params } : any) => {
     setCurrentOptionIndex(-1);
     setIsVoted(Array.from({ length: NUMCATS }, () => false));
     setReasons(Array.from({ length: NUMCATS }, () => ''));
-    setBadgeState({});
-    setSubmittedReasons({});
     setTimeRemaining(0);
   };
 
   const goToPreviousIdea = () => {
+    if (timeRemaining > 0) return;
     if (currentIdeaIndex > 0) {
       setIdea(ideas[currentIdeaIndex - 1]);
       setCurrentIdeaIndex(currentIdeaIndex - 1);
@@ -414,8 +456,6 @@ const Voting = ({ params } : any) => {
     setCurrentOptionIndex(-1);
     setIsVoted(Array.from({ length: NUMCATS }, () => false));
     setReasons(Array.from({ length: NUMCATS }, () => ''));
-    setBadgeState({});
-    setSubmittedReasons({});
     setTimeRemaining(0);
   };
 
@@ -442,10 +482,11 @@ const Voting = ({ params } : any) => {
       }, {
         headers,
       });
-      setSubmittedReasons((prev) => ({
-        ...prev,
-        [currentReasonIndex]: true,
-      }));
+      const newVotesAll = [...votes];
+        const newVotesOpp = [...votes[currentIdeaIndex]];
+        newVotesOpp[currentReasonIndex].hasSubmitted = true;
+        newVotesAll[currentIdeaIndex] = newVotesOpp;
+        setVotes(newVotesAll);
     } catch (error) {
         if (
           axios.isAxiosError(error) &&
@@ -469,10 +510,11 @@ const Voting = ({ params } : any) => {
                   AUTHORIZATION: `Bearer ${refreshResponse.data.access}`,
                 },
               });
-              setSubmittedReasons((prev) => ({
-                ...prev,
-                [currentReasonIndex]: true,
-              }));
+              const newVotesAll = [...votes];
+              const newVotesOpp = [...votes[currentIdeaIndex]];
+              newVotesOpp[data.criteria_id - 1].hasSubmitted = true;
+              newVotesAll[currentReasonIndex] = newVotesOpp;
+              setVotes(newVotesAll);
           } catch (refreshError) {
                           if (refreshError.response && refreshError.response.status === 401) {
                             console.log('Refresh token expired. Redirecting to login.');
@@ -504,8 +546,8 @@ const Voting = ({ params } : any) => {
   };
 
   const Selection: React.FC<VotingProps> = ({ caption, index, infoM }) => {
-    const isOutlier = badgeState[index] || false; // Check the badgeState for the current index
-    const hasSubmitted = submittedReasons[index] || false; // Check if input has been submitted for this criterion
+    const { isOutlier } = votes[currentIdeaIndex][index]; // Check the badgeState for the current index
+    const { hasSubmitted } = votes[currentIdeaIndex][index]; // Check if input has been submitted for this criterion
     const badgeColor = isOutlier ? (hasSubmitted ? "red" : "red") : "green"; // Green if submitted, red otherwise
     const badgeLabel = isOutlier
       ? hasSubmitted
@@ -529,14 +571,14 @@ const Voting = ({ params } : any) => {
           <Flex>
             <InfoButton message={infoM} />
             <RadioGroup
-              value={votes[currentIdeaIndex][index].toString()}
+              value={votes[currentIdeaIndex][index].score.toString()}
               label={caption}
               description={
-                currentIdeaIndex > 0 && votes[currentIdeaIndex - 1][index] > 0
-                  ? `You voted ${votes[currentIdeaIndex - 1][index]} for ${ideas[currentIdeaIndex - 1][0]}`
+                currentIdeaIndex > 0 && votes[currentIdeaIndex - 1][index].score > 0
+                  ? `You voted ${votes[currentIdeaIndex - 1][index].score} for ${ideas[currentIdeaIndex - 1][0]}`
                   : ''
               }
-              className={timeRemaining > 0 && currentOptionIndex !== index ? 'Disabled' : ''}
+              style={{ opacity: timeRemaining > 0 && currentOptionIndex !== index ? 0.5 : 1 }}
               bg="rgba(0, 0, 0, .3)"
               required
             >
@@ -568,15 +610,6 @@ const Voting = ({ params } : any) => {
     );
   };
 
-  const categories = [
-    { caption: 'Reason to Buy', infoM: 'Based on: Unmet need, Effective solution, and Better than current solutions. [HIGH is GOOD]' },
-    { caption: 'Market Volume', infoM: 'Based on: Current market size and Expected growth. [HIGH is GOOD]' },
-    { caption: 'Economic Viability', infoM: 'Based on: Margins (value vs. cost), Customers ability to pay, and Customer stickiness? [HIGH is GOOD]' },
-    { caption: 'Obstacles to Implementation', infoM: 'Based on: Product development difficulties and Funding challenges [WANT LOW]' },
-    { caption: 'Time To Revenue', infoM: 'Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]' },
-    { caption: 'Economic Risks', infoM: 'Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]' },
-  ];
-
   if (!queryFetched || !idea) {
     return (
         <p>Loading...</p>
@@ -603,10 +636,10 @@ const Voting = ({ params } : any) => {
     <form onSubmit={form.onSubmit(handleSubmit)}>
       <Center>
         <Stack bg="var(--mantine-color-body)" align="stretch" justify="center" gap="sm">
-          {categories.map((category, index) => (
+          {CATEGORIES.map((category, index) => (
             <React.Fragment key={index}>
               <Selection caption={category.caption} index={index} infoM={category.infoM} />
-              {votes[currentIdeaIndex][index] > 0 &&
+              {votes[currentIdeaIndex][index].score > 0 &&
               !isEmpty(curVotes[currentIdeaIndex][index]) &&
               (timeRemaining === 0 || currentOptionIndex !== index) && (
                 <Graph
@@ -624,25 +657,27 @@ const Voting = ({ params } : any) => {
         {currentIdeaIndex > 0 &&
           <Button className="Idea-button" type="button" onClick={goToPreviousIdea} mx="md">Return</Button>
         }
-        <Button className="Idea-button" type="submit">{currentIdeaIndex < ideas.length - 1 ? 'Proceed' : 'Finish'}</Button>
+        <Button mt="md" className="Idea-button" type="submit" style={{ opacity: timeRemaining > 0 ? 0.5 : 1 }}>{currentIdeaIndex < ideas.length - 1 ? 'Proceed' : 'Finish'}</Button>
       </Center>
     </form>
 
-    <Modal
-      opened={modalOpened}
-      onClose={modalHandlers.close}
-      title={`You are an outlier. Your vote: ${votes[currentIdeaIndex][currentReasonIndex]}.`}
-      centered
-      fullScreen={isMobile}
-      transitionProps={{ transition: 'fade', duration: 200 }}
-    >
-      <Textarea
-        placeholder="Please share your valuable input"
-        value={reasonInput}
-        onChange={(e) => setReasonInput(e.target.value)}
-      />
-      <Button onClick={handleReasonSubmit} mt="md">Submit Reason</Button>
-    </Modal>
+    {votes[currentIdeaIndex][currentReasonIndex] &&
+      <Modal
+        opened={modalOpened}
+        onClose={modalHandlers.close}
+        title={`You are an outlier. Your vote: ${votes[currentIdeaIndex][currentReasonIndex].score}.`}
+        centered
+        fullScreen={isMobile}
+        transitionProps={{ transition: 'fade', duration: 200 }}
+      >
+        <Textarea
+          placeholder="Please share your valuable input"
+          value={reasonInput}
+          onChange={(e) => setReasonInput(e.target.value)}
+        />
+        <Button onClick={handleReasonSubmit} mt="md">Submit Reason</Button>
+      </Modal>
+    }
   </>
 );
 };

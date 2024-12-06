@@ -16,7 +16,7 @@ import {
   Stack,
 } from "@mantine/core";
 import { QRCodeCanvas } from "qrcode.react";
-import toast, { Toaster } from "react-hot-toast";
+import { showNotification } from "@mantine/notifications";
 
 type WorkspaceData = {
   name: string;
@@ -74,7 +74,11 @@ export default function InvitePage() {
       setWorkspaceData(data);
     } catch (error: any) {
       console.error("Error:", error);
-      toast.error(error.message || "Failed to fetch workspace data");
+      showNotification({
+        title: 'error',
+        message: error.message || 'Failed to fetch workspace data',
+        color: 'red',
+      })
     }
   };
 
@@ -95,13 +99,25 @@ export default function InvitePage() {
       if (response.ok) {
         // Update the workspaceData with the new URL link
         setWorkspaceData((prev) => ({ ...prev, url_link: data.new_url_link }));
-        toast.success("Session code refreshed successfully");
+        showNotification({
+          title: 'Success',
+          message: 'Session code refreshed successfully',
+          color: 'green',
+        });
       } else {
-        toast.error(data.error || "Could not refresh session code");
+        showNotification({
+          title: 'Error',
+          message: data.error || 'Could not refresh session code',
+          color: 'red',
+        });
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("An error occurred while refreshing the session code.");
+      showNotification({
+        title: 'Error',
+        message: 'An error occurred while refreshing the session code.',
+        color: 'red',
+      });
     } finally {
       setLoading(false);
     }
@@ -127,19 +143,25 @@ export default function InvitePage() {
       });
       const data = await response.json();
       if (response.ok) {
-        toast.success("Invite email sent successfully");
+        showNotification({
+          title: 'Sucess',
+          message: 'Invite email sent successfully',
+          color: 'green',
+        });
       } else {
-        /*
         showNotification({
           title: 'Error',
           message: data.error,
           color: 'red',
-        }); */
-        toast.error('Invite email could not be sent try refreshing the page and sending again.');
+        }); 
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Failed to send invite email");
+      showNotification({
+        title: 'Error',
+        message: 'Failed to send invite email',
+        color: 'red',
+      }); 
     } finally {
       setLoading(false);
     }
@@ -147,7 +169,6 @@ export default function InvitePage() {
 
   return (
     <div>
-      <Toaster />
       <Container size="sm" style={{ marginTop: "2rem" }}>
         <Paper withBorder shadow="sm" p="md" radius="md">
           <Stack spacing="md">

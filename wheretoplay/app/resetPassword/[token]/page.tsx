@@ -3,9 +3,9 @@
 import { Stack, PasswordInput, Button, Center } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useState } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { showNotification } from '@mantine/notifications';
 
 const ResetPassword = ({ params } : any ) => {
     const [loading, setLoading] = useState<boolean>(false);
@@ -39,13 +39,21 @@ const ResetPassword = ({ params } : any ) => {
 
             if (response.status === 200) {
                 form.reset();
-                toast.success('Password reset. Hang tight...');
+                showNotification({
+                    title: 'Success',
+                    message: 'Password reset. Hang tight...',
+                    color: 'green',
+                });
                 await new Promise(resolve => { setTimeout(resolve, 2000); });
                 router.push('/login');
             }
         } catch (err : any) {
             if (err.response && err.response.data && err.response.data.error)
-                toast.error(err.response.data.error);
+                showNotification({
+                    title: 'Error',
+                    message: err.response.data.error,
+                    color: 'red',
+                });
             console.log(err);
         } finally {
             setLoading(false);
@@ -78,7 +86,6 @@ const ResetPassword = ({ params } : any ) => {
 
     return (
         <>
-            <Toaster />
             {changePasswordForm()}
         </>
     );
