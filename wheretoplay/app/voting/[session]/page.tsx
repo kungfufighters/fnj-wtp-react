@@ -368,8 +368,8 @@ const Voting = ({ params } : any) => {
 
   const connectWebSocket = () => {
     // USE WSS in prod and WS in DEV
-    socketRef.current = new WebSocket(`wss://wheretoplay-6af95d3b28f7.herokuapp.com/ws/vote/${session}/`);
-    // socketRef.current = new WebSocket(`ws://localhost:8000/ws/vote/${session}/`);
+    // socketRef.current = new WebSocket(`wss://wheretoplay-6af95d3b28f7.herokuapp.com/ws/vote/${session}/`);
+    socketRef.current = new WebSocket(`ws://localhost:8000/ws/vote/${session}/`);
     socketRef.current.onmessage = (event: MessageEvent) => {
       const data: WebSocketMessage = JSON.parse(event.data);
       // console.log('Response from server:', data);
@@ -430,12 +430,41 @@ const Voting = ({ params } : any) => {
     };
   }, [idea]);
 
+  const canProceed = () => {
+    // Cannot proceed if there is a timer currently running
+    if (timeRemaining > 0) return false;
+
+    // Cannot proceed if there is an unfilled vote or there is an outlier vote without a reason
+    for (let i = 0; i < NUMCATS; i += 1) {
+      const vote = votes[currentIdeaIndex][i];
+      if (vote.score === 0 || (vote.isOutlier && !vote.hasSubmitted)) return false;
+    }
+
+    // If trying to finish cannot proceed if there are retroactive outliers from an earlier page without submitted reasons
+    if (currentIdeaIndex + 1 === ideas.length) {
+      for (let oppIndex = 0; oppIndex < currentIdeaIndex; oppIndex += 1) {
+        for (let i = 0; i < NUMCATS; i += 1) {
+          const vote = votes[oppIndex][i];
+          if (vote.isOutlier && !vote.hasSubmitted) return false;
+        }
+      }
+    }
+
+    // Otherwise, no pending votes or outliers, so can proceed
+    return true;
+  };
+
   const handleSubmit = () => {
     goToNextIdea();
   };
 
   const goToNextIdea = () => {
     if (timeRemaining > 0) return;
+    if (!canProceed()) {
+      alert('You must submit all votes and give reasons for all of your outlier votes');
+      return;
+    }
+
     if (currentIdeaIndex < ideas.length - 1) {
       setIdea(ideas[currentIdeaIndex + 1]);
       setCurrentIdeaIndex(currentIdeaIndex + 1);
@@ -566,7 +595,7 @@ const Voting = ({ params } : any) => {
       <Center>
         <Stack>
           {timeRemaining > 0 && currentOptionIndex === index && (
-            <h4 style={{ textAlign: 'center' }}>Time Remaining: {timeRemaining}s</h4>
+            <h4 style={{ textAlign: 'center' }}>Vote Locks In: {timeRemaining}s</h4>
           )}
           <Flex>
             <InfoButton message={infoM} />
@@ -655,9 +684,9 @@ const Voting = ({ params } : any) => {
       </Center>
       <Center>
         {currentIdeaIndex > 0 &&
-          <Button className="Idea-button" type="button" onClick={goToPreviousIdea} mx="md">Return</Button>
+          <Button mt="md" className="Idea-button" type="button" onClick={goToPreviousIdea} disabled={timeRemaining > 0} mx="md">Return</Button>
         }
-        <Button mt="md" className="Idea-button" type="submit" style={{ opacity: timeRemaining > 0 ? 0.5 : 1 }}>{currentIdeaIndex < ideas.length - 1 ? 'Proceed' : 'Finish'}</Button>
+        <Button mt="md" className="Idea-button" type="submit" data-disabled={!canProceed()}>{currentIdeaIndex < ideas.length - 1 ? 'Proceed' : 'Finish'}</Button>
       </Center>
     </form>
 

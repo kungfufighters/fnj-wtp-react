@@ -2,7 +2,7 @@
 
 import "@mantine/core/styles.css";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Container,
   TextInput,
@@ -21,7 +21,7 @@ import { showNotification } from "@mantine/notifications";
 type WorkspaceData = {
   name: string;
   url_link: string;
-  workspace_id: number;
+  id: number;
 };
 
 const expirationOptions = [
@@ -37,10 +37,11 @@ const expirationOptions = [
 export default function InvitePage() {
   const pathname = usePathname();
   const sessionPin = pathname.split("/").pop(); // Extract sessionPin from the URL path
-  const [workspaceData, setWorkspaceData] = useState<WorkspaceData>({ name: "", url_link: "", workspace_id: -1 });
+  const [workspaceData, setWorkspaceData] = useState<WorkspaceData>({ name: "", url_link: "", id: -1 });
   const [email, setEmail] = useState("");
   const [expiration, setExpiration] = useState<string>("no_expiration");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchWorkspaceData();
@@ -71,7 +72,16 @@ export default function InvitePage() {
       }
 
       const data = await response.json();
-      setWorkspaceData(data);
+      if(data.is_owner)
+        setWorkspaceData(data);
+      else {
+        showNotification({
+          title: 'Could Not Find Workspace',
+          message: 'Session code did not match any of your workspaces',
+          color: 'red',
+        })
+        router.push('/dashboard/opportunities');
+      }
     } catch (error: any) {
       console.error("Error:", error);
       showNotification({
@@ -98,12 +108,14 @@ export default function InvitePage() {
       const data = await response.json();
       if (response.ok) {
         // Update the workspaceData with the new URL link
-        setWorkspaceData((prev) => ({ ...prev, url_link: data.new_url_link }));
+        // setWorkspaceData((prev) => ({ ...prev, url_link: data.new_url_link }));
         showNotification({
           title: 'Success',
-          message: 'Session code refreshed successfully',
+          message: 'Session code refreshed successfully. Hang tight...',
           color: 'green',
         });
+        await new Promise(resolve => { setTimeout(resolve, 2000); });
+        router.push(`/invite/${data.new_code}`);
       } else {
         showNotification({
           title: 'Error',
@@ -138,7 +150,7 @@ export default function InvitePage() {
           email,
           session_pin: sessionPin,
           expiration,
-          workspace_id: workspaceData.workspace_id,
+          workspace_id: workspaceData.id,
         }),
       });
       const data = await response.json();
@@ -183,7 +195,8 @@ export default function InvitePage() {
             <Paper withBorder shadow="xs" p="md" radius="md">
               <Text weight={600}>Workspace: {workspaceData.name || "N/A"}</Text>
               <Space h="xs" />
-              <Text>Invite Link:</Text>
+              <Text>Session Code: {workspaceData.url_link.split('voting/')[1]}</Text>
+              {/* <Text>Invite Link:</Text> */}
               <a href={workspaceData.url_link || "#"}>{workspaceData.url_link || "N/A"}</a>
               {workspaceData.url_link && (
                 <div style={{ marginTop: "1rem" }}>
@@ -214,6 +227,7 @@ export default function InvitePage() {
                     value={email}
                     onChange={(event) => setEmail(event.currentTarget.value)}
                   />
+                  {/* To be added back once backend functionality is added
                   <Select
                     label="Expiration Time"
                     placeholder="Select expiration time"
@@ -221,7 +235,7 @@ export default function InvitePage() {
                     value={expiration}
                     onChange={(value) => setExpiration(value || "no_expiration")}
                     style={{ marginTop: "1rem" }}
-                  />
+                  /> */}
                   <Button
                     onClick={handleSendEmail}
                     fullWidth

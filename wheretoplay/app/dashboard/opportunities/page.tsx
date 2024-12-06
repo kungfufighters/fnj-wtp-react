@@ -16,6 +16,7 @@ import {
   Loader,
   Title,
 } from "@mantine/core";
+import { useRouter } from 'next/navigation';
 import axios from "axios";
 
 interface Opportunity {
@@ -37,6 +38,23 @@ interface Workspace {
 export default function OpportunitiesPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      // Save notification details in localStorage
+      localStorage.setItem(
+        'redirectNotification',
+        JSON.stringify({
+          title: 'Unauthorized',
+          message: 'You need to log in view your dashboard.',
+          color: 'red',
+        })
+      );
+      router.push('/login');
+    }
+  }, [router]);
 
   useEffect(() => {
     const fetchWorkspaces = async () => {
