@@ -336,12 +336,12 @@ const ResultsPage = ({ params } : any) => {
             <Bar key={`chart-obstacles-${currentIdeaIndex}`} data={graphData('Obstacles', idea[3][3])} {...optionProps} />
           </div>
 
-          <h3>External Risks</h3>
+          <h3>Time to Revenue</h3>
           <div style={{ height: '150px' }}>
             <Bar key={`chart-risks-${currentIdeaIndex}`} data={graphData('External Risks', idea[3][4])} {...optionProps} />
           </div>
 
-          <h3>Time to Revenue</h3>
+          <h3>External Risks</h3>
           <div style={{ height: '150px' }}>
             <Bar key={`chart-revenue-${currentIdeaIndex}`} data={graphData('Time to Revenue', idea[3][5])} {...optionProps} />
           </div>
