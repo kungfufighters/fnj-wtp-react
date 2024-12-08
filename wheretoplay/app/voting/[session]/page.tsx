@@ -61,7 +61,7 @@ const Voting = ({ params } : any) => {
     { caption: 'Economic Viability', infoM: 'Based on: Margins (value vs. cost), Customers ability to pay, and Customer stickiness? [HIGH is GOOD]' },
     { caption: 'Obstacles to Implementation', infoM: 'Based on: Product development difficulties and Funding challenges [WANT LOW]' },
     { caption: 'Time To Revenue', infoM: 'Based on: Development time, Time between product and market readiness, and Length of sale cycle (e.g. hospitals and schools take a long time) [WANT LOW]' },
-    { caption: 'Economic Risks', infoM: 'Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]' },
+    { caption: 'External Risks', infoM: 'Based on: Competitive threats, 3rd party dependencies, and Barriers to adoption. [WANT LOW]' },
   ];
   const form = useForm({ mode: 'uncontrolled' });
   const [userID, setUserID] = useState(-1);
