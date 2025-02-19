@@ -15,6 +15,9 @@ import {
   Divider,
   Loader,
   Title,
+  Modal,
+  TextInput,
+  Textarea,
 } from "@mantine/core";
 import axios from "axios";
 
@@ -25,6 +28,7 @@ interface Opportunity {
   participants: number;
   scoreP: number;
   scoreC: number;
+  opportunity_id: number;  // Added to track which project is being edited/invited
 }
 
 interface Workspace {
@@ -37,17 +41,18 @@ interface Workspace {
 export default function OpportunitiesPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [inviteModal, setInviteModal] = useState<{ open: boolean; projectId?: number }>({ open: false });
+  const [editModal, setEditModal] = useState<{ open: boolean; project?: Opportunity }>({ open: false });
+  const [editData, setEditData] = useState<{ name: string; customer_segment: string }>({ name: "", customer_segment: "" });
 
   useEffect(() => {
     const fetchWorkspaces = async () => {
       const TOKEN = localStorage.getItem("accessToken");
-      const RefreshToken = localStorage.getItem("refreshToken");
 
       try {
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/query/owneropps/`,
-          { headers: { Authorization: `Bearer ${TOKEN}` } }
-        );
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/query/owneropps/`, {
+          headers: { Authorization: `Bearer ${TOKEN}` },
+        });
 
         const data = response.data.map((workspace: any[]) => ({
           name: workspace[0],
@@ -57,39 +62,7 @@ export default function OpportunitiesPage() {
         }));
         setWorkspaces(data);
       } catch (error) {
-        if (
-          axios.isAxiosError(error) &&
-          error.response?.status === 401 &&
-          RefreshToken
-        ) {
-          try {
-            const refreshResponse = await axios.post(
-              `${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`,
-              { refresh: RefreshToken }
-            );
-
-            localStorage.setItem("accessToken", refreshResponse.data.access);
-
-            const response = await axios.get(
-              `${process.env.NEXT_PUBLIC_API_BASE_URL}/query/owneropps/`,
-              { headers: { Authorization: `Bearer ${refreshResponse.data.access}` } }
-            );
-
-            const data = response.data.map((workspace: any[]) => ({
-              name: workspace[0],
-              code: workspace[1],
-              opportunities: workspace[2] || [],
-              display: false,
-            }));
-            setWorkspaces(data);
-          } catch (refreshError) {
-            console.error("Failed to refresh token:", refreshError);
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-          }
-        } else {
-          console.error("Failed to fetch workspaces:", error);
-        }
+        console.error("Failed to fetch workspaces:", error);
       } finally {
         setLoading(false);
       }
@@ -100,17 +73,45 @@ export default function OpportunitiesPage() {
 
   const toggleDisplay = (index: number) => {
     setWorkspaces((prev) =>
-      prev.map((workspace, i) =>
-        i === index ? { ...workspace, display: !workspace.display } : workspace
-      )
+      prev.map((workspace, i) => (i === index ? { ...workspace, display: !workspace.display } : workspace))
     );
+  };
+
+  const openInviteModal = (projectId: number) => {
+    setInviteModal({ open: true, projectId });
+  };
+
+  const openEditModal = (project: Opportunity) => {
+    setEditData({ name: project.name, customer_segment: project.customer_segment });
+    setEditModal({ open: true, project });
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editModal.project) return;
+
+    const TOKEN = localStorage.getItem("accessToken");
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/edit_project/`,
+        {
+          opportunity_id: editModal.project.opportunity_id,
+          name: editData.name,
+          customer_segment: editData.customer_segment,
+        },
+        { headers: { Authorization: `Bearer ${TOKEN}` } }
+      );
+
+      alert("Project updated successfully!");
+      setEditModal({ open: false });
+      window.location.reload();  // Refresh to reflect changes
+    } catch (error) {
+      console.error("Failed to update project:", error);
+    }
   };
 
   return (
     <Container size="xl" py="xl">
-      <Title align="center" mb="lg">
-        My Workspaces
-      </Title>
+      <Title align="center" mb="lg">My Workspaces</Title>
       {loading ? (
         <Loader size="lg" variant="dots" mx="auto" />
       ) : (
@@ -119,31 +120,15 @@ export default function OpportunitiesPage() {
             <Grid gutter="lg">
               {workspaces.map((workspace, i) => (
                 <Grid.Col span={12} sm={6} lg={4} key={i}>
-                  <Card
-                    shadow="sm"
-                    padding="lg"
-                    radius="md"
-                    withBorder
-                    style={{ height: "100%" }}
-                  >
+                  <Card shadow="sm" padding="lg" radius="md" withBorder style={{ height: "100%" }}>
                     <Group position="apart">
-                      <Text size="lg" weight={500}>
-                        {workspace.name}
-                      </Text>
-                      <Button
-                        size="xs"
-                        variant="outline"
-                        onClick={() => toggleDisplay(i)}
-                      >
+                      <Text size="lg" weight={500}>{workspace.name}</Text>
+                      <Button size="xs" variant="outline" onClick={() => toggleDisplay(i)}>
                         {workspace.display ? "Hide" : "Details"}
                       </Button>
                     </Group>
                     <Divider my="sm" />
-                    <Anchor
-                      href={`/results/${workspace.code}`}
-                      size="sm"
-                      underline
-                    >
+                    <Anchor href={`/results/${workspace.code}`} size="sm" underline>
                       View Full Results
                     </Anchor>
                     <Collapse in={workspace.display}>
@@ -153,13 +138,7 @@ export default function OpportunitiesPage() {
                             <Accordion.Control>
                               <Group position="apart">
                                 <Text>{opp.name}</Text>
-                                <Badge
-                                  color={
-                                    opp.label === "Keep Open" ? "blue" : "green"
-                                  }
-                                >
-                                  {opp.label}
-                                </Badge>
+                                <Badge color={opp.label === "Keep Open" ? "blue" : "green"}>{opp.label}</Badge>
                               </Group>
                             </Accordion.Control>
                             <Accordion.Panel>
@@ -167,6 +146,14 @@ export default function OpportunitiesPage() {
                               <Text size="sm">Participants: {opp.participants}</Text>
                               <Text size="sm">Potential: {opp.scoreP}/5</Text>
                               <Text size="sm">Challenge: {opp.scoreC}/5</Text>
+                              <Group mt="sm">
+                                <Button size="xs" color="blue" onClick={() => openInviteModal(opp.opportunity_id)}>
+                                  Invite
+                                </Button>
+                                <Button size="xs" color="yellow" onClick={() => openEditModal(opp)}>
+                                  Edit
+                                </Button>
+                              </Group>
                             </Accordion.Panel>
                           </Accordion.Item>
                         ))}
@@ -177,12 +164,31 @@ export default function OpportunitiesPage() {
               ))}
             </Grid>
           ) : (
-            <Text align="center" size="sm" color="dimmed">
-              You have no workspaces...
-            </Text>
+            <Text align="center" size="sm" color="dimmed">You have no workspaces...</Text>
           )}
         </>
       )}
+
+      {/* Invite Modal */}
+      <Modal opened={inviteModal.open} onClose={() => setInviteModal({ open: false })} title="Invite User">
+        <TextInput label="User Email" placeholder="Enter email" />
+        <Button fullWidth mt="md">Send Invite</Button>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal opened={editModal.open} onClose={() => setEditModal({ open: false })} title="Edit Project">
+        <TextInput
+          label="Project Name"
+          value={editData.name}
+          onChange={(e) => setEditData((prev) => ({ ...prev, name: e.target.value }))}
+        />
+        <Textarea
+          label="Customer Segment"
+          value={editData.customer_segment}
+          onChange={(e) => setEditData((prev) => ({ ...prev, customer_segment: e.target.value }))}
+        />
+        <Button fullWidth mt="md" color="green" onClick={handleEditSubmit}>Save Changes</Button>
+      </Modal>
     </Container>
   );
 }
