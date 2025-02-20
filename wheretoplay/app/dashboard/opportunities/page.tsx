@@ -184,19 +184,20 @@ export default function OpportunitiesPage() {
       )}
 
       {/* Invite Modal - Loads InviteModalPage with correct sessionPin */}
-      <Modal
-        opened={inviteModal.open}
-        onClose={() => setInviteModal({ open: false })}
-        title="Invite Users"
-        size="md"
-        centered
-      >
-        {inviteModal.sessionPin ? (
-          <InviteModalPage key={inviteModal.sessionPin} sessionPin={inviteModal.sessionPin} />
-        ) : (
-          <Loader />
-        )}
-      </Modal>
+<Modal
+  opened={inviteModal.open}
+  onClose={() => setInviteModal({ open: false })}
+  title={inviteModal.sessionPin ? `Session PIN: ${inviteModal.sessionPin}` : "Invite Users"}
+  size="md"
+  centered
+>
+  {inviteModal.sessionPin ? (
+    <InviteModalPage key={inviteModal.sessionPin} sessionPin={inviteModal.sessionPin} />
+  ) : (
+    <Loader />
+  )}
+</Modal>
+
 
       {/* Edit Modal - Loads EditProjectForm with opportunity_id */}
       <Modal
