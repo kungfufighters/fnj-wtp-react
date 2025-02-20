@@ -60,28 +60,8 @@ const EditProjectForm = dynamic(
 export default function OpportunitiesPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-<<<<<<< HEAD
   const [inviteModal, setInviteModal] = useState<{ open: boolean; sessionPin?: string }>({ open: false });
   const [editModal, setEditModal] = useState<{ open: boolean; project?: Opportunity }>({ open: false });
-=======
-  const router = useRouter();
-
-  useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      // Save notification details in localStorage
-      localStorage.setItem(
-        'redirectNotification',
-        JSON.stringify({
-          title: 'Unauthorized',
-          message: 'You need to log in view your dashboard.',
-          color: 'red',
-        })
-      );
-      router.push('/login');
-    }
-  }, [router]);
->>>>>>> main
 
   useEffect(() => {
     const fetchWorkspaces = async () => {
