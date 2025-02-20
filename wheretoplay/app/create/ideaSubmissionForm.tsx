@@ -206,6 +206,7 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({ onSubmit }) => 
           <Accordion.Item value="advanced">
             <Accordion.Control>Advanced Options</Accordion.Control>
             <Accordion.Panel>
+              {/* To be added back in once backend functionality for guest cap is completed
               <NumberInput
                 label="Guest Cap"
                 placeholder="Maximum number of guests"
@@ -217,7 +218,7 @@ const IdeaSubmissionForm: React.FC<IdeaSubmissionFormProps> = ({ onSubmit }) => 
                 <Text size="sm" color="dimmed" mt="xs">
                   No Maximum
                 </Text>
-              )}
+              )}*/}
               <Select
                 label="MAD Threshold"
                 description="2 is the default MAD threshold"

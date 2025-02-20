@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import IdeaSubmissionForm from './ideaSubmissionForm';
 import { showNotification } from '@mantine/notifications';
+import IdeaSubmissionForm from './ideaSubmissionForm';
 
 function CreateWorkspace() {
   const router = useRouter();

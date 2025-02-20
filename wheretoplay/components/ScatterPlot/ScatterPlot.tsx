@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const ScatterPlot = ({points}) => {
+const ScatterPlot = ({points} : any) => {
     useEffect(() => {
         const canvas = document.getElementById("scatterCanvas");
         const ctx = canvas.getContext("2d");
@@ -39,7 +39,7 @@ const ScatterPlot = ({points}) => {
 
 
 
-        points.forEach(point => {
+        points.forEach((point : any) => {
             ctx.beginPath();
             ctx.arc(point.x, point.y, 5, 0, Math.PI * 2); // Draw a circle
             ctx.fillText(point.label, point.x + 10, point.y)

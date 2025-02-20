@@ -1,7 +1,7 @@
 'use client';
 
 import '@mantine/core/styles.css';
-import { useState, useEffect } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   TextInput,
@@ -14,12 +14,20 @@ import {
   Text,
 } from '@mantine/core';
 
-export default function GuestJoinPage() {
+export default function GuestInfoPage() {
+  return (
+    <Suspense>
+      <GuestInfoPagePart />
+    </Suspense>
+  );
+}
+
+function GuestInfoPagePart() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionPinFromParams = searchParams.get('sessionPin');
   const [sessionPin, setSessionPin] = useState('');
-  
+
   useEffect(() => {
     const pin = sessionPinFromParams || localStorage.getItem('sessionPin');
     setSessionPin(pin);

@@ -154,7 +154,8 @@ export default function AccountSettingsPage() {
           console.error("Failed to refresh token:", refreshError);
         }
       } else {
-        setMailError("Could not update email. Please try again.");
+        if (axios.isAxiosError(error) && error.response?.status === 422) setMailError("Email may already be in use")
+        else setMailError("Could not update email. Please try again.");
         console.error("Email update error:", error);
       }
     } finally {
@@ -193,7 +194,7 @@ export default function AccountSettingsPage() {
         error.response?.status === 401 &&
         RefreshToken
       ) {
-        try {
+          // Try to refresh and give error message
           const refreshResponse = await axios.post(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/token/refresh/`,
             { refresh: RefreshToken }
@@ -201,29 +202,10 @@ export default function AccountSettingsPage() {
 
           localStorage.setItem("accessToken", refreshResponse.data.access);
 
-          await axios.post(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/change/password/`,
-            {
-              currentPassword: values.currentPassword,
-              newPassword: values.newPassword,
-              confirmNewPassword: values.confirmNewPassword,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${refreshResponse.data.access}`,
-              },
-            }
-          );
-          passwordForm.reset();
-          showNotification({
-            title: "Success",
-            message: "Password updated successfully",
-            color: "green",
-          });
-        } catch (refreshError) {
-          console.error("Failed to refresh token:", refreshError);
+          setPassError("Unable to authorize, ensure password is correct before trying again")
+          console.error("Failed to refresh token:", error);
         }
-      } else {
+      else {
         setPassError("Could not update password. Please try again.");
         console.error("Password update error:", error);
       }

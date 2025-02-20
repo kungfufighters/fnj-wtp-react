@@ -22,6 +22,7 @@ export default function Login() {
   const [isAlreadyLoggedIn, setIsAlreadyLoggedIn] = useState(false); // Handle message display if logged in
   const [error, setError] = useState<string | null>(null); // Error state
 
+  // This calls an endpoint that doesnt exist
   const isValidToken = async (token: string): Promise<boolean> => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/custom/token/verify/`, {
@@ -50,7 +51,8 @@ export default function Login() {
     const checkLoginStatus = async () => {
       const accessToken = localStorage.getItem('accessToken');
       if (accessToken) {
-        const valid = await isValidToken(accessToken);
+        const valid = true;
+       // const valid = await isValidToken(accessToken); This calls an endpoint that doesnt exists, replaced with the above
         if (valid) {
           setIsAlreadyLoggedIn(true);
           setTimeout(() => router.push('/'), 500);
@@ -78,7 +80,6 @@ export default function Login() {
     },
   });
 
-  
   // Login logic to handle API call to the Django backend
   const handleSubmit = async (values) => {
     setLoginLoading(true);
@@ -103,6 +104,7 @@ export default function Login() {
         console.log('Refresh Token:', refreshToken);
 
         // Store tokens in localStorage
+        localStorage.removeItem('guest_id');
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
 
@@ -120,7 +122,6 @@ export default function Login() {
       setLoginLoading(false);
     }
   };
-
 
   const handleSignupRedirect = () => {
     router.push('/signup');
@@ -179,7 +180,7 @@ export default function Login() {
           </Button>
           <Group justify="space-between" mt="md">
             <Button variant="subtle" onClick={handleSignupRedirect}>
-              Don't have an account?
+              Don&apos;t have an account?
             </Button>
             <Button variant="subtle" onClick={() => router.push('/forgotPassword')}>
               Forgot Password?

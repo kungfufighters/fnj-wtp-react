@@ -10,7 +10,7 @@ import {
   import { useForm } from '@mantine/form';
   import { useState } from 'react';
   import axios from 'axios';
-  import toast, { Toaster } from 'react-hot-toast';
+import { showNotification } from '@mantine/notifications';
 
 export default function Forgot() {
     const [loading, setLoading] = useState<boolean>(false);
@@ -29,11 +29,19 @@ export default function Forgot() {
 
             if (response.status === 200) {
                 form.reset();
-                toast.success('Check your email for a reset password link');
+                showNotification({
+                    title: 'Success!',
+                    message: 'Check your email for a reset password link',
+                    color: 'green',
+                })
             }
-        } catch (err) {
+        } catch (err : any) {
             if (err.response && err.response.data && err.response.data.error)
-                toast.error(err.response.data.error);
+                showNotification({
+                    title: 'Error',
+                    message: err.response.data.error,
+                    color: 'red',
+                })
             console.log(err);
         } finally {
             setLoading(false);
@@ -42,7 +50,6 @@ export default function Forgot() {
 
     return (
         <>
-        <Toaster />
             <Container
               size="xs"
               style={{

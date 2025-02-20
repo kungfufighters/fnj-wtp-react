@@ -1,18 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  TextInput, 
-  Button, 
-  Container, 
-  Divider, 
-  Image, 
-  Title, 
-  Text, 
-  Paper, 
-  Stack, 
-  Group, 
-  Box 
+import {
+  TextInput,
+  Button,
+  Container,
+  Divider,
+  Image,
+  Title,
+  Text,
+  Paper,
+  Stack,
+  Box,
 } from '@mantine/core';
 import { useRouter } from 'next/navigation';
 

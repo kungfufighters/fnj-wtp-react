@@ -21,7 +21,7 @@ import {
     Legend
   );
 
-export function Graph({ key, votes, graphTitle }) {
+export function Graph({ key, votes, graphTitle } : any) {
     const graphData = (label : string, data: number[][]) => ({
         labels: [label],
         datasets: [

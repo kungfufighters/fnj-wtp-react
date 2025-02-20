@@ -2,7 +2,7 @@
 
 import "@mantine/core/styles.css";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Container,
   TextInput,
@@ -16,11 +16,12 @@ import {
   Stack,
 } from "@mantine/core";
 import { QRCodeCanvas } from "qrcode.react";
-import toast, { Toaster } from "react-hot-toast";
+import { showNotification } from "@mantine/notifications";
 
 type WorkspaceData = {
   name: string;
   url_link: string;
+  id: number;
 };
 
 const expirationOptions = [
@@ -36,10 +37,11 @@ const expirationOptions = [
 export default function InvitePage() {
   const pathname = usePathname();
   const sessionPin = pathname.split("/").pop(); // Extract sessionPin from the URL path
-  const [workspaceData, setWorkspaceData] = useState<WorkspaceData>({ name: "", url_link: "" });
+  const [workspaceData, setWorkspaceData] = useState<WorkspaceData>({ name: "", url_link: "", id: -1 });
   const [email, setEmail] = useState("");
   const [expiration, setExpiration] = useState<string>("no_expiration");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchWorkspaceData();
@@ -70,10 +72,23 @@ export default function InvitePage() {
       }
 
       const data = await response.json();
-      setWorkspaceData(data);
+      if(data.is_owner)
+        setWorkspaceData(data);
+      else {
+        showNotification({
+          title: 'Could Not Find Workspace',
+          message: 'Session code did not match any of your workspaces',
+          color: 'red',
+        })
+        router.push('/dashboard/opportunities');
+      }
     } catch (error: any) {
       console.error("Error:", error);
-      toast.error(error.message || "Failed to fetch workspace data");
+      showNotification({
+        title: 'error',
+        message: error.message || 'Failed to fetch workspace data',
+        color: 'red',
+      })
     }
   };
 
@@ -93,14 +108,28 @@ export default function InvitePage() {
       const data = await response.json();
       if (response.ok) {
         // Update the workspaceData with the new URL link
-        setWorkspaceData((prev) => ({ ...prev, url_link: data.new_url_link }));
-        toast.success("Session code refreshed successfully");
+        // setWorkspaceData((prev) => ({ ...prev, url_link: data.new_url_link }));
+        showNotification({
+          title: 'Success',
+          message: 'Session code refreshed successfully. Hang tight...',
+          color: 'green',
+        });
+        await new Promise(resolve => { setTimeout(resolve, 2000); });
+        router.push(`/invite/${data.new_code}`);
       } else {
-        toast.error(data.error || "Could not refresh session code");
+        showNotification({
+          title: 'Error',
+          message: data.error || 'Could not refresh session code',
+          color: 'red',
+        });
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("An error occurred while refreshing the session code.");
+      showNotification({
+        title: 'Error',
+        message: 'An error occurred while refreshing the session code.',
+        color: 'red',
+      });
     } finally {
       setLoading(false);
     }
@@ -121,23 +150,30 @@ export default function InvitePage() {
           email,
           session_pin: sessionPin,
           expiration,
+          workspace_id: workspaceData.id,
         }),
       });
       const data = await response.json();
       if (response.ok) {
-        toast.success("Invite email sent successfully");
+        showNotification({
+          title: 'Sucess',
+          message: 'Invite email sent successfully',
+          color: 'green',
+        });
       } else {
-        /*
         showNotification({
           title: 'Error',
           message: data.error,
           color: 'red',
-        }); */
-        toast.error('Invite email could not be sent try refreshing the page and sending again.');
+        }); 
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Failed to send invite email");
+      showNotification({
+        title: 'Error',
+        message: 'Failed to send invite email',
+        color: 'red',
+      }); 
     } finally {
       setLoading(false);
     }
@@ -145,7 +181,6 @@ export default function InvitePage() {
 
   return (
     <div>
-      <Toaster />
       <Container size="sm" style={{ marginTop: "2rem" }}>
         <Paper withBorder shadow="sm" p="md" radius="md">
           <Stack spacing="md">
@@ -160,7 +195,8 @@ export default function InvitePage() {
             <Paper withBorder shadow="xs" p="md" radius="md">
               <Text weight={600}>Workspace: {workspaceData.name || "N/A"}</Text>
               <Space h="xs" />
-              <Text>Invite Link:</Text>
+              <Text>Session Code: {workspaceData.url_link.split('voting/')[1]}</Text>
+              {/* <Text>Invite Link:</Text> */}
               <a href={workspaceData.url_link || "#"}>{workspaceData.url_link || "N/A"}</a>
               {workspaceData.url_link && (
                 <div style={{ marginTop: "1rem" }}>
@@ -191,6 +227,7 @@ export default function InvitePage() {
                     value={email}
                     onChange={(event) => setEmail(event.currentTarget.value)}
                   />
+                  {/* To be added back once backend functionality is added
                   <Select
                     label="Expiration Time"
                     placeholder="Select expiration time"
@@ -198,7 +235,7 @@ export default function InvitePage() {
                     value={expiration}
                     onChange={(value) => setExpiration(value || "no_expiration")}
                     style={{ marginTop: "1rem" }}
-                  />
+                  /> */}
                   <Button
                     onClick={handleSendEmail}
                     fullWidth
